@@ -1,0 +1,1463 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulação do Pêndulo Triplo — Caos &amp; Dinâmica Não-Linear</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    :root {
+      --bg-dark: #080b12;
+      --panel-bg: rgba(15, 23, 42, 0.75);
+      --panel-border: rgba(255, 255, 255, 0.1);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      
+      --accent-cyan: #00f0ff;
+      --accent-pink: #ff007f;
+      --accent-gold: #ffb700;
+      --accent-green: #10b981;
+      --accent-purple: #a855f7;
+
+      --font-title: 'Outfit', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-code: 'Fira Code', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Background FX */
+    #bg-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Simulation Canvas */
+    #sim-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      cursor: crosshair;
+    }
+
+    /* Header Bar */
+    header {
+      position: absolute;
+      top: 16px;
+      left: 20px;
+      right: 20px;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+
+    .title-box {
+      pointer-events: auto;
+      background: var(--panel-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--panel-border);
+      padding: 12px 20px;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .title-box h1 {
+      font-family: var(--font-title);
+      font-size: 1.4rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-pink), var(--accent-gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .title-box p {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .top-controls {
+      pointer-events: auto;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      background: var(--panel-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--panel-border);
+      padding: 8px 14px;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.25);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #00f0ff22, #00f0ff44);
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #00f0ff44, #00f0ff77);
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+    }
+
+    .btn-danger {
+      background: rgba(255, 0, 127, 0.15);
+      border-color: var(--accent-pink);
+      color: var(--accent-pink);
+    }
+
+    .btn-danger:hover {
+      background: rgba(255, 0, 127, 0.3);
+      box-shadow: 0 0 15px rgba(255, 0, 127, 0.4);
+    }
+
+    select.preset-select {
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text-main);
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      outline: none;
+      cursor: pointer;
+    }
+
+    select.preset-select option {
+      background: #0f172a;
+      color: var(--text-main);
+    }
+
+    /* Side Panels */
+    .panel {
+      position: absolute;
+      top: 86px;
+      z-index: 10;
+      background: var(--panel-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      padding: 16px;
+      width: 320px;
+      max-height: calc(100vh - 110px);
+      overflow-y: auto;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .panel::-webkit-scrollbar {
+      width: 6px;
+    }
+    .panel::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 3px;
+    }
+
+    #left-panel {
+      left: 20px;
+    }
+
+    #right-panel {
+      right: 20px;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .panel-title {
+      font-family: var(--font-title);
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Section Groups */
+    .section-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin: 14px 0 8px 0;
+    }
+
+    .control-group {
+      margin-bottom: 12px;
+    }
+
+    .control-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .control-label span.val {
+      font-family: var(--font-code);
+      color: var(--text-main);
+      font-weight: 500;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 5px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.15);
+      outline: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      box-shadow: 0 0 10px var(--accent-cyan);
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 0;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 38px;
+      height: 20px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider-round {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(255, 255, 255, 0.15);
+      transition: .3s;
+      border-radius: 20px;
+    }
+
+    .slider-round:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider-round {
+      background-color: var(--accent-cyan);
+    }
+
+    input:checked + .slider-round:before {
+      transform: translateX(18px);
+    }
+
+    /* Live Telemetry Cards */
+    .telemetry-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .telemetry-card {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 6px 8px;
+      text-align: center;
+    }
+
+    .telemetry-card .lbl {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .telemetry-card .val {
+      font-family: var(--font-code);
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--accent-cyan);
+      margin-top: 2px;
+    }
+
+    /* Chart Canvas Container */
+    .chart-container {
+      width: 100%;
+      height: 120px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      margin-top: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #energy-chart {
+      width: 100%;
+      height: 100%;
+    }
+
+    .chart-legend {
+      position: absolute;
+      top: 4px;
+      right: 8px;
+      display: flex;
+      gap: 8px;
+      font-size: 0.65rem;
+      font-weight: 600;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    /* Collapsible Panel Toggle Buttons for Mobile/Compact */
+    .panel-toggle-btn {
+      position: absolute;
+      top: 86px;
+      z-index: 11;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      color: var(--text-main);
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+    }
+    
+    #toggle-left-btn { left: 20px; display: none; }
+    #toggle-right-btn { right: 20px; display: none; }
+
+    @media (max-width: 900px) {
+      .panel {
+        width: 280px;
+      }
+      #left-panel.collapsed {
+        transform: translateX(-320px);
+      }
+      #right-panel.collapsed {
+        transform: translateX(320px);
+      }
+      #toggle-left-btn, #toggle-right-btn {
+        display: flex;
+      }
+    }
+
+    /* Instruction overlay toast */
+    .toast-info {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      background: var(--panel-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--panel-border);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      pointer-events: none;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    }
+
+    .toast-info i {
+      color: var(--accent-cyan);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Dynamic Stars/Particles canvas -->
+  <canvas id="bg-canvas"></canvas>
+  
+  <!-- Physics Simulation Canvas -->
+  <canvas id="sim-canvas"></canvas>
+
+  <!-- Header Controls -->
+  <header>
+    <div class="title-box">
+      <h1><i data-lucide="orbit"></i> Pêndulo Triplo</h1>
+      <p>Simulação em Tempo Real &bull; Integração RK4 &bull; Teoria do Caos</p>
+    </div>
+
+    <div class="top-controls">
+      <select id="preset-select" class="preset-select">
+        <option value="chaos">🌀 Caos Extremo</option>
+        <option value="butterfly">🦋 Efeito Borboleta (Multi-Pêndulo)</option>
+        <option value="flip">🔄 Cambalhota Completa (Flip)</option>
+        <option value="harmony">🎵 Oscilações Suaves</option>
+        <option value="heavy">⚖️ Massa Desigual (m1 ≫ m3)</option>
+        <option value="microgravity">🌌 Microgravidade</option>
+      </select>
+
+      <button id="btn-play" class="btn btn-primary">
+        <i data-lucide="pause" id="play-icon"></i> <span id="play-text">Pausar</span>
+      </button>
+
+      <button id="btn-step" class="btn">
+        <i data-lucide="step-forward"></i> Passo
+      </button>
+
+      <button id="btn-reset" class="btn">
+        <i data-lucide="rotate-ccw"></i> Reiniciar
+      </button>
+
+      <button id="btn-clear" class="btn btn-danger">
+        <i data-lucide="trash-2"></i> Rastros
+      </button>
+    </div>
+  </header>
+
+  <!-- Toggle Buttons for panels on smaller screens -->
+  <button id="toggle-left-btn" class="panel-toggle-btn"><i data-lucide="sliders"></i></button>
+  <button id="toggle-right-btn" class="panel-toggle-btn"><i data-lucide="eye"></i></button>
+
+  <!-- Left Panel: Physics Parameters -->
+  <div id="left-panel" class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><i data-lucide="sliders"></i> Parâmetros Físicos</div>
+    </div>
+
+    <div class="section-title">Comprimento das Hastes (m)</div>
+    <div class="control-group">
+      <div class="control-label">Haste 1 (L1) <span class="val" id="val-L1">1.00 m</span></div>
+      <input type="range" id="slider-L1" min="0.3" max="2.0" step="0.05" value="1.0">
+    </div>
+    <div class="control-group">
+      <div class="control-label">Haste 2 (L2) <span class="val" id="val-L2">1.00 m</span></div>
+      <input type="range" id="slider-L2" min="0.3" max="2.0" step="0.05" value="1.0">
+    </div>
+    <div class="control-group">
+      <div class="control-label">Haste 3 (L3) <span class="val" id="val-L3">1.00 m</span></div>
+      <input type="range" id="slider-L3" min="0.3" max="2.0" step="0.05" value="1.0">
+    </div>
+
+    <div class="section-title">Massas dos Pesos (kg)</div>
+    <div class="control-group">
+      <div class="control-label">Massa 1 (m1) <span class="val" id="val-m1">1.00 kg</span></div>
+      <input type="range" id="slider-m1" min="0.1" max="5.0" step="0.1" value="1.0">
+    </div>
+    <div class="control-group">
+      <div class="control-label">Massa 2 (m2) <span class="val" id="val-m2">1.00 kg</span></div>
+      <input type="range" id="slider-m2" min="0.1" max="5.0" step="0.1" value="1.0">
+    </div>
+    <div class="control-group">
+      <div class="control-label">Massa 3 (m3) <span class="val" id="val-m3">1.00 kg</span></div>
+      <input type="range" id="slider-m3" min="0.1" max="5.0" step="0.1" value="1.0">
+    </div>
+
+    <div class="section-title">Ângulos Iniciais (graus)</div>
+    <div class="control-group">
+      <div class="control-label">Ângulo θ1 <span class="val" id="val-th1">90°</span></div>
+      <input type="range" id="slider-th1" min="-180" max="180" step="1" value="90">
+    </div>
+    <div class="control-group">
+      <div class="control-label">Ângulo θ2 <span class="val" id="val-th2">90°</span></div>
+      <input type="range" id="slider-th2" min="-180" max="180" step="1" value="90">
+    </div>
+    <div class="control-group">
+      <div class="control-label">Ângulo θ3 <span class="val" id="val-th3">90°</span></div>
+      <input type="range" id="slider-th3" min="-180" max="180" step="1" value="90">
+    </div>
+
+    <div class="section-title">Constantes Ambientais</div>
+    <div class="control-group">
+      <div class="control-label">Gravidade (g) <span class="val" id="val-g">9.81 m/s²</span></div>
+      <input type="range" id="slider-g" min="0.0" max="25.0" step="0.1" value="9.81">
+    </div>
+    <div class="control-group">
+      <div class="control-label">Amortecimento / Fricção <span class="val" id="val-damp">0.000</span></div>
+      <input type="range" id="slider-damp" min="0.0" max="0.05" step="0.001" value="0.0">
+    </div>
+    <div class="control-group">
+      <div class="control-label">Velocidade da Simulação <span class="val" id="val-speed">1.0x</span></div>
+      <input type="range" id="slider-speed" min="0.1" max="3.0" step="0.1" value="1.0">
+    </div>
+  </div>
+
+  <!-- Right Panel: Visual Options & Telemetry -->
+  <div id="right-panel" class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><i data-lucide="eye"></i> Exibição &amp; Análise</div>
+    </div>
+
+    <div class="section-title">Modo Caos Multi-Pêndulo</div>
+    <div class="control-group">
+      <div class="control-label">Pêndulos Simultâneos <span class="val" id="val-p-count">1</span></div>
+      <input type="range" id="slider-p-count" min="1" max="5" step="1" value="1">
+    </div>
+    <div class="control-group">
+      <div class="control-label">Diferença Inicial (Δθ) <span class="val" id="val-p-offset">0.001 rad</span></div>
+      <input type="range" id="slider-p-offset" min="0.0001" max="0.01" step="0.0005" value="0.001">
+    </div>
+
+    <div class="section-title">Visualização de Rastros</div>
+    <div class="control-group">
+      <div class="control-label">Comprimento do Rastro <span class="val" id="val-trail-len">2000</span></div>
+      <input type="range" id="slider-trail-len" min="100" max="10000" step="100" value="2000">
+    </div>
+    
+    <div class="toggle-row">
+      <span>Modo Arco-Íris (Velocidade)</span>
+      <label class="switch">
+        <input type="checkbox" id="check-rainbow" checked>
+        <span class="slider-round"></span>
+      </label>
+    </div>
+
+    <div class="toggle-row">
+      <span>Exibir Vetores de Velocidade</span>
+      <label class="switch">
+        <input type="checkbox" id="check-vectors">
+        <span class="slider-round"></span>
+      </label>
+    </div>
+
+    <div class="toggle-row">
+      <span>Glow Neon nas Hastes</span>
+      <label class="switch">
+        <input type="checkbox" id="check-glow" checked>
+        <span class="slider-round"></span>
+      </label>
+    </div>
+
+    <div class="section-title">Telemetria Instantânea</div>
+    <div class="telemetry-grid">
+      <div class="telemetry-card">
+        <div class="lbl">θ1</div>
+        <div class="val" id="tel-th1">0.0°</div>
+      </div>
+      <div class="telemetry-card">
+        <div class="lbl">θ2</div>
+        <div class="val" id="tel-th2">0.0°</div>
+      </div>
+      <div class="telemetry-card">
+        <div class="lbl">θ3</div>
+        <div class="val" id="tel-th3">0.0°</div>
+      </div>
+      <div class="telemetry-card">
+        <div class="lbl">ω1 (rad/s)</div>
+        <div class="val" id="tel-w1">0.0</div>
+      </div>
+      <div class="telemetry-card">
+        <div class="lbl">ω2 (rad/s)</div>
+        <div class="val" id="tel-w2">0.0</div>
+      </div>
+      <div class="telemetry-card">
+        <div class="lbl">ω3 (rad/s)</div>
+        <div class="val" id="tel-w3">0.0</div>
+      </div>
+    </div>
+
+    <div class="section-title">Conservação de Energia (J)</div>
+    <div class="chart-container">
+      <div class="chart-legend">
+        <div class="legend-item"><div class="dot" style="background: var(--accent-cyan)"></div> Cinética</div>
+        <div class="legend-item"><div class="dot" style="background: var(--accent-pink)"></div> Potencial</div>
+        <div class="legend-item"><div class="dot" style="background: var(--accent-gold)"></div> Total</div>
+      </div>
+      <canvas id="energy-chart"></canvas>
+    </div>
+  </div>
+
+  <!-- Footer Info Toast -->
+  <div class="toast-info">
+    <i data-lucide="mouse-pointer"></i> Clique e arraste qualquer uma das massas para reposicionar em tempo real!
+  </div>
+
+  <script>
+    // --- LUCIDE ICONS ---
+    lucide.createIcons();
+
+    // --- CANVAS SETUP ---
+    const bgCanvas = document.getElementById('bg-canvas');
+    const bgCtx = bgCanvas.getContext('2d');
+    const simCanvas = document.getElementById('sim-canvas');
+    const simCtx = simCanvas.getContext('2d');
+    const chartCanvas = document.getElementById('energy-chart');
+    const chartCtx = chartCanvas.getContext('2d');
+
+    let width = 0, height = 0, dpr = window.devicePixelRatio || 1;
+
+    function resizeCanvas() {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      
+      bgCanvas.width = width * dpr;
+      bgCanvas.height = height * dpr;
+      bgCanvas.style.width = width + 'px';
+      bgCanvas.style.height = height + 'px';
+      bgCtx.scale(dpr, dpr);
+
+      simCanvas.width = width * dpr;
+      simCanvas.height = height * dpr;
+      simCanvas.style.width = width + 'px';
+      simCanvas.style.height = height + 'px';
+      simCtx.scale(dpr, dpr);
+
+      const chartRect = chartCanvas.parentElement.getBoundingClientRect();
+      chartCanvas.width = chartRect.width * dpr;
+      chartCanvas.height = chartRect.height * dpr;
+      chartCtx.scale(dpr, dpr);
+
+      drawBackgroundStars();
+    }
+
+    // Background Starfield Grid
+    const stars = [];
+    for (let i = 0; i < 120; i++) {
+      stars.push({
+        x: Math.random(),
+        y: Math.random(),
+        size: Math.random() * 1.5 + 0.5,
+        alpha: Math.random() * 0.5 + 0.2
+      });
+    }
+
+    function drawBackgroundStars() {
+      bgCtx.clearRect(0, 0, width, height);
+      
+      // Radial glow gradient at center
+      const grad = bgCtx.createRadialGradient(width / 2, height / 2, 50, width / 2, height / 2, Math.max(width, height) * 0.7);
+      grad.addColorStop(0, 'rgba(15, 23, 42, 0.8)');
+      grad.addColorStop(1, 'rgba(8, 11, 18, 1)');
+      bgCtx.fillStyle = grad;
+      bgCtx.fillRect(0, 0, width, height);
+
+      // Subtle grid
+      bgCtx.strokeStyle = 'rgba(255, 255, 255, 0.02)';
+      bgCtx.lineWidth = 1;
+      const gridSize = 40;
+      for (let x = 0; x < width; x += gridSize) {
+        bgCtx.beginPath();
+        bgCtx.moveTo(x, 0);
+        bgCtx.lineTo(x, height);
+        bgCtx.stroke();
+      }
+      for (let y = 0; y < height; y += gridSize) {
+        bgCtx.beginPath();
+        bgCtx.moveTo(0, y);
+        bgCtx.lineTo(width, y);
+        bgCtx.stroke();
+      }
+
+      // Draw faint stars
+      stars.forEach(s => {
+        bgCtx.fillStyle = `rgba(255, 255, 255, ${s.alpha})`;
+        bgCtx.beginPath();
+        bgCtx.arc(s.x * width, s.y * height, s.size, 0, Math.PI * 2);
+        bgCtx.fill();
+      });
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+
+    // --- PHYSICS PARAMETERS & GLOBAL STATE ---
+    const params = {
+      L1: 1.0, L2: 1.0, L3: 1.0,
+      m1: 1.0, m2: 1.0, m3: 1.0,
+      th1: Math.PI / 2, th2: Math.PI / 2, th3: Math.PI / 2,
+      w1: 0.0, w2: 0.0, w3: 0.0,
+      g: 9.81,
+      damp: 0.0,
+      speed: 1.0,
+      pCount: 1,
+      pOffset: 0.001,
+      trailLen: 2000,
+      rainbow: true,
+      vectors: false,
+      glow: true
+    };
+
+    let isPlaying = true;
+    let pendulums = [];
+    let scale = 140; // Pixels per meter
+    let originX = width / 2;
+    let originY = height / 3;
+
+    // Energy history for chart
+    const maxChartPoints = 150;
+    let energyHistory = [];
+
+    // Distinct neon colors for multi-pendulum chaos mode
+    const pendulumColors = [
+      { main: '#00f0ff', trail: 'rgba(0, 240, 255, ' },  // Cyan
+      { main: '#ff007f', trail: 'rgba(255, 0, 127, ' },  // Magenta/Pink
+      { main: '#ffb700', trail: 'rgba(255, 183, 0, ' },  // Gold
+      { main: '#10b981', trail: 'rgba(16, 185, 129, ' }, // Emerald
+      { main: '#a855f7', trail: 'rgba(168, 85, 247, ' }  // Purple
+    ];
+
+    // Single Pendulum Object Class
+    class TriplePendulum {
+      constructor(th1, th2, th3, colorIndex = 0) {
+        // State vector: [th1, th2, th3, w1, w2, w3]
+        this.y = [th1, th2, th3, 0.0, 0.0, 0.0];
+        this.trail = [];
+        this.colorIndex = colorIndex;
+      }
+
+      // Compute accelerations using exact 3x3 Matrix Equation M * alpha = B
+      getDerivatives(yState) {
+        const [th1, th2, th3, w1, w2, w3] = yState;
+        const { L1, L2, L3, m1, m2, m3, g, damp } = params;
+
+        const d12 = th1 - th2;
+        const d13 = th1 - th3;
+        const d23 = th2 - th3;
+
+        const mu123 = m1 + m2 + m3;
+        const mu23 = m2 + m3;
+        const mu3 = m3;
+
+        // Mass Matrix M elements
+        const M11 = mu123 * L1 * L1;
+        const M12 = mu23 * L1 * L2 * Math.cos(d12);
+        const M13 = mu3 * L1 * L3 * Math.cos(d13);
+
+        const M21 = M12;
+        const M22 = mu23 * L2 * L2;
+        const M23 = mu3 * L2 * L3 * Math.cos(d23);
+
+        const M31 = M13;
+        const M32 = M23;
+        const M33 = mu3 * L3 * L3;
+
+        // Right Hand Side vector B elements
+        const B1 = - mu23 * L1 * L2 * w2 * w2 * Math.sin(d12)
+                   - mu3 * L1 * L3 * w3 * w3 * Math.sin(d13)
+                   - mu123 * g * L1 * Math.sin(th1)
+                   - damp * w1;
+
+        const B2 =   mu23 * L1 * L2 * w1 * w1 * Math.sin(d12)
+                   - mu3 * L2 * L3 * w3 * w3 * Math.sin(d23)
+                   - mu23 * g * L2 * Math.sin(th2)
+                   - damp * w2;
+
+        const B3 =   mu3 * L1 * L3 * w1 * w1 * Math.sin(d13)
+                   + mu3 * L2 * L3 * w2 * w2 * Math.sin(d23)
+                   - mu3 * g * L3 * Math.sin(th3)
+                   - damp * w3;
+
+        // Solve 3x3 system via Cramer's Rule
+        const detM = M11 * (M22 * M33 - M23 * M32)
+                   - M12 * (M21 * M33 - M23 * M31)
+                   + M13 * (M21 * M32 - M22 * M31);
+
+        if (Math.abs(detM) < 1e-12) {
+          return [w1, w2, w3, 0, 0, 0];
+        }
+
+        const det1 = B1 * (M22 * M33 - M23 * M32)
+                   - M12 * (B2 * M33 - M23 * B3)
+                   + M13 * (B2 * M32 - M22 * B3);
+
+        const det2 = M11 * (B2 * M33 - M23 * B3)
+                   - B1 * (M21 * M33 - M23 * M31)
+                   + M13 * (M21 * B3 - B2 * M31);
+
+        const det3 = M11 * (M22 * B3 - B2 * M32)
+                   - M12 * (M21 * B3 - B2 * M31)
+                   + B1 * (M21 * M32 - M22 * M31);
+
+        const alpha1 = det1 / detM;
+        const alpha2 = det2 / detM;
+        const alpha3 = det3 / detM;
+
+        return [w1, w2, w3, alpha1, alpha2, alpha3];
+      }
+
+      // Runge-Kutta 4th Order Integrator Step
+      rk4Step(dt) {
+        const k1 = this.getDerivatives(this.y);
+
+        const y2 = this.y.map((val, i) => val + 0.5 * dt * k1[i]);
+        const k2 = this.getDerivatives(y2);
+
+        const y3 = this.y.map((val, i) => val + 0.5 * dt * k2[i]);
+        const k3 = this.getDerivatives(y3);
+
+        const y4 = this.y.map((val, i) => val + dt * k3[i]);
+        const k4 = this.getDerivatives(y4);
+
+        for (let i = 0; i < 6; i++) {
+          this.y[i] += (dt / 6.0) * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]);
+        }
+
+        // Keep angles normalized between -PI and PI for telemetry display
+        for (let i = 0; i < 3; i++) {
+          while (this.y[i] > Math.PI) this.y[i] -= 2 * Math.PI;
+          while (this.y[i] < -Math.PI) this.y[i] += 2 * Math.PI;
+        }
+
+        // Store Bob 3 position in trail
+        const pos = this.getPositions();
+        this.trail.push({ x: pos.x3, y: pos.y3, vx: pos.vx3, vy: pos.vy3 });
+        if (this.trail.length > params.trailLen) {
+          this.trail.shift();
+        }
+      }
+
+      // Calculate Cartesian coordinates of all 3 bobs
+      getPositions() {
+        const [th1, th2, th3, w1, w2, w3] = this.y;
+        const { L1, L2, L3 } = params;
+
+        const x1 = L1 * Math.sin(th1);
+        const y1 = L1 * Math.cos(th1);
+
+        const x2 = x1 + L2 * Math.sin(th2);
+        const y2 = y1 + L2 * Math.cos(th2);
+
+        const x3 = x2 + L3 * Math.sin(th3);
+        const y3 = y2 + L3 * Math.cos(th3);
+
+        // Velocities
+        const vx1 = L1 * w1 * Math.cos(th1);
+        const vy1 = -L1 * w1 * Math.sin(th1);
+
+        const vx2 = vx1 + L2 * w2 * Math.cos(th2);
+        const vy2 = vy1 - L2 * w2 * Math.sin(th2);
+
+        const vx3 = vx2 + L3 * w3 * Math.cos(th3);
+        const vy3 = vy1 - L3 * w3 * Math.sin(th3);
+
+        return { x1, y1, x2, y2, x3, y3, vx1, vy1, vx2, vy2, vx3, vy3 };
+      }
+
+      // Calculate Kinetic, Potential, and Total Energy
+      getEnergy() {
+        const [th1, th2, th3, w1, w2, w3] = this.y;
+        const { L1, L2, L3, m1, m2, m3, g } = params;
+
+        const pos = this.getPositions();
+
+        // Kinetic Energy T
+        const T1 = 0.5 * m1 * (pos.vx1 * pos.vx1 + pos.vy1 * pos.vy1);
+        const T2 = 0.5 * m2 * (pos.vx2 * pos.vx2 + pos.vy2 * pos.vy2);
+        const T3 = 0.5 * m3 * (pos.vx3 * pos.vx3 + pos.vy3 * pos.vy3);
+        const T = T1 + T2 + T3;
+
+        // Potential Energy V (Datum y=0 at pivot, positive downwards)
+        const V = - (m1 + m2 + m3) * g * L1 * Math.cos(th1)
+                  - (m2 + m3) * g * L2 * Math.cos(th2)
+                  - m3 * g * L3 * Math.cos(th3);
+
+        return { T, V, E: T + V };
+      }
+    }
+
+    // Initialize Pendulums array
+    function initPendulums() {
+      pendulums = [];
+      const baseTh1 = params.th1;
+      const baseTh2 = params.th2;
+      const baseTh3 = params.th3;
+
+      for (let i = 0; i < params.pCount; i++) {
+        const offset = i * params.pOffset;
+        const p = new TriplePendulum(baseTh1 + offset, baseTh2 + offset, baseTh3 + offset, i % pendulumColors.length);
+        pendulums.push(p);
+      }
+      energyHistory = [];
+    }
+
+    // --- INTERACTIVE DRAGGING STATE ---
+    let draggedBob = null; // { pendulumIndex, bobNumber: 1|2|3 }
+    let isDragging = false;
+
+    simCanvas.addEventListener('mousedown', onPointerDown);
+    simCanvas.addEventListener('mousemove', onPointerMove);
+    simCanvas.addEventListener('mouseup', onPointerUp);
+    simCanvas.addEventListener('touchstart', (e) => onPointerDown(e.touches[0]));
+    simCanvas.addEventListener('touchmove', (e) => onPointerMove(e.touches[0]));
+    simCanvas.addEventListener('touchend', onPointerUp);
+
+    function onPointerDown(e) {
+      const rect = simCanvas.getBoundingClientRect();
+      const mx = (e.clientX - rect.left) - originX;
+      const my = (e.clientY - rect.top) - originY;
+
+      // Find if clicking near any bob of pendulum 0
+      if (pendulums.length === 0) return;
+      const p = pendulums[0];
+      const pos = p.getPositions();
+
+      const bobs = [
+        { num: 1, x: pos.x1 * scale, y: pos.y1 * scale },
+        { num: 2, x: pos.x2 * scale, y: pos.y2 * scale },
+        { num: 3, x: pos.x3 * scale, y: pos.y3 * scale }
+      ];
+
+      for (let b of bobs) {
+        const dist = Math.hypot(mx - b.x, my - b.y);
+        if (dist < 25) {
+          draggedBob = b.num;
+          isDragging = true;
+          p.y[3] = p.y[4] = p.y[5] = 0; // Zero velocities when dragged
+          break;
+        }
+      }
+    }
+
+    function onPointerMove(e) {
+      if (!isDragging || !draggedBob || pendulums.length === 0) return;
+      const rect = simCanvas.getBoundingClientRect();
+      const mx = (e.clientX - rect.left - originX) / scale;
+      const my = (e.clientY - rect.top - originY) / scale;
+
+      const p = pendulums[0];
+      const { L1, L2, L3 } = params;
+
+      if (draggedBob === 1) {
+        p.y[0] = Math.atan2(mx, my);
+      } else if (draggedBob === 2) {
+        // Position of Bob 1
+        const x1 = L1 * Math.sin(p.y[0]);
+        const y1 = L1 * Math.cos(p.y[0]);
+        p.y[1] = Math.atan2(mx - x1, my - y1);
+      } else if (draggedBob === 3) {
+        // Position of Bob 2
+        const pos = p.getPositions();
+        p.y[2] = Math.atan2(mx - pos.x2, my - pos.y2);
+      }
+
+      // Sync sliders
+      document.getElementById('slider-th1').value = Math.round(p.y[0] * 180 / Math.PI);
+      document.getElementById('slider-th2').value = Math.round(p.y[1] * 180 / Math.PI);
+      document.getElementById('slider-th3').value = Math.round(p.y[2] * 180 / Math.PI);
+      updateSliderLabels();
+
+      p.trail = [];
+    }
+
+    function onPointerUp() {
+      isDragging = false;
+      draggedBob = null;
+    }
+
+    // --- MAIN SIMULATION LOOP ---
+    let lastTime = performance.now();
+
+    function animate(currentTime) {
+      const dtFrame = (currentTime - lastTime) / 1000;
+      lastTime = currentTime;
+
+      originX = width / 2;
+      originY = height / 3;
+
+      if (isPlaying && !isDragging) {
+        const subSteps = 15; // High RK4 precision substeps
+        const dt = (0.016 * params.speed) / subSteps;
+
+        for (let step = 0; step < subSteps; step++) {
+          pendulums.forEach(p => p.rk4Step(dt));
+        }
+
+        // Record telemetry & energy of primary pendulum
+        if (pendulums.length > 0) {
+          const energy = pendulums[0].getEnergy();
+          energyHistory.push(energy);
+          if (energyHistory.length > maxChartPoints) energyHistory.shift();
+        }
+      }
+
+      // Render Scene
+      renderScene();
+      renderEnergyChart();
+      updateTelemetryUI();
+
+      requestAnimationFrame(animate);
+    }
+
+    // Render Canvas Simulation
+    function renderScene() {
+      simCtx.clearRect(0, 0, width, height);
+
+      simCtx.save();
+      simCtx.translate(originX, originY);
+
+      // Draw Pivot Anchor Base
+      simCtx.fillStyle = '#f8fafc';
+      simCtx.beginPath();
+      simCtx.arc(0, 0, 8, 0, Math.PI * 2);
+      simCtx.fill();
+      simCtx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      simCtx.lineWidth = 2;
+      simCtx.stroke();
+
+      // Render Trails first (behind pendulums)
+      pendulums.forEach((p, idx) => {
+        if (p.trail.length < 2) return;
+
+        simCtx.lineWidth = pendulums.length > 1 ? 1.5 : 2.5;
+
+        for (let i = 1; i < p.trail.length; i++) {
+          const p1 = p.trail[i - 1];
+          const p2 = p.trail[i];
+          const alpha = (i / p.trail.length) * 0.85;
+
+          simCtx.beginPath();
+          simCtx.moveTo(p1.x * scale, p1.y * scale);
+          simCtx.lineTo(p2.x * scale, p2.y * scale);
+
+          if (params.rainbow && pendulums.length === 1) {
+            const speed = Math.hypot(p2.vx, p2.vy);
+            const hue = Math.min(280, speed * 25);
+            simCtx.strokeStyle = `hsla(${hue}, 100%, 60%, ${alpha})`;
+          } else {
+            const palette = pendulumColors[p.colorIndex];
+            simCtx.strokeStyle = `${palette.trail}${alpha})`;
+          }
+          simCtx.stroke();
+        }
+      });
+
+      // Render Pendulum Arms & Bobs
+      pendulums.forEach((p, idx) => {
+        const pos = p.getPositions();
+        const palette = pendulumColors[p.colorIndex];
+
+        const x0 = 0, y0 = 0;
+        const x1 = pos.x1 * scale, y1 = pos.y1 * scale;
+        const x2 = pos.x2 * scale, y2 = pos.y2 * scale;
+        const x3 = pos.x3 * scale, y3 = pos.y3 * scale;
+
+        // Draw Rods
+        if (params.glow) {
+          simCtx.shadowBlur = 12;
+          simCtx.shadowColor = palette.main;
+        }
+
+        simCtx.strokeStyle = palette.main;
+        simCtx.lineWidth = pendulums.length > 1 ? 2 : 3;
+
+        simCtx.beginPath();
+        simCtx.moveTo(x0, y0);
+        simCtx.lineTo(x1, y1);
+        simCtx.lineTo(x2, y2);
+        simCtx.lineTo(x3, y3);
+        simCtx.stroke();
+
+        simCtx.shadowBlur = 0; // Reset shadow
+
+        // Draw Bobs (Masses)
+        const r1 = 6 + params.m1 * 3;
+        const r2 = 6 + params.m2 * 3;
+        const r3 = 6 + params.m3 * 3;
+
+        // Bob 1
+        drawBob(x1, y1, r1, '#00f0ff');
+        // Bob 2
+        drawBob(x2, y2, r2, '#ff007f');
+        // Bob 3
+        drawBob(x3, y3, r3, palette.main);
+
+        // Draw Velocity Vectors if enabled
+        if (params.vectors) {
+          drawVector(x1, y1, pos.vx1 * 15, pos.vy1 * 15, '#00f0ff');
+          drawVector(x2, y2, pos.vx2 * 15, pos.vy2 * 15, '#ff007f');
+          drawVector(x3, y3, pos.vx3 * 15, pos.vy3 * 15, palette.main);
+        }
+      });
+
+      simCtx.restore();
+    }
+
+    function drawBob(x, y, r, color) {
+      simCtx.save();
+      simCtx.beginPath();
+      simCtx.arc(x, y, r, 0, Math.PI * 2);
+      
+      const grad = simCtx.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.1, x, y, r);
+      grad.addColorStop(0, '#ffffff');
+      grad.addColorStop(0.5, color);
+      grad.addColorStop(1, '#000000');
+      
+      simCtx.fillStyle = grad;
+      simCtx.fill();
+      simCtx.strokeStyle = 'rgba(255,255,255,0.6)';
+      simCtx.lineWidth = 1.5;
+      simCtx.stroke();
+      simCtx.restore();
+    }
+
+    function drawVector(x, y, vx, vy, color) {
+      simCtx.save();
+      simCtx.strokeStyle = color;
+      simCtx.fillStyle = color;
+      simCtx.lineWidth = 1.5;
+
+      simCtx.beginPath();
+      simCtx.moveTo(x, y);
+      simCtx.lineTo(x + vx, y + vy);
+      simCtx.stroke();
+
+      // Arrowhead
+      const angle = Math.atan2(vy, vx);
+      const headLen = 6;
+      simCtx.beginPath();
+      simCtx.moveTo(x + vx, y + vy);
+      simCtx.lineTo(x + vx - headLen * Math.cos(angle - Math.PI / 6), y + vy - headLen * Math.sin(angle - Math.PI / 6));
+      simCtx.lineTo(x + vx - headLen * Math.cos(angle + Math.PI / 6), y + vy - headLen * Math.sin(angle + Math.PI / 6));
+      simCtx.fill();
+
+      simCtx.restore();
+    }
+
+    // Energy Chart Rendering
+    function renderEnergyChart() {
+      const w = chartCanvas.parentElement.clientWidth;
+      const h = chartCanvas.parentElement.clientHeight;
+
+      chartCtx.clearRect(0, 0, w, h);
+
+      if (energyHistory.length < 2) return;
+
+      // Find min & max total energy for scaling
+      let minE = Infinity, maxE = -Infinity;
+      energyHistory.forEach(e => {
+        minE = Math.min(minE, e.T, e.V, e.E);
+        maxE = Math.max(maxE, e.T, e.V, e.E);
+      });
+
+      const margin = 10;
+      const range = (maxE - minE) || 1;
+
+      function mapY(val) {
+        return h - margin - ((val - minE) / range) * (h - 2 * margin);
+      }
+
+      const stepX = w / (maxChartPoints - 1);
+
+      // Plot Kinetic Energy T (Cyan)
+      plotSeries(energyHistory.map(e => e.T), '#00f0ff', stepX, mapY);
+      // Plot Potential Energy V (Pink)
+      plotSeries(energyHistory.map(e => e.V), '#ff007f', stepX, mapY);
+      // Plot Total Energy E (Gold)
+      plotSeries(energyHistory.map(e => e.E), '#ffb700', stepX, mapY);
+    }
+
+    function plotSeries(data, color, stepX, mapY) {
+      chartCtx.beginPath();
+      chartCtx.strokeStyle = color;
+      chartCtx.lineWidth = 1.5;
+      data.forEach((val, i) => {
+        const x = i * stepX;
+        const y = mapY(val);
+        if (i === 0) chartCtx.moveTo(x, y);
+        else chartCtx.lineTo(x, y);
+      });
+      chartCtx.stroke();
+    }
+
+    // Telemetry UI Text Updates
+    function updateTelemetryUI() {
+      if (pendulums.length === 0) return;
+      const p = pendulums[0];
+      const rad2deg = 180 / Math.PI;
+
+      document.getElementById('tel-th1').innerText = (p.y[0] * rad2deg).toFixed(1) + '°';
+      document.getElementById('tel-th2').innerText = (p.y[1] * rad2deg).toFixed(1) + '°';
+      document.getElementById('tel-th3').innerText = (p.y[2] * rad2deg).toFixed(1) + '°';
+
+      document.getElementById('tel-w1').innerText = p.y[3].toFixed(2);
+      document.getElementById('tel-w2').innerText = p.y[4].toFixed(2);
+      document.getElementById('tel-w3').innerText = p.y[5].toFixed(2);
+    }
+
+    // Update Slider Value Labels
+    function updateSliderLabels() {
+      document.getElementById('val-L1').innerText = parseFloat(document.getElementById('slider-L1').value).toFixed(2) + ' m';
+      document.getElementById('val-L2').innerText = parseFloat(document.getElementById('slider-L2').value).toFixed(2) + ' m';
+      document.getElementById('val-L3').innerText = parseFloat(document.getElementById('slider-L3').value).toFixed(2) + ' m';
+
+      document.getElementById('val-m1').innerText = parseFloat(document.getElementById('slider-m1').value).toFixed(1) + ' kg';
+      document.getElementById('val-m2').innerText = parseFloat(document.getElementById('slider-m2').value).toFixed(1) + ' kg';
+      document.getElementById('val-m3').innerText = parseFloat(document.getElementById('slider-m3').value).toFixed(1) + ' kg';
+
+      document.getElementById('val-th1').innerText = document.getElementById('slider-th1').value + '°';
+      document.getElementById('val-th2').innerText = document.getElementById('slider-th2').value + '°';
+      document.getElementById('val-th3').innerText = document.getElementById('slider-th3').value + '°';
+
+      document.getElementById('val-g').innerText = parseFloat(document.getElementById('slider-g').value).toFixed(1) + ' m/s²';
+      document.getElementById('val-damp').innerText = parseFloat(document.getElementById('slider-damp').value).toFixed(3);
+      document.getElementById('val-speed').innerText = parseFloat(document.getElementById('slider-speed').value).toFixed(1) + 'x';
+
+      document.getElementById('val-p-count').innerText = document.getElementById('slider-p-count').value;
+      document.getElementById('val-p-offset').innerText = parseFloat(document.getElementById('slider-p-offset').value).toFixed(4) + ' rad';
+      document.getElementById('val-trail-len').innerText = document.getElementById('slider-trail-len').value;
+    }
+
+    // --- EVENT LISTENERS FOR CONTROLS ---
+
+    // Play/Pause Button
+    document.getElementById('btn-play').addEventListener('click', () => {
+      isPlaying = !isPlaying;
+      document.getElementById('play-text').innerText = isPlaying ? 'Pausar' : 'Iniciar';
+      document.getElementById('play-icon').setAttribute('data-lucide', isPlaying ? 'pause' : 'play');
+      lucide.createIcons();
+    });
+
+    // Step Button
+    document.getElementById('btn-step').addEventListener('click', () => {
+      isPlaying = false;
+      document.getElementById('play-text').innerText = 'Iniciar';
+      document.getElementById('play-icon').setAttribute('data-lucide', 'play');
+      lucide.createIcons();
+
+      pendulums.forEach(p => p.rk4Step(0.01));
+      renderScene();
+    });
+
+    // Reset Button
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      initPendulums();
+    });
+
+    // Clear Trails Button
+    document.getElementById('btn-clear').addEventListener('click', () => {
+      pendulums.forEach(p => p.trail = []);
+    });
+
+    // Parameter Sliders Listeners
+    ['L1', 'L2', 'L3', 'm1', 'm2', 'm3', 'g', 'damp', 'speed', 'p-count', 'p-offset', 'trail-len'].forEach(id => {
+      document.getElementById(`slider-${id}`).addEventListener('input', (e) => {
+        updateSliderLabels();
+        params.L1 = parseFloat(document.getElementById('slider-L1').value);
+        params.L2 = parseFloat(document.getElementById('slider-L2').value);
+        params.L3 = parseFloat(document.getElementById('slider-L3').value);
+        params.m1 = parseFloat(document.getElementById('slider-m1').value);
+        params.m2 = parseFloat(document.getElementById('slider-m2').value);
+        params.m3 = parseFloat(document.getElementById('slider-m3').value);
+        params.g = parseFloat(document.getElementById('slider-g').value);
+        params.damp = parseFloat(document.getElementById('slider-damp').value);
+        params.speed = parseFloat(document.getElementById('slider-speed').value);
+        
+        const newPCount = parseInt(document.getElementById('slider-p-count').value);
+        const newPOffset = parseFloat(document.getElementById('slider-p-offset').value);
+        
+        if (newPCount !== params.pCount || newPOffset !== params.pOffset) {
+          params.pCount = newPCount;
+          params.pOffset = newPOffset;
+          initPendulums();
+        }
+
+        params.trailLen = parseInt(document.getElementById('slider-trail-len').value);
+      });
+    });
+
+    // Angle Sliders (Re-initializes state when changed)
+    ['th1', 'th2', 'th3'].forEach((id, idx) => {
+      document.getElementById(`slider-${id}`).addEventListener('input', (e) => {
+        updateSliderLabels();
+        const rad = parseFloat(e.target.value) * Math.PI / 180;
+        params[id] = rad;
+        pendulums.forEach((p, pIdx) => {
+          p.y[idx] = rad + pIdx * params.pOffset;
+          p.y[idx + 3] = 0; // Zero velocity
+          p.trail = [];
+        });
+      });
+    });
+
+    // Toggles
+    document.getElementById('check-rainbow').addEventListener('change', (e) => { params.rainbow = e.target.checked; });
+    document.getElementById('check-vectors').addEventListener('change', (e) => { params.vectors = e.target.checked; });
+    document.getElementById('check-glow').addEventListener('change', (e) => { params.glow = e.target.checked; });
+
+    // Presets Handler
+    document.getElementById('preset-select').addEventListener('change', (e) => {
+      const val = e.target.value;
+      
+      // Default reset
+      params.m1 = params.m2 = params.m3 = 1.0;
+      params.L1 = params.L2 = params.L3 = 1.0;
+      params.g = 9.81;
+      params.damp = 0.0;
+      params.pCount = 1;
+      params.pOffset = 0.001;
+
+      if (val === 'chaos') {
+        params.th1 = Math.PI / 2;
+        params.th2 = Math.PI / 2;
+        params.th3 = Math.PI / 2;
+      } else if (val === 'butterfly') {
+        params.th1 = Math.PI * 0.8;
+        params.th2 = Math.PI * 0.8;
+        params.th3 = Math.PI * 0.8;
+        params.pCount = 3;
+        params.pOffset = 0.0002;
+      } else if (val === 'flip') {
+        params.th1 = Math.PI * 0.99;
+        params.th2 = Math.PI * 0.99;
+        params.th3 = Math.PI * 0.99;
+      } else if (val === 'harmony') {
+        params.th1 = 0.2;
+        params.th2 = 0.15;
+        params.th3 = 0.1;
+      } else if (val === 'heavy') {
+        params.m1 = 4.0;
+        params.m2 = 1.5;
+        params.m3 = 0.2;
+        params.th1 = Math.PI / 2;
+        params.th2 = Math.PI / 2;
+        params.th3 = Math.PI / 2;
+      } else if (val === 'microgravity') {
+        params.g = 0.5;
+        params.th1 = Math.PI / 2;
+        params.th2 = Math.PI / 2;
+        params.th3 = Math.PI / 2;
+      }
+
+      // Sync UI Sliders
+      document.getElementById('slider-L1').value = params.L1;
+      document.getElementById('slider-L2').value = params.L2;
+      document.getElementById('slider-L3').value = params.L3;
+      document.getElementById('slider-m1').value = params.m1;
+      document.getElementById('slider-m2').value = params.m2;
+      document.getElementById('slider-m3').value = params.m3;
+      document.getElementById('slider-th1').value = Math.round(params.th1 * 180 / Math.PI);
+      document.getElementById('slider-th2').value = Math.round(params.th2 * 180 / Math.PI);
+      document.getElementById('slider-th3').value = Math.round(params.th3 * 180 / Math.PI);
+      document.getElementById('slider-g').value = params.g;
+      document.getElementById('slider-damp').value = params.damp;
+      document.getElementById('slider-p-count').value = params.pCount;
+      document.getElementById('slider-p-offset').value = params.pOffset;
+
+      updateSliderLabels();
+      initPendulums();
+    });
+
+    // Panel Toggle Buttons (Mobile / Compact view)
+    const leftPanel = document.getElementById('left-panel');
+    const rightPanel = document.getElementById('right-panel');
+
+    document.getElementById('toggle-left-btn').addEventListener('click', () => {
+      leftPanel.classList.toggle('collapsed');
+    });
+    document.getElementById('toggle-right-btn').addEventListener('click', () => {
+      rightPanel.classList.toggle('collapsed');
+    });
+
+    // --- INITIALIZATION ---
+    resizeCanvas();
+    updateSliderLabels();
+    initPendulums();
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>

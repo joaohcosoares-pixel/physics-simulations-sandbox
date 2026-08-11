@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Solar: Perspectiva Clássica vs Relativística</title>
+    <meta name="description" content="Simulação interativa que compara o Sistema Solar segundo a Mecânica Clássica (Newton) e a Relatividade Geral (Einstein).">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Header Principal -->
+    <header class="app-header">
+        <div class="logo-container">
+            <span class="logo-icon">🌌</span>
+            <div>
+                <h1>Sistema Solar: Newton vs. Einstein</h1>
+                <p class="subtitle">Comparação da Dinâmica Gravitacional Clássica e da Relatividade Geral no Espaço-Tempo</p>
+            </div>
+        </div>
+        <div class="header-controls">
+            <div class="mode-selector">
+                <button class="mode-btn active" data-mode="relativity">
+                    <span class="dot gold"></span> Relatividade Geral
+                </button>
+                <button class="mode-btn" data-mode="classical">
+                    <span class="dot cyan"></span> Mecânica Clássica
+                </button>
+                <button class="mode-btn" data-mode="compare">
+                    <span class="dot split"></span> Comparação Sobreposta
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navegação de Abas de Experimentos -->
+    <nav class="tab-nav">
+        <button class="tab-btn active" data-tab="orbits">
+            🪐 Órbitas & Precessão do Periélio
+        </button>
+        <button class="tab-btn" data-tab="spacetime">
+            🌀 Curvatura do Espaço-Tempo (Malha)
+        </button>
+        <button class="tab-btn" data-tab="light">
+            💡 Deflexão Relativística da Luz
+        </button>
+        <button class="tab-btn" data-tab="clocks">
+            ⏱️ Dilatação Gravitacional do Tempo
+        </button>
+        <button class="tab-btn" data-tab="comparison">
+            📊 Tabela Comparativa Física
+        </button>
+    </nav>
+
+    <!-- Dashboard de Simulação -->
+    <main class="dashboard-container">
+        <!-- ÁREA CANVAS DE SIMULAÇÃO -->
+        <section class="card canvas-card">
+            <div class="card-header">
+                <h2 id="view-title"><span class="icon">🪐</span> Órbitas Planetárias e Precessão Relativística</h2>
+                <div class="view-legend">
+                    <span class="legend-item newton"><span class="color-box"></span> Newton (Clássica)</span>
+                    <span class="legend-item einstein"><span class="color-box"></span> Einstein (Relatividade)</span>
+                </div>
+            </div>
+
+            <div class="canvas-wrapper">
+                <canvas id="simCanvas" width="900" height="560"></canvas>
+                
+                <!-- Overlay de Informações Flutuantes -->
+                <div class="canvas-info-overlay" id="canvas-overlay">
+                    <div class="info-tag" id="precession-tag">
+                        <span>Precessão do Periélio de Mercúrio:</span>
+                        <strong id="precession-val">43.03"/século</strong>
+                    </div>
+                </div>
+
+                <!-- Canvas Controls Overlay -->
+                <div class="canvas-toggles">
+                    <label class="toggle-btn">
+                        <input type="checkbox" id="toggleTrails" checked>
+                        <span class="toggle-slider"></span> Trajetória / Rastro
+                    </label>
+                    <label class="toggle-btn">
+                        <input type="checkbox" id="toggleVectors" checked>
+                        <span class="toggle-slider"></span> Vetores / Geodésicas
+                    </label>
+                    <label class="toggle-btn">
+                        <input type="checkbox" id="toggleGrid" checked>
+                        <span class="toggle-slider"></span> Malha Relativística
+                    </label>
+                </div>
+            </div>
+
+            <!-- Barra de Controles de Física e Velocidade -->
+            <div class="controls-bar">
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>Efeito Relativístico (Fator $c$-scale)</span>
+                        <strong id="rel-scale-val">100x (Exagerado p/ Visualização)</strong>
+                    </div>
+                    <input type="range" id="relScaleSlider" min="1" max="500" value="100" step="1">
+                </div>
+
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>Velocidade da Simulação</span>
+                        <strong id="speed-val">1.0x</strong>
+                    </div>
+                    <input type="range" id="speedSlider" min="0.1" max="5.0" value="1.0" step="0.1">
+                </div>
+
+                <div class="button-group">
+                    <button id="playPauseBtn" class="btn btn-primary">
+                        <span id="playIcon">⏸</span> <span id="playText">Pausar</span>
+                    </button>
+                    <button id="resetBtn" class="btn btn-outline">
+                        🔄 Limpar Trajetórias
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- SIDEBAR DE PAINÉIS E TELEMETRIA -->
+        <aside class="sidebar-container">
+            <!-- Selector de Planetas -->
+            <section class="card planet-card">
+                <div class="card-header">
+                    <h2><span class="icon">🔍</span> Foco do Corpo Celeste</h2>
+                </div>
+                <div class="planet-buttons-grid">
+                    <button class="planet-btn active" data-planet="mercury">
+                        <span class="planet-symbol">☿</span>
+                        <div class="planet-info">
+                            <strong>Mercúrio</strong>
+                            <small>Maior Precessão (43"/século)</small>
+                        </div>
+                    </button>
+                    <button class="planet-btn" data-planet="venus">
+                        <span class="planet-symbol">♀</span>
+                        <div class="planet-info">
+                            <strong>Vênus</strong>
+                            <small>Precessão (8.6"/século)</small>
+                        </div>
+                    </button>
+                    <button class="planet-btn" data-planet="earth">
+                        <span class="planet-symbol">🜨</span>
+                        <div class="planet-info">
+                            <strong>Terra</strong>
+                            <small>Precessão (3.8"/século)</small>
+                        </div>
+                    </button>
+                    <button class="planet-btn" data-planet="all">
+                        <span class="planet-symbol">☀️</span>
+                        <div class="planet-info">
+                            <strong>Todo o Sistema Solar</strong>
+                            <small>Vista Visão Geral</small>
+                        </div>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Painel de Relógios Relativísticos (Dilatação do Tempo) -->
+            <section class="card telemetry-card">
+                <div class="card-header">
+                    <h2><span class="icon">⏱️</span> Dilatação Gravitacional do Tempo</h2>
+                </div>
+                <div class="clock-display-grid">
+                    <div class="clock-item">
+                        <span class="clock-label">Relógio no Espaço Profundo (Solares)</span>
+                        <span class="clock-value" id="clock-deep-space">00:00:00.000</span>
+                    </div>
+                    <div class="clock-item highlight">
+                        <span class="clock-label">Relógio na Superfície do Sol</span>
+                        <span class="clock-value" id="clock-sun">00:00:00.000</span>
+                        <small class="time-diff" id="diff-sun">-66 segundos / ano</small>
+                    </div>
+                    <div class="clock-item">
+                        <span class="clock-label">Relógio em Mercúrio (r = 0.387 UA)</span>
+                        <span class="clock-value" id="clock-mercury">00:00:00.000</span>
+                        <small class="time-diff" id="diff-mercury">-0.025 seg / ano</small>
+                    </div>
+                    <div class="clock-item">
+                        <span class="clock-label">Relógio na Terra (r = 1.000 UA)</span>
+                        <span class="clock-value" id="clock-earth">00:00:00.000</span>
+                        <small class="time-diff" id="diff-earth">-0.010 seg / ano</small>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Painel de Equações Físicas -->
+            <section class="card physics-card">
+                <div class="card-header">
+                    <h2><span class="icon">📐</span> Potencial Efetivo Comparado</h2>
+                </div>
+                <div class="formula-box">
+                    <div class="formula-title">Newton (Clássico):</div>
+                    <div class="formula-code">V_eff(r) = -GM/r + L² / (2r²)</div>
+                    <div class="formula-desc">Potencial estritamente $1/r$. Orbitas são elipses perfeitas e fechadas.</div>
+                </div>
+                <div class="formula-box gold">
+                    <div class="formula-title">Einstein (Schwarzschild / RG):</div>
+                    <div class="formula-code">V_eff(r) = -GM/r + L²/(2r²) - GML² / (c² r³)</div>
+                    <div class="formula-desc">O termo extra $-GML^2 / (c^2 r^3)$ atrai o periélio a cada revolução, causando a precessão!</div>
+                </div>
+            </section>
+        </aside>
+    </main>
+
+    <!-- Seção da Tabela Comparativa Completa -->
+    <section class="comparison-section card" id="comparison-section">
+        <h2><span class="icon">📊</span> Comparativo Detalhado: Física Newtoniana vs. Relatividade Geral</h2>
+        <div class="table-wrapper">
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Propriedade / Fenômeno</th>
+                        <th>Mecânica Clássica (Isaac Newton)</th>
+                        <th>Relatividade Geral (Albert Einstein)</th>
+                        <th>Consequência no Sistema Solar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Conceito de Gravidade</strong></td>
+                        <td>Força atrativa instantânea atuando à distância entre duas massas ($F = G m_1 m_2 / r^2$).</td>
+                        <td>Curvatura da geometria quadridimensional do Espaço-Tempo causada por massa-energia ($G_{\mu\nu} = \frac{8\pi G}{c^4} T_{\mu\nu}$).</td>
+                        <td>Planetas não são "puxados", mas seguem geodésicas (caminhos de menor energia) no espaço curvo.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Geometria da Órbita</strong></td>
+                        <td>Elipse perfeita e estritamente fechada (conservação do Vetor de Runge-Lenz).</td>
+                        <td>Elipse aberta que precessa no espaço a cada órbita (Precessão do Periélio).</td>
+                        <td>A órbita de Mercúrio gira 43 segundos de arco adicionais por século em relação ao Sol.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Trajetória da Luz (Fótons)</strong></td>
+                        <td>Luz não tem massa de repouso, mas se desviada: $\theta = \frac{2GM}{c^2 b}$ ($0.875"$).</td>
+                        <td>A luz segue a curvatura do espaço-tempo: $\theta = \frac{4GM}{c^2 b}$ ($1.75"$ — o dobro!).</td>
+                        <td>Comprovado no Eclipse Solar de 1919 em Sobral (Ceará) e Príncipe por Arthur Eddington.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Natureza do Tempo</strong></td>
+                        <td>Tempo absoluto, uniforme e idêntico em todo o Universo ($t_{Sol} = t_{Terra}$).</td>
+                        <td>Dilatação Gravitacional do Tempo ($d\tau = dt \sqrt{1 - 2GM/rc^2}$). Relógios mais fundos no poço gravitacional andam mais devagar.</td>
+                        <td>Relógios no Sol atrasam ~66s/ano. O GPS na Terra precisa corrigir este efeito diariamente!</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Velocidade de Propagação</strong></td>
+                        <td>Instantânea ($v = \infty$). Se o Sol sumisse, a Terra sairia da órbita na hora.</td>
+                        <td>Limitada à velocidade da luz ($c = 300.000 \text{ km/s}$). Produz Ondas Gravitacionais.</td>
+                        <td>Se o Sol sumisse, a Terra levaria 8 minutos e 20 segundos para sentir a alteração gravitacional.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <footer class="app-footer">
+        <p>Simulador do Sistema Solar Relativístico | Desenvolvido com HTML5 Canvas 2D/3D, JavaScript e Vanilla CSS</p>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>
