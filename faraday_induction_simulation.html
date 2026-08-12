@@ -1,0 +1,1480 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulação Interativa - Indução Eletromagnética de Faraday</title>
+    <style>
+        :root {
+            --bg-dark: #090d16;
+            --panel-bg: rgba(16, 24, 40, 0.85);
+            --panel-border: rgba(255, 255, 255, 0.12);
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --accent-cyan: #00f2fe;
+            --accent-magenta: #ff007f;
+            --accent-amber: #ffb700;
+            --accent-green: #00ff88;
+            --accent-blue: #3b82f6;
+            --north-color: #ef4444;
+            --south-color: #3b82f6;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(9, 13, 22, 0.8) 100%);
+            border-bottom: 1px solid var(--panel-border);
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            z-index: 10;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            color: #000;
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.4);
+        }
+
+        .brand-text h1 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            background: linear-gradient(90deg, #ffffff, #cbd5e1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-text p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .formula-badge {
+            background: rgba(0, 242, 254, 0.08);
+            border: 1px solid rgba(0, 242, 254, 0.3);
+            border-radius: 20px;
+            padding: 6px 16px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.95rem;
+            color: var(--accent-cyan);
+            font-weight: 600;
+            box-shadow: 0 0 10px rgba(0, 242, 254, 0.15);
+        }
+
+        /* App Layout */
+        .app-container {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            grid-template-rows: 1fr auto;
+            flex: 1;
+            gap: 16px;
+            padding: 16px;
+            height: calc(100vh - 65px);
+        }
+
+        /* Canvas Stage */
+        .stage-container {
+            position: relative;
+            background: radial-gradient(circle at 50% 40%, #111827 0%, #070a12 100%);
+            border: 1px solid var(--panel-border);
+            border-radius: 14px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.8);
+        }
+
+        #simCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            cursor: default;
+        }
+
+        /* Overlay Hint */
+        .canvas-overlay-hint {
+            position: absolute;
+            top: 14px;
+            left: 14px;
+            background: rgba(15, 23, 42, 0.75);
+            border: 1px solid var(--panel-border);
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            pointer-events: none;
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hint-pulse {
+            width: 8px;
+            height: 8px;
+            background-color: var(--accent-cyan);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--accent-cyan);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+            100% { opacity: 0.3; transform: scale(0.8); }
+        }
+
+        /* Telemetry Cards Overlay */
+        .telemetry-overlay {
+            position: absolute;
+            bottom: 14px;
+            left: 14px;
+            display: flex;
+            gap: 10px;
+            pointer-events: none;
+            flex-wrap: wrap;
+        }
+
+        .telemetry-card {
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid var(--panel-border);
+            border-radius: 10px;
+            padding: 8px 14px;
+            min-width: 115px;
+            backdrop-filter: blur(6px);
+        }
+
+        .telemetry-card .label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 2px;
+        }
+
+        .telemetry-card .value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .value-cyan { color: var(--accent-cyan); }
+        .value-magenta { color: var(--accent-magenta); }
+        .value-amber { color: var(--accent-amber); }
+        .value-green { color: var(--accent-green); }
+
+        /* Sidebar Control Panel */
+        .sidebar {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 14px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            overflow-y: auto;
+            backdrop-filter: blur(10px);
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+
+        .panel-section {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 10px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .section-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--accent-cyan);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: var(--text-main);
+        }
+
+        .control-value {
+            font-weight: 600;
+            color: var(--accent-cyan);
+            font-family: monospace;
+        }
+
+        /* Custom Range Slider */
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 3px;
+            outline: none;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent-cyan);
+            box-shadow: 0 0 10px var(--accent-cyan);
+            cursor: pointer;
+            transition: transform 0.1s, background-color 0.2s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: #ffffff;
+        }
+
+        /* Toggle Buttons & Selects */
+        .button-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: var(--text-main);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.18);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-active {
+            background: linear-gradient(135deg, rgba(0, 242, 254, 0.25), rgba(59, 130, 246, 0.25));
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+            box-shadow: 0 0 12px rgba(0, 242, 254, 0.2);
+        }
+
+        .btn-magenta {
+            background: rgba(255, 0, 127, 0.15);
+            border-color: rgba(255, 0, 127, 0.4);
+            color: var(--accent-magenta);
+        }
+        .btn-magenta:hover {
+            background: rgba(255, 0, 127, 0.3);
+            box-shadow: 0 0 12px rgba(255, 0, 127, 0.3);
+        }
+
+        /* Oscilloscope Bottom Panel */
+        .oscilloscope-panel {
+            grid-column: 1 / -1;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 14px;
+            padding: 12px 16px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            height: 140px;
+        }
+
+        .scope-header {
+            width: 160px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .scope-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .scope-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 0.75rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 3px;
+            border-radius: 2px;
+        }
+
+        #scopeCanvas {
+            flex: 1;
+            height: 100%;
+            background: #050811;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 1024px) {
+            .app-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto;
+                height: auto;
+            }
+            .stage-container {
+                height: 480px;
+            }
+            .oscilloscope-panel {
+                grid-column: 1;
+                flex-direction: column;
+                height: 200px;
+                align-items: stretch;
+            }
+            .scope-header {
+                width: 100%;
+                flex-direction: row;
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <div class="brand">
+            <div class="brand-icon">Φ</div>
+            <div class="brand-text">
+                <h1>Indução Eletromagnética de Faraday</h1>
+                <p>Simulador de Física Computacional em Tempo Real</p>
+            </div>
+        </div>
+        <div class="formula-badge">
+            &mathcal{E} = -N &middot; (d&Phi;<sub>B</sub> / dt)
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="app-container">
+        
+        <!-- Canvas Stage -->
+        <div class="stage-container">
+            <canvas id="simCanvas"></canvas>
+            
+            <div class="canvas-overlay-hint">
+                <div class="hint-pulse"></div>
+                <span>Clique e arraste o <b>Ímã</b> ou a <b>Espira</b> horizontalmente</span>
+            </div>
+
+            <!-- Telemetry Metrics -->
+            <div class="telemetry-overlay">
+                <div class="telemetry-card">
+                    <div class="label">Fluxo (&Phi;<sub>B</sub>)</div>
+                    <div class="value value-cyan" id="valFlux">0.00 Wb</div>
+                </div>
+                <div class="telemetry-card">
+                    <div class="label">d&Phi;<sub>B</sub> / dt</div>
+                    <div class="value value-amber" id="valDFlux">0.00 Wb/s</div>
+                </div>
+                <div class="telemetry-card">
+                    <div class="label">F.E.M. (&mathcal{E})</div>
+                    <div class="value value-magenta" id="valEMF">0.00 mV</div>
+                </div>
+                <div class="telemetry-card">
+                    <div class="label">Corrente (I)</div>
+                    <div class="value value-green" id="valCurrent">0.00 mA</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Control Panel -->
+        <div class="sidebar">
+            
+            <!-- Magnet Controls -->
+            <div class="panel-section">
+                <div class="section-title">
+                    <span>🧲 Ímã em Barra</span>
+                </div>
+
+                <div class="control-group">
+                    <div class="control-header">
+                        <span>Campo Magnético (B<sub>0</sub>)</span>
+                        <span class="control-value" id="dispB0">1.50 T</span>
+                    </div>
+                    <input type="range" id="inputB0" min="0.2" max="3.0" step="0.05" value="1.5">
+                </div>
+
+                <div class="button-grid">
+                    <button class="btn" id="btnFlipPoles">
+                        🔄 Inverter Polos
+                    </button>
+                    <button class="btn" id="btnResetPos">
+                        📍 Centralizar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Coil Controls -->
+            <div class="panel-section">
+                <div class="section-title">
+                    <span>⭕ Espira Condutora</span>
+                </div>
+
+                <div class="control-group">
+                    <div class="control-header">
+                        <span>Número de Espiras (N)</span>
+                        <span class="control-value" id="dispN">10</span>
+                    </div>
+                    <input type="range" id="inputN" min="1" max="50" step="1" value="10">
+                </div>
+
+                <div class="control-group">
+                    <div class="control-header">
+                        <span>Raio da Espira (R)</span>
+                        <span class="control-value" id="dispR">55 px</span>
+                    </div>
+                    <input type="range" id="inputR" min="30" max="90" step="1" value="55">
+                </div>
+
+                <div class="control-group">
+                    <div class="control-header">
+                        <span>Resistência (R<sub>fio</sub>)</span>
+                        <span class="control-value" id="dispRes">5.0 &Omega;</span>
+                    </div>
+                    <input type="range" id="inputRes" min="1.0" max="20.0" step="0.5" value="5.0">
+                </div>
+            </div>
+
+            <!-- Visual Options -->
+            <div class="panel-section">
+                <div class="section-title">
+                    <span>👁️ Visualização de Campo</span>
+                </div>
+
+                <div class="button-grid">
+                    <button class="btn btn-active" id="btnVisLines">Linhas B</button>
+                    <button class="btn" id="btnVisVectors">Vetores B</button>
+                    <button class="btn" id="btnVisBoth">Ambos</button>
+                    <button class="btn" id="btnVisOff">Ocultar</button>
+                </div>
+            </div>
+
+            <!-- Auto Oscillation -->
+            <div class="panel-section">
+                <div class="section-title">
+                    <span>⚡ Oscilação Harmônica (AC)</span>
+                </div>
+
+                <button class="btn btn-magenta" id="btnAutoOsc">
+                    ▶️ Iniciar Oscilação Automática
+                </button>
+
+                <div class="control-group" id="oscFreqGroup" style="opacity: 0.6;">
+                    <div class="control-header">
+                        <span>Frequência (f)</span>
+                        <span class="control-value" id="dispFreq">1.0 Hz</span>
+                    </div>
+                    <input type="range" id="inputFreq" min="0.2" max="3.0" step="0.1" value="1.0">
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Oscilloscope Panel -->
+        <div class="oscilloscope-panel">
+            <div class="scope-header">
+                <div class="scope-title">
+                    <span>📈 Osciloscópio</span>
+                </div>
+                <div class="scope-legend">
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: var(--accent-cyan);"></div>
+                        <span>Fluxo (&Phi;<sub>B</sub>)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: var(--accent-magenta);"></div>
+                        <span>F.E.M. (&mathcal{E})</span>
+                    </div>
+                </div>
+                <button class="btn" id="btnClearScope" style="padding: 4px 8px; font-size: 0.75rem; margin-top: 4px;">
+                    Limpar
+                </button>
+            </div>
+            <canvas id="scopeCanvas"></canvas>
+        </div>
+
+    </div>
+
+    <!-- Simulation Script -->
+    <script>
+        // Physical & Simulation State
+        const state = {
+            magnet: {
+                x: 240,
+                y: 220,
+                width: 150,
+                height: 50,
+                strength: 1.5,
+                polarity: 1, // 1: N on right, -1: N on left
+                isDragging: false,
+                dragOffsetX: 0,
+                dragOffsetY: 0
+            },
+            coil: {
+                x: 580,
+                y: 220,
+                radius: 55,
+                turns: 10,
+                resistance: 5.0,
+                isDragging: false,
+                dragOffsetX: 0,
+                dragOffsetY: 0
+            },
+            galvanometer: {
+                x: 580,
+                y: 410,
+                radius: 65,
+                angle: 0,
+                velocity: 0
+            },
+            options: {
+                visMode: 'lines', // 'lines', 'vectors', 'both', 'off'
+                autoOscillate: false,
+                oscFrequency: 1.0,
+                oscAmplitude: 140,
+                oscCenter: 260,
+                oscTime: 0
+            },
+            physics: {
+                flux: 0,
+                dFluxDt: 0,
+                dFluxDtFiltered: 0,
+                emf: 0,
+                current: 0,
+                particlePhase: 0
+            },
+            history: [],
+            lastTime: performance.now()
+        };
+
+        // Canvas setup
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        const scopeCanvas = document.getElementById('scopeCanvas');
+        const scopeCtx = scopeCanvas.getContext('2d');
+
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width * window.devicePixelRatio;
+            canvas.height = rect.height * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+            const scopeRect = scopeCanvas.parentElement.getBoundingClientRect();
+            scopeCanvas.width = (scopeRect.width - 180) * window.devicePixelRatio;
+            scopeCanvas.height = scopeRect.height * window.devicePixelRatio;
+            scopeCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
+            
+            // Adjust vertical centering
+            const logicHeight = rect.height;
+            state.magnet.y = logicHeight * 0.42;
+            state.coil.y = logicHeight * 0.42;
+            state.galvanometer.x = state.coil.x;
+            state.galvanometer.y = logicHeight * 0.78;
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        // Magnetic Field Calculation (Dipole Model)
+        function getMagneticField(x, y) {
+            const m = state.magnet;
+            const halfL = m.width * 0.42;
+            
+            // Pole positions
+            const nX = m.x + m.polarity * halfL;
+            const nY = m.y;
+            const sX = m.x - m.polarity * halfL;
+            const sY = m.y;
+            
+            const eps2 = 600; // Softening parameter
+            
+            // North pole (+)
+            const rxN = x - nX;
+            const ryN = y - nY;
+            const r2N = rxN * rxN + ryN * ryN + eps2;
+            const r3N = Math.pow(r2N, 1.5);
+            const BxN = (state.magnet.strength * 70000 * rxN) / r3N;
+            const ByN = (state.magnet.strength * 70000 * ryN) / r3N;
+            
+            // South pole (-)
+            const rxS = x - sX;
+            const ryS = y - sY;
+            const r2S = rxS * rxS + ryS * ryS + eps2;
+            const r3S = Math.pow(r2S, 1.5);
+            const BxS = -(state.magnet.strength * 70000 * rxS) / r3S;
+            const ByS = -(state.magnet.strength * 70000 * ryS) / r3S;
+            
+            return {
+                x: BxN + BxS,
+                y: ByN + ByS,
+                mag: Math.hypot(BxN + BxS, ByN + ByS)
+            };
+        }
+
+        // Calculate Magnetic Flux through Coil
+        function calculateFlux() {
+            const c = state.coil;
+            let totalBx = 0;
+            
+            // Multi-ring polar integration over circular cross-section
+            const numRings = 4;
+            let totalWeight = 0;
+            
+            // Center point
+            const B_center = getMagneticField(c.x, c.y);
+            totalBx += B_center.x * 1.0;
+            totalWeight += 1.0;
+            
+            for (let rIdx = 1; rIdx <= numRings; rIdx++) {
+                const rFrac = rIdx / numRings;
+                const r = c.radius * rFrac;
+                const numPoints = rIdx * 6;
+                const weight = rFrac;
+                
+                for (let i = 0; i < numPoints; i++) {
+                    const angle = (i / numPoints) * 2 * Math.PI;
+                    const py = c.y + r * Math.sin(angle);
+                    const B = getMagneticField(c.x, py);
+                    totalBx += B.x * weight;
+                    totalWeight += weight;
+                }
+            }
+            
+            const avgBx = totalBx / totalWeight;
+            const areaFactor = Math.PI * Math.pow(c.radius / 50, 2);
+            return avgBx * areaFactor * 0.08;
+        }
+
+        // Physics Engine Update
+        function updatePhysics(dt) {
+            if (dt <= 0) return;
+            dt = Math.min(dt, 0.05); // Cap max dt
+            
+            // Auto oscillation
+            if (state.options.autoOscillate && !state.magnet.isDragging) {
+                state.options.oscTime += dt;
+                const freq = state.options.oscFrequency;
+                const amp = state.options.oscAmplitude;
+                state.magnet.x = state.options.oscCenter + amp * Math.sin(2 * Math.PI * freq * state.options.oscTime);
+            }
+            
+            // Flux derivative calculation
+            const currentFlux = calculateFlux();
+            const rawDFluxDt = (currentFlux - state.physics.flux) / dt;
+            state.physics.flux = currentFlux;
+            
+            // Low-pass exponential filter to eliminate drag jitter
+            const alpha = 1.0 - Math.exp(-dt / 0.035);
+            state.physics.dFluxDtFiltered += alpha * (rawDFluxDt - state.physics.dFluxDtFiltered);
+            state.physics.dFluxDt = state.physics.dFluxDtFiltered;
+            
+            // Faraday-Lenz Law: EMF = -N * dFlux/dt
+            state.physics.emf = -state.coil.turns * state.physics.dFluxDt;
+            state.physics.current = state.physics.emf / state.coil.resistance;
+            
+            // Galvanometer Needle Physics (Damped Harmonic Oscillator)
+            const targetAngle = Math.max(-1.2, Math.min(1.2, state.physics.emf * 0.022));
+            const k_spring = 220.0;
+            const damping = 20.0;
+            
+            const accel = -k_spring * (state.galvanometer.angle - targetAngle) - damping * state.galvanometer.velocity;
+            state.galvanometer.velocity += accel * dt;
+            state.galvanometer.angle += state.galvanometer.velocity * dt;
+            
+            // Particle animation phase along wire
+            state.physics.particlePhase += state.physics.current * dt * 0.25;
+            
+            // History for oscilloscope
+            state.history.push({
+                flux: state.physics.flux,
+                emf: state.physics.emf
+            });
+            if (state.history.length > 350) {
+                state.history.shift();
+            }
+            
+            // Update UI telemetry text
+            document.getElementById('valFlux').textContent = state.physics.flux.toFixed(2) + ' Wb';
+            document.getElementById('valDFlux').textContent = state.physics.dFluxDt.toFixed(2) + ' Wb/s';
+            document.getElementById('valEMF').textContent = state.physics.emf.toFixed(2) + ' mV';
+            document.getElementById('valCurrent').textContent = state.physics.current.toFixed(2) + ' mA';
+        }
+
+        // RENDER FUNCTIONS
+
+        // Render Magnetic Field Lines
+        function drawFieldLines(width, height) {
+            const m = state.magnet;
+            const numLines = 16;
+            const halfL = m.width * 0.42;
+            const nX = m.x + m.polarity * halfL;
+            const nY = m.y;
+            
+            ctx.save();
+            ctx.lineWidth = 1.5;
+
+            for (let i = 0; i < numLines; i++) {
+                const angle = (i / numLines) * 2 * Math.PI;
+                let curX = nX + 15 * Math.cos(angle);
+                let curY = nY + 15 * Math.sin(angle);
+                
+                ctx.beginPath();
+                ctx.moveTo(curX, curY);
+                
+                let steps = 0;
+                const stepSize = 8;
+                const maxSteps = 120;
+                
+                while (steps < maxSteps) {
+                    const B = getMagneticField(curX, curY);
+                    if (B.mag < 0.001) break;
+                    
+                    // Trace along B direction (out of North if polarity = 1)
+                    const dirX = (B.x / B.mag) * m.polarity;
+                    const dirY = (B.y / B.mag) * m.polarity;
+                    
+                    curX += dirX * stepSize;
+                    curY += dirY * stepSize;
+                    
+                    ctx.lineTo(curX, curY);
+                    
+                    // Stop if close to canvas edge or South pole
+                    if (curX < 0 || curX > width || curY < 0 || curY > height) break;
+                    
+                    steps++;
+                }
+                
+                const alpha = Math.min(0.6, 0.15 + state.magnet.strength * 0.15);
+                ctx.strokeStyle = `rgba(0, 242, 254, ${alpha})`;
+                ctx.shadowColor = '#00f2fe';
+                ctx.shadowBlur = 4;
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+
+        // Render Field Vector Grid
+        function drawFieldVectors(width, height) {
+            ctx.save();
+            const spacing = 45;
+            for (let x = 30; x < width; x += spacing) {
+                for (let y = 30; y < height; y += spacing) {
+                    const B = getMagneticField(x, y);
+                    if (B.mag < 0.05) continue;
+                    
+                    const angle = Math.atan2(B.y, B.x);
+                    const len = Math.min(22, Math.max(8, B.mag * 0.18));
+                    const alpha = Math.min(0.75, B.mag * 0.015);
+                    
+                    ctx.save();
+                    ctx.translate(x, y);
+                    ctx.rotate(angle);
+                    
+                    ctx.strokeStyle = `rgba(0, 242, 254, ${alpha})`;
+                    ctx.fillStyle = `rgba(0, 242, 254, ${alpha})`;
+                    ctx.lineWidth = 1.2;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(len, 0);
+                    ctx.stroke();
+                    
+                    // Arrowhead
+                    ctx.beginPath();
+                    ctx.moveTo(len, 0);
+                    ctx.lineTo(len - 5, -3);
+                    ctx.lineTo(len - 5, 3);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    ctx.restore();
+                }
+            }
+            ctx.restore();
+        }
+
+        // Render Magnet
+        function drawMagnet() {
+            const m = state.magnet;
+            const w = m.width;
+            const h = m.height;
+            const x = m.x - w / 2;
+            const y = m.y - h / 2;
+            
+            ctx.save();
+            
+            // Drop shadow
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+            ctx.shadowBlur = 15;
+            ctx.shadowOffsetY = 8;
+            
+            // Magnet outline container
+            ctx.beginPath();
+            ctx.roundRect(x, y, w, h, 8);
+            ctx.clip();
+            
+            // Left Half & Right Half according to polarity
+            const isNorthRight = m.polarity === 1;
+            const colorLeft = isNorthRight ? 'var(--south-color)' : 'var(--north-color)';
+            const colorRight = isNorthRight ? 'var(--north-color)' : 'var(--south-color)';
+            const labelLeft = isNorthRight ? 'S' : 'N';
+            const labelRight = isNorthRight ? 'N' : 'S';
+            
+            // Left pole
+            const gradLeft = ctx.createLinearGradient(x, y, x + w / 2, y + h);
+            gradLeft.addColorStop(0, colorLeft === 'var(--north-color)' ? '#ef4444' : '#3b82f6');
+            gradLeft.addColorStop(1, colorLeft === 'var(--north-color)' ? '#991b1b' : '#1e40af');
+            ctx.fillStyle = gradLeft;
+            ctx.fillRect(x, y, w / 2, h);
+            
+            // Right pole
+            const gradRight = ctx.createLinearGradient(x + w / 2, y, x + w, y + h);
+            gradRight.addColorStop(0, colorRight === 'var(--north-color)' ? '#ef4444' : '#3b82f6');
+            gradRight.addColorStop(1, colorRight === 'var(--north-color)' ? '#991b1b' : '#1e40af');
+            ctx.fillStyle = gradRight;
+            ctx.fillRect(x + w / 2, y, w / 2, h);
+            
+            // Metallic center line divider
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+            ctx.fillRect(x + w / 2 - 2, y, 4, h);
+            
+            // Text Labels
+            ctx.shadowBlur = 0;
+            ctx.font = 'bold 22px system-ui, sans-serif';
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(labelLeft, x + w * 0.25, y + h * 0.52);
+            ctx.fillText(labelRight, x + w * 0.75, y + h * 0.52);
+            
+            ctx.restore();
+
+            // Magnetic Dipole Vector Arrow above magnet
+            ctx.save();
+            ctx.translate(m.x, m.y - h / 2 - 14);
+            const arrowDir = m.polarity;
+            const arrowLen = 40 * (m.strength / 1.5);
+            ctx.strokeStyle = 'var(--accent-amber)';
+            ctx.fillStyle = 'var(--accent-amber)';
+            ctx.lineWidth = 2;
+            ctx.shadowColor = 'var(--accent-amber)';
+            ctx.shadowBlur = 6;
+            
+            ctx.beginPath();
+            ctx.moveTo(-arrowLen * arrowDir / 2, 0);
+            ctx.lineTo(arrowLen * arrowDir / 2, 0);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(arrowLen * arrowDir / 2, 0);
+            ctx.lineTo(arrowLen * arrowDir / 2 - 6 * arrowDir, -4);
+            ctx.lineTo(arrowLen * arrowDir / 2 - 6 * arrowDir, 4);
+            ctx.closePath();
+            ctx.fill();
+            
+            ctx.font = '10px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('Momento Dipolar m', 0, -10);
+            ctx.restore();
+        }
+
+        // Render Coil (Solenoid) & Connected Circuit
+        function drawCoilAndCircuit() {
+            const c = state.coil;
+            const g = state.galvanometer;
+            
+            ctx.save();
+
+            // Connecting Wires to Galvanometer
+            const wireLeftX = c.x - c.radius * 0.4;
+            const wireRightX = c.x + c.radius * 0.4;
+            const wireStartY = c.y + c.radius;
+            const wireEndY = g.y - g.radius + 15;
+            
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#64748b';
+            
+            // Left lead wire
+            ctx.beginPath();
+            ctx.moveTo(wireLeftX, wireStartY);
+            ctx.lineTo(wireLeftX, wireEndY);
+            ctx.stroke();
+            
+            // Right lead wire
+            ctx.beginPath();
+            ctx.moveTo(wireRightX, wireStartY);
+            ctx.lineTo(wireRightX, wireEndY);
+            ctx.stroke();
+
+            // LED Bulb on wire circuit
+            const ledX = (wireLeftX + wireRightX) / 2;
+            const ledY = (wireStartY + wireEndY) / 2;
+            const absEMF = Math.abs(state.physics.emf);
+            
+            ctx.save();
+            ctx.translate(ledX, ledY);
+            ctx.beginPath();
+            ctx.arc(0, 0, 10, 0, 2 * Math.PI);
+            const ledAlpha = Math.min(1, absEMF / 15);
+            ctx.fillStyle = `rgba(255, 230, 0, ${0.2 + ledAlpha * 0.8})`;
+            ctx.shadowColor = '#ffea00';
+            ctx.shadowBlur = ledAlpha * 25;
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            
+            ctx.font = '9px system-ui';
+            ctx.fillStyle = '#cbd5e1';
+            ctx.textAlign = 'center';
+            ctx.fillText('LED Indutivo', 0, -14);
+            ctx.restore();
+
+            // Render Coil Loops (Back half first, then Front half)
+            const numTurns = state.coil.turns;
+            const turnSpacing = Math.min(12, 120 / numTurns);
+            const startX = c.x - (numTurns * turnSpacing) / 2;
+            const rx = turnSpacing * 0.7;
+            const ry = c.radius;
+            
+            // Back half of loops
+            ctx.lineWidth = 4;
+            for (let i = 0; i < numTurns; i++) {
+                const tx = startX + i * turnSpacing;
+                ctx.strokeStyle = '#94a3b8'; // Darker copper/grey
+                ctx.beginPath();
+                ctx.ellipse(tx, c.y, rx, ry, 0, Math.PI * 0.5, Math.PI * 1.5);
+                ctx.stroke();
+            }
+
+            // Draw Magnet if it passes through coil depth (handled cleanly in main render order)
+
+            // Front half of loops (Shiny metallic copper)
+            for (let i = 0; i < numTurns; i++) {
+                const tx = startX + i * turnSpacing;
+                const gradCoil = ctx.createLinearGradient(tx, c.y - ry, tx, c.y + ry);
+                gradCoil.addColorStop(0, '#f97316');
+                gradCoil.addColorStop(0.5, '#fed7aa');
+                gradCoil.addColorStop(1, '#c2410c');
+                
+                ctx.strokeStyle = gradCoil;
+                ctx.shadowColor = '#f97316';
+                ctx.shadowBlur = absEMF > 1.0 ? 8 : 0;
+                ctx.beginPath();
+                ctx.ellipse(tx, c.y, rx, ry, 0, -Math.PI * 0.5, Math.PI * 0.5);
+                ctx.stroke();
+            }
+
+            // Animated Current Flow Vectors / Setas along Wire (Lenz's Law Feedback)
+            if (absEMF > 0.1) {
+                ctx.save();
+                const phase = state.physics.particlePhase;
+                const dir = Math.sign(state.physics.current); // Current direction
+                const numParticles = 8;
+                
+                ctx.fillStyle = 'var(--accent-green)';
+                ctx.shadowColor = 'var(--accent-green)';
+                ctx.shadowBlur = 10;
+                
+                for (let i = 0; i < numParticles; i++) {
+                    const pAngle = ((i / numParticles) * 2 * Math.PI + phase * dir) % (2 * Math.PI);
+                    const px = c.x + rx * Math.cos(pAngle);
+                    const py = c.y + ry * Math.sin(pAngle);
+                    
+                    // Arrow shape indicating current direction
+                    ctx.save();
+                    ctx.translate(px, py);
+                    const tangentAngle = Math.atan2(ry * Math.cos(pAngle), -rx * Math.sin(pAngle)) + (dir > 0 ? 0 : Math.PI);
+                    ctx.rotate(tangentAngle);
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(6, 0);
+                    ctx.lineTo(-4, -4);
+                    ctx.lineTo(-2, 0);
+                    ctx.lineTo(-4, 4);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.restore();
+                }
+                
+                // Direction text prompt above coil
+                ctx.font = 'bold 11px system-ui';
+                ctx.fillStyle = 'var(--accent-green)';
+                ctx.textAlign = 'center';
+                ctx.fillText(dir > 0 ? ' Corrente: Sentido Horário ↻' : ' Corrente: Sentido Anti-Horário ↺', c.x, c.y - ry - 18);
+                ctx.restore();
+            }
+
+            // Coil Base Stand
+            ctx.fillStyle = '#334155';
+            ctx.fillRect(c.x - 20, c.y + c.radius + 2, 40, 8);
+            ctx.restore();
+        }
+
+        // Render Galvanometer
+        function drawGalvanometer() {
+            const g = state.galvanometer;
+            const r = g.radius;
+            
+            ctx.save();
+            ctx.translate(g.x, g.y);
+            
+            // Outer casing drop shadow
+            ctx.shadowColor = 'rgba(0,0,0,0.7)';
+            ctx.shadowBlur = 20;
+            ctx.shadowOffsetY = 10;
+            
+            // Meter body
+            ctx.beginPath();
+            ctx.arc(0, 0, r, 0, 2 * Math.PI);
+            const bgGrad = ctx.createRadialGradient(0, -r * 0.3, 5, 0, 0, r);
+            bgGrad.addColorStop(0, '#1e293b');
+            bgGrad.addColorStop(1, '#0f172a');
+            ctx.fillStyle = bgGrad;
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            ctx.shadowBlur = 0;
+
+            // Arc scale background
+            ctx.beginPath();
+            ctx.arc(0, 15, r * 0.7, -Math.PI * 0.75, -Math.PI * 0.25);
+            ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+            ctx.lineWidth = 12;
+            ctx.stroke();
+
+            // Ticks and Labels
+            const ticks = [-50, -40, -30, -20, -10, 0, 10, 20, 30, 40, 50];
+            ticks.forEach(val => {
+                const tickAngle = -Math.PI * 0.5 + (val / 50) * (Math.PI * 0.35);
+                const innerR = r * 0.62;
+                const outerR = r * 0.72;
+                
+                const x1 = innerR * Math.cos(tickAngle);
+                const y1 = 15 + innerR * Math.sin(tickAngle);
+                const x2 = outerR * Math.cos(tickAngle);
+                const y2 = 15 + outerR * Math.sin(tickAngle);
+                
+                ctx.strokeStyle = val === 0 ? 'var(--accent-cyan)' : '#94a3b8';
+                ctx.lineWidth = val === 0 ? 2 : 1;
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+                
+                if (val % 20 === 0) {
+                    const textR = r * 0.48;
+                    const tx = textR * Math.cos(tickAngle);
+                    const ty = 15 + textR * Math.sin(tickAngle);
+                    ctx.font = '9px monospace';
+                    ctx.fillStyle = val === 0 ? 'var(--accent-cyan)' : '#64748b';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(val.toString(), tx, ty);
+                }
+            });
+
+            // Meter Title
+            ctx.font = 'bold 10px system-ui';
+            ctx.fillStyle = '#cbd5e1';
+            ctx.textAlign = 'center';
+            ctx.fillText('GALVANÔMETRO', 0, -r * 0.45);
+            ctx.font = '8px monospace';
+            ctx.fillStyle = '#64748b';
+            ctx.fillText('Zero Central (mV)', 0, -r * 0.3);
+
+            // Needle
+            ctx.save();
+            ctx.translate(0, 15);
+            ctx.rotate(g.angle);
+            
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 2;
+            ctx.shadowColor = '#ef4444';
+            ctx.shadowBlur = 8;
+            
+            ctx.beginPath();
+            ctx.moveTo(0, 5);
+            ctx.lineTo(0, -r * 0.72);
+            ctx.stroke();
+            
+            // Pivot cap
+            ctx.beginPath();
+            ctx.arc(0, 0, 5, 0, 2 * Math.PI);
+            ctx.fillStyle = '#f87171';
+            ctx.fill();
+            ctx.restore();
+
+            ctx.restore();
+        }
+
+        // Render Oscilloscope Graph
+        function drawOscilloscope() {
+            const w = scopeCanvas.width / window.devicePixelRatio;
+            const h = scopeCanvas.height / window.devicePixelRatio;
+            
+            scopeCtx.clearRect(0, 0, w, h);
+            
+            // Grid lines
+            scopeCtx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            scopeCtx.lineWidth = 1;
+            
+            const midY = h / 2;
+            scopeCtx.beginPath();
+            scopeCtx.moveTo(0, midY);
+            scopeCtx.lineTo(w, midY);
+            scopeCtx.stroke();
+            
+            for (let y = 0; y < h; y += 25) {
+                if (y === midY) continue;
+                scopeCtx.beginPath();
+                scopeCtx.moveTo(0, y);
+                scopeCtx.lineTo(w, y);
+                scopeCtx.stroke();
+            }
+
+            if (state.history.length < 2) return;
+
+            const dx = w / 350;
+
+            // Plot Flux (Cyan)
+            scopeCtx.strokeStyle = 'var(--accent-cyan)';
+            scopeCtx.lineWidth = 1.8;
+            scopeCtx.beginPath();
+            state.history.forEach((pt, idx) => {
+                const x = idx * dx;
+                const y = midY - pt.flux * 8.0;
+                if (idx === 0) scopeCtx.moveTo(x, y);
+                else scopeCtx.lineTo(x, y);
+            });
+            scopeCtx.stroke();
+
+            // Plot EMF (Magenta)
+            scopeCtx.strokeStyle = 'var(--accent-magenta)';
+            scopeCtx.lineWidth = 2.0;
+            scopeCtx.beginPath();
+            state.history.forEach((pt, idx) => {
+                const x = idx * dx;
+                const y = midY - pt.emf * 2.2;
+                if (idx === 0) scopeCtx.moveTo(x, y);
+                else scopeCtx.lineTo(x, y);
+            });
+            scopeCtx.stroke();
+        }
+
+        // Main Render Loop
+        function render() {
+            const width = canvas.width / window.devicePixelRatio;
+            const height = canvas.height / window.devicePixelRatio;
+
+            ctx.clearRect(0, 0, width, height);
+
+            // 1. Draw Field lines / vectors
+            if (state.options.visMode === 'lines' || state.options.visMode === 'both') {
+                drawFieldLines(width, height);
+            }
+            if (state.options.visMode === 'vectors' || state.options.visMode === 'both') {
+                drawFieldVectors(width, height);
+            }
+
+            // 2. Draw Magnet & Solenoid
+            drawMagnet();
+            drawCoilAndCircuit();
+            drawGalvanometer();
+
+            // 3. Draw Oscilloscope
+            drawOscilloscope();
+        }
+
+        // Animation Loop
+        function animate(time) {
+            const dt = (time - state.lastTime) / 1000;
+            state.lastTime = time;
+
+            updatePhysics(dt);
+            render();
+
+            requestAnimationFrame(animate);
+        }
+
+        // INTERACTION & EVENT HANDLERS
+
+        function getMousePos(evt) {
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: (evt.clientX - rect.left),
+                y: (evt.clientY - rect.top)
+            };
+        }
+
+        function isInsideMagnet(pos) {
+            const m = state.magnet;
+            return Math.abs(pos.x - m.x) < m.width / 2 + 10 &&
+                   Math.abs(pos.y - m.y) < m.height / 2 + 10;
+        }
+
+        function isInsideCoil(pos) {
+            const c = state.coil;
+            return Math.hypot(pos.x - c.x, pos.y - c.y) < c.radius + 15;
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            const pos = getMousePos(e);
+            if (isInsideMagnet(pos)) {
+                state.magnet.isDragging = true;
+                state.magnet.dragOffsetX = pos.x - state.magnet.x;
+                canvas.style.cursor = 'grabbing';
+            } else if (isInsideCoil(pos)) {
+                state.coil.isDragging = true;
+                state.coil.dragOffsetX = pos.x - state.coil.x;
+                canvas.style.cursor = 'grabbing';
+            }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            const pos = getMousePos(e);
+            
+            if (state.magnet.isDragging) {
+                state.magnet.x = pos.x - state.magnet.dragOffsetX;
+            } else if (state.coil.isDragging) {
+                state.coil.x = pos.x - state.coil.dragOffsetX;
+                state.galvanometer.x = state.coil.x; // Galvanometer moves with coil
+            } else {
+                if (isInsideMagnet(pos) || isInsideCoil(pos)) {
+                    canvas.style.cursor = 'grab';
+                } else {
+                    canvas.style.cursor = 'default';
+                }
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            state.magnet.isDragging = false;
+            state.coil.isDragging = false;
+            canvas.style.cursor = 'default';
+        });
+
+        // Touch support
+        canvas.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 0) {
+                const touch = e.touches[0];
+                const rect = canvas.getBoundingClientRect();
+                const pos = { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+                if (isInsideMagnet(pos)) {
+                    state.magnet.isDragging = true;
+                    state.magnet.dragOffsetX = pos.x - state.magnet.x;
+                } else if (isInsideCoil(pos)) {
+                    state.coil.isDragging = true;
+                    state.coil.dragOffsetX = pos.x - state.coil.x;
+                }
+            }
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            if (e.touches.length > 0) {
+                const touch = e.touches[0];
+                const rect = canvas.getBoundingClientRect();
+                const pos = { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+                if (state.magnet.isDragging) {
+                    state.magnet.x = pos.x - state.magnet.dragOffsetX;
+                } else if (state.coil.isDragging) {
+                    state.coil.x = pos.x - state.coil.dragOffsetX;
+                    state.galvanometer.x = state.coil.x;
+                }
+            }
+        });
+
+        canvas.addEventListener('touchend', () => {
+            state.magnet.isDragging = false;
+            state.coil.isDragging = false;
+        });
+
+        // CONTROL PANEL BINDINGS
+
+        // Sliders
+        const inputB0 = document.getElementById('inputB0');
+        const dispB0 = document.getElementById('dispB0');
+        inputB0.addEventListener('input', (e) => {
+            state.magnet.strength = parseFloat(e.target.value);
+            dispB0.textContent = state.magnet.strength.toFixed(2) + ' T';
+        });
+
+        const inputN = document.getElementById('inputN');
+        const dispN = document.getElementById('dispN');
+        inputN.addEventListener('input', (e) => {
+            state.coil.turns = parseInt(e.target.value);
+            dispN.textContent = state.coil.turns;
+        });
+
+        const inputR = document.getElementById('inputR');
+        const dispR = document.getElementById('dispR');
+        inputR.addEventListener('input', (e) => {
+            state.coil.radius = parseInt(e.target.value);
+            dispR.textContent = state.coil.radius + ' px';
+        });
+
+        const inputRes = document.getElementById('inputRes');
+        const dispRes = document.getElementById('dispRes');
+        inputRes.addEventListener('input', (e) => {
+            state.coil.resistance = parseFloat(e.target.value);
+            dispRes.textContent = state.coil.resistance.toFixed(1) + ' Ω';
+        });
+
+        const inputFreq = document.getElementById('inputFreq');
+        const dispFreq = document.getElementById('dispFreq');
+        inputFreq.addEventListener('input', (e) => {
+            state.options.oscFrequency = parseFloat(e.target.value);
+            dispFreq.textContent = state.options.oscFrequency.toFixed(1) + ' Hz';
+        });
+
+        // Buttons
+        document.getElementById('btnFlipPoles').addEventListener('click', () => {
+            state.magnet.polarity *= -1;
+        });
+
+        document.getElementById('btnResetPos').addEventListener('click', () => {
+            const width = canvas.width / window.devicePixelRatio;
+            state.magnet.x = width * 0.28;
+            state.coil.x = width * 0.68;
+            state.galvanometer.x = state.coil.x;
+            state.history = [];
+        });
+
+        // Visualization Buttons
+        const visButtons = {
+            lines: document.getElementById('btnVisLines'),
+            vectors: document.getElementById('btnVisVectors'),
+            both: document.getElementById('btnVisBoth'),
+            off: document.getElementById('btnVisOff')
+        };
+
+        Object.keys(visButtons).forEach(mode => {
+            visButtons[mode].addEventListener('click', () => {
+                state.options.visMode = mode;
+                Object.values(visButtons).forEach(b => b.classList.remove('btn-active'));
+                visButtons[mode].classList.add('btn-active');
+            });
+        });
+
+        // Auto Oscillation Toggle
+        const btnAutoOsc = document.getElementById('btnAutoOsc');
+        const oscFreqGroup = document.getElementById('oscFreqGroup');
+        btnAutoOsc.addEventListener('click', () => {
+            state.options.autoOscillate = !state.options.autoOscillate;
+            if (state.options.autoOscillate) {
+                btnAutoOsc.textContent = '⏸️ Pausar Oscilação';
+                btnAutoOsc.classList.remove('btn-magenta');
+                btnAutoOsc.classList.add('btn-active');
+                oscFreqGroup.style.opacity = '1';
+                state.options.oscCenter = state.magnet.x;
+            } else {
+                btnAutoOsc.textContent = '▶️ Iniciar Oscilação Automática';
+                btnAutoOsc.classList.remove('btn-active');
+                btnAutoOsc.classList.add('btn-magenta');
+                oscFreqGroup.style.opacity = '0.6';
+            }
+        });
+
+        // Clear Scope
+        document.getElementById('btnClearScope').addEventListener('click', () => {
+            state.history = [];
+        });
+
+        // Initialize Canvas & Start Loop
+        resizeCanvas();
+        requestAnimationFrame(animate);
+    </script>
+</body>
+</html>
