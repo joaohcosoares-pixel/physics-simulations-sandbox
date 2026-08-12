@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulação de Correntes de Foucault - Pêndulo Magnético</title>
+    <style>
+        :root {
+            --bg-dark: #080c14;
+            --panel-bg: rgba(15, 23, 42, 0.85);
+            --panel-border: rgba(255, 255, 255, 0.12);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-cyan: #00f2fe;
+            --accent-magenta: #ff007f;
+            --accent-amber: #ffb700;
+            --accent-green: #00ff88;
+            --accent-blue: #3b82f6;
+            --field-color: rgba(245, 158, 11, 0.15);
+            --field-border: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(8, 12, 20, 0.85) 100%);
+            border-bottom: 1px solid var(--panel-border);
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            z-index: 10;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-icon {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, var(--accent-magenta), var(--accent-amber));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 20px;
+            color: #000;
+            box-shadow: 0 0 15px rgba(255, 0, 127, 0.4);
+        }
+
+        .brand-text h1 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            background: linear-gradient(90deg, #ffffff, #cbd5e1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-text p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .formula-badge {
+            background: rgba(255, 0, 127, 0.08);
+            border: 1px solid rgba(255, 0, 127, 0.3);
+            border-radius: 20px;
+            padding: 6px 16px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9rem;
+            color: var(--accent-magenta);
+            font-weight: 600;
+            box-shadow: 0 0 12px rgba(255, 0, 127, 0.15);
+        }
+
+        /* App Layout */
+        .app-container {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            grid-template-rows: 1fr auto;
+            flex: 1;
+            gap: 16px;
+            padding: 16px;
+            height: calc(100vh - 65px);
+        }
+
+        /* Canvas Stage */
+        .stage-container {
+            position: relative;
+            background: radial-gradient(circle at 50% 30%, #111827 0%, #060911 100%);
+            border: 1px solid var(--panel-border);
+            border-radius: 14px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.85);
+        }
+
+        #simCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Canvas Controls & Status Bar */
+        .stage-overlay-top {
+            position: absolute;
+            top: 14px;
+            left: 14px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .plate-type-badge {
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid var(--accent-cyan);
+            color: var(--accent-cyan);
+            border-radius: 8px;
+            padding: 6px 14px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 0 12px rgba(0, 242, 254, 0.2);
+        }
+
+        /* Telemetry Metrics Overlay */
+        .telemetry-overlay {
+            position: absolute;
+            bottom: 14px;
+            left: 14px;
+            display: flex;
+            gap: 10px;
+            pointer-events: none;
+            flex-wrap: wrap;
+        }
+
+        .telemetry-card {
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid var(--panel-border);
+            border-radius: 10px;
+            padding: 8px 14px;
+            min-width: 110px;
+            backdrop-filter: blur(6px);
+        }
+
+        .telemetry-card .label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 2px;
+        }
+
+        .telemetry-card .value {
+            font-size: 1.05rem;
+            font-weight: 700;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .value-cyan { color: var(--accent-cyan); }
+        .value-magenta { color: var(--accent-magenta); }
+        .value-amber { color: var(--accent-amber); }
+        .value-green { color: var(--accent-green); }
+
+        /* Sidebar Control Panel */
+        .sidebar {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 14px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            overflow-y: auto;
+            backdrop-filter: blur(10px);
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+
+        .panel-section {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 10px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .section-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--accent-amber);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: var(--text-main);
+        }
+
+        .control-value {
+            font-weight: 600;
+            color: var(--accent-cyan);
+            font-family: monospace;
+        }
+
+        /* Custom Range Slider */
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 3px;
+            outline: none;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent-cyan);
+            box-shadow: 0 0 10px var(--accent-cyan);
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: #ffffff;
+        }
+
+        /* Toggle Grid & Buttons */
+        .button-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: var(--text-main);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.18);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-active {
+            background: linear-gradient(135deg, rgba(0, 242, 254, 0.25), rgba(59, 130, 246, 0.25));
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+            box-shadow: 0 0 12px rgba(0, 242, 254, 0.2);
+        }
+
+        .btn-magenta {
+            background: rgba(255, 0, 127, 0.18);
+            border-color: rgba(255, 0, 127, 0.4);
+            color: var(--accent-magenta);
+        }
+
+        .btn-amber {
+            background: rgba(245, 158, 11, 0.18);
+            border-color: rgba(245, 158, 11, 0.4);
+            color: var(--accent-amber);
+        }
+
+        /* Energy & Oscilloscope Panel */
+        .bottom-panel {
+            grid-column: 1 / -1;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 14px;
+            padding: 12px 16px;
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            gap: 16px;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            height: 155px;
+        }
+
+        /* Energy Bars */
+        .energy-bars-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .energy-bar-group {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .bar-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+
+        .bar-track {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .bar-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 4px;
+            transition: width 0.05s linear;
+        }
+
+        #scopeCanvas {
+            width: 100%;
+            height: 100%;
+            background: #040711;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .app-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto;
+                height: auto;
+            }
+            .stage-container {
+                height: 480px;
+            }
+            .bottom-panel {
+                grid-column: 1;
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <div class="brand">
+            <div class="brand-icon">🌀</div>
+            <div class="brand-text">
+                <h1>Correntes de Foucault (Eddy Currents)</h1>
+                <p>Simulação Virtual do Pêndulo Magnético e Frenagem Eletromagnética</p>
+            </div>
+        </div>
+        <div class="formula-badge">
+            &vec;F<sub>m</sub> = &int; &vec;I &times; &vec;B &middot; dl &nbsp;|&nbsp; Placa Maciça vs Ranhurada
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="app-container">
+        
+        <!-- Canvas Stage -->
+        <div class="stage-container">
+            <canvas id="simCanvas"></canvas>
+
+            <div class="stage-overlay-top">
+                <div class="plate-type-badge" id="badgePlateType">
+                    <span>🔲 Placa Maciça (Frenagem Alta)</span>
+                </div>
+            </div>
+
+            <!-- Telemetry Metrics -->
+            <div class="telemetry-overlay">
+                <div class="telemetry-card">
+                    <div class="label">Ângulo (&theta;)</div>
+                    <div class="value value-cyan" id="valAngle">0.0°</div>
+                </div>
+                <div class="telemetry-card">
+                    <div class="label">Velocidade (v)</div>
+                    <div class="value value-amber" id="valVelocity">0.00 m/s</div>
+                </div>
+                <div class="telemetry-card">
+                    <div class="label">Força Magnética (F<sub>m</sub>)</div>
+                    <div class="value value-magenta" id="valForce">0.00 N</div>
+                </div>
+                <div class="telemetry-card">
+                    <div class="label">Calor Joule (P<sub>J</sub>)</div>
+                    <div class="value value-green" id="valJoule">0.00 W</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Control Panel -->
+        <div class="sidebar">
+            
+            <!-- Geometry Selector -->
+            <div class="panel-section">
+                <div class="section-title">
+                    <span>✂️ Geometria da Placa Metálica</span>
+                </div>
+
+                <div class="button-grid">
+                    <button class="btn btn-active" id="btnSolidPlate">
+                        🔲 Placa Maciça
+                    </button>
+                    <button class="btn" id="btnSlottedPlate">
+                        🏁 Placa Ranhurada
+                    </button>
+                </div>
+            </div>
+
+            <!-- Field & Physics Controls -->
+            <div class="panel-section">
+                <div class="section-title">
+                    <span>🧲 Campo Magnético & Física</span>
+                </div>
+
+                <div class="control-group">
+                    <div class="control-header">
+                        <span>Campo Magnético (B<sub>ext</sub>)</span>
+                        <span class="control-value" id="dispBext">1.50 T</span>
+                    </div>
+                    <input type="range" id="inputBext" min="0.0" max="3.0" step="0.05" value="1.5">
+                </div>
+
+                <div class="control-group">
+                    <div class="control-header">
+                        <span>Massa do Pêndulo (m)</span>
+                        <span class="control-value" id="dispMass">0.50 kg</span>
+                    </div>
+                    <input type="range" id="inputMass" min="0.1" max="2.0" step="0.05" value="0.5">
+                </div>
+
+                <div class="control-group">
+                    <div class="control-header">
+                        <span>Ângulo Inicial (&theta;<sub>0</sub>)</span>
+                        <span class="control-value" id="dispAngle0">45.0°</span>
+                    </div>
+                    <input type="range" id="inputAngle0" min="10" max="75" step="1" value="45">
+                </div>
+
+                <div class="button-grid">
+                    <button class="btn" id="btnFieldDir">
+                        🔀 Campo: Entrando (✕)
+                    </button>
+                    <button class="btn" id="btnToggleAir">
+                        💨 Ar: Ligado
+                    </button>
+                </div>
+            </div>
+
+            <!-- Playback Controls -->
+            <div class="panel-section">
+                <div class="section-title">
+                    <span>⏯️ Controle de Animação</span>
+                </div>
+
+                <div class="button-grid">
+                    <button class="btn btn-magenta" id="btnPlayPause">
+                        ⏸️ Pausar
+                    </button>
+                    <button class="btn btn-amber" id="btnReset">
+                        🔄 Soltar / Reset
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Energy & Oscilloscope Bottom Panel -->
+        <div class="bottom-panel">
+            
+            <!-- Real-time Energy Bar Charts -->
+            <div class="energy-bars-container">
+                <div class="energy-bar-group">
+                    <div class="bar-label">
+                        <span>Energia Potencial (E<sub>p</sub>)</span>
+                        <span id="dispEp" style="color: var(--accent-cyan);">0.00 J</span>
+                    </div>
+                    <div class="bar-track">
+                        <div class="bar-fill" id="fillEp" style="background: var(--accent-cyan);"></div>
+                    </div>
+                </div>
+
+                <div class="energy-bar-group">
+                    <div class="bar-label">
+                        <span>Energia Cinética (E<sub>k</sub>)</span>
+                        <span id="dispEk" style="color: var(--accent-amber);">0.00 J</span>
+                    </div>
+                    <div class="bar-track">
+                        <div class="bar-fill" id="fillEk" style="background: var(--accent-amber);"></div>
+                    </div>
+                </div>
+
+                <div class="energy-bar-group">
+                    <div class="bar-label">
+                        <span>Calor Dissipado Joule (E<sub>joule</sub>)</span>
+                        <span id="dispEjoule" style="color: var(--accent-magenta);">0.00 J</span>
+                    </div>
+                    <div class="bar-track">
+                        <div class="bar-fill" id="fillEjoule" style="background: var(--accent-magenta);"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Scope Canvas -->
+            <canvas id="scopeCanvas"></canvas>
+
+        </div>
+
+    </div>
+
+    <!-- Physics & Rendering Script -->
+    <script>
+        // Simulation State
+        const state = {
+            plateType: 'solid', // 'solid' or 'slotted'
+            angle0: 45 * Math.PI / 180, // initial angle
+            angle: 45 * Math.PI / 180,  // current pendulum angle (radians)
+            angularVel: 0,              // dtheta/dt (rad/s)
+            angularAccel: 0,            // d2theta/dt2 (rad/s2)
+            
+            // Physical Parameters
+            length: 270,        // Pendulum arm length (px)
+            gravity: 9.81 * 420, // Gravity acceleration in px/s2 (velocidade acelerada)
+            mass: 0.50,         // kg
+            bExt: 1.50,         // Tesla
+            fieldDir: 1,        // 1: Into page (X), -1: Out of page (.)
+            airDamping: 0.04,   // Air resistance coefficient
+            isAirOn: true,
+            
+            // Magnetic Field Region (in canvas coordinates, updated on resize)
+            fieldZone: {
+                x: 0,
+                y: 0,
+                width: 120,
+                height: 130
+            },
+
+            // Plate Parameters
+            plate: {
+                width: 80,
+                height: 70,
+                slots: 7
+            },
+
+            // Calculated Dynamics
+            magneticForce: 0,   // Magnitude of braking force
+            joulePower: 0,      // Instantenous heat power W = F_m * v
+            dissipatedJoule: 0, // Total dissipated energy (J)
+            initialTotalEnergy: 0,
+            
+            // Animation Controls
+            isRunning: true,
+            vortexPhase: 0,
+            lastTime: performance.now(),
+            history: []
+        };
+
+        // Canvas Setup
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        const scopeCanvas = document.getElementById('scopeCanvas');
+        const scopeCtx = scopeCanvas.getContext('2d');
+
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width * window.devicePixelRatio;
+            canvas.height = rect.height * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+            const scopeRect = scopeCanvas.parentElement.getBoundingClientRect();
+            scopeCanvas.width = scopeRect.width * window.devicePixelRatio;
+            scopeCanvas.height = scopeRect.height * window.devicePixelRatio;
+            scopeCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+            // Center pivot and set field region at lowest point of trajectory
+            const logicWidth = rect.width;
+            const logicHeight = rect.height;
+            
+            const pivotX = logicWidth / 2;
+            const pivotY = 70;
+            
+            state.pivot = { x: pivotX, y: pivotY };
+            
+            // Magnetic field region centered at bottom of swing
+            const bottomY = pivotY + state.length;
+            state.fieldZone.width = 130;
+            state.fieldZone.height = 120;
+            state.fieldZone.x = pivotX - state.fieldZone.width / 2;
+            state.fieldZone.y = bottomY - state.fieldZone.height / 2;
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        // Compute Plate Center and Corners in World Space
+        function getPlateWorldTransform(theta) {
+            const pivot = state.pivot;
+            const L = state.length;
+            
+            const cx = pivot.x + L * Math.sin(theta);
+            const cy = pivot.y + L * Math.cos(theta);
+            
+            return { cx, cy, theta };
+        }
+
+        // Check Overlap Fraction of Plate with Magnetic Field Region
+        function calculateFieldOverlap(cx, cy, theta) {
+            const fz = state.fieldZone;
+            const pw = state.plate.width;
+            const ph = state.plate.height;
+            
+            // Sample a 8x8 grid of points on the plate
+            const rows = 8;
+            const cols = 8;
+            let insideCount = 0;
+            const cosT = Math.cos(theta);
+            const sinT = Math.sin(theta);
+            
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const localX = (c / (cols - 1) - 0.5) * pw;
+                    const localY = (r / (rows - 1) - 0.5) * ph;
+                    
+                    // Rotate and translate to world space
+                    const wx = cx + localX * cosT - localY * sinT;
+                    const wy = cy + localX * sinT + localY * cosT;
+                    
+                    if (wx >= fz.x && wx <= fz.x + fz.width &&
+                        wy >= fz.y && wy <= fz.y + fz.height) {
+                        insideCount++;
+                    }
+                }
+            }
+            
+            const overlapFraction = insideCount / (rows * cols);
+            
+            // Transition factor: highest derivative happens at boundaries (entering/exiting)
+            // Near center of field, flux change dA/dt ~ 0; near boundaries, dA/dt is maximum!
+            const dxFromCenter = Math.abs(cx - (fz.x + fz.width / 2));
+            const boundaryFactor = Math.sin(Math.min(Math.PI, (dxFromCenter / (fz.width / 2)) * Math.PI));
+            
+            return { overlapFraction, boundaryFactor };
+        }
+
+        // Physics Engine Update (Sub-stepped Euler-Cromer)
+        function updatePhysics(dt) {
+            if (!state.isRunning || dt <= 0) return;
+            dt = Math.min(dt, 0.04);
+            
+            const subSteps = 10;
+            const subDt = dt / subSteps;
+
+            for (let s = 0; s < subSteps; s++) {
+                const { cx, cy, theta } = getPlateWorldTransform(state.angle);
+                const { overlapFraction, boundaryFactor } = calculateFieldOverlap(cx, cy, state.angle);
+                
+                const linearVel = state.length * state.angularVel; // px/s
+                
+                // Effective electrical conductivity: Solid plate = 1.0, Slotted plate = 0.015 (98.5% reduction)
+                const conductivityEff = state.plateType === 'solid' ? 1.0 : 0.015;
+                
+                // Magnetic braking force: F_m = - sigma * B^2 * Area_overlap * v
+                // Intensified coefficient to create an explicit abrupt braking effect (freada brusca)
+                const brakingCoeff = 1.25 * conductivityEff * Math.pow(state.bExt, 2) * overlapFraction;
+                const brakingForceMag = brakingCoeff * Math.abs(linearVel);
+                
+                state.magneticForce = brakingForceMag;
+                state.isBrakingHard = (state.plateType === 'solid' && overlapFraction > 0.08 && brakingForceMag > 1.2);
+                state.joulePower = brakingForceMag * Math.abs(linearVel) * 0.01;
+                state.dissipatedJoule += state.joulePower * subDt;
+                
+                // Torque balance: tau = - m g L sin(theta) - c_air * omega - c_mag * omega
+                const gravityTorque = -state.mass * state.gravity * Math.sin(state.angle);
+                const airTorque = state.isAirOn ? -state.airDamping * state.angularVel * Math.abs(state.angularVel) * 10 : 0;
+                const magTorque = -brakingCoeff * state.angularVel * state.length * state.length;
+                
+                const totalTorque = gravityTorque + airTorque + magTorque;
+                const momentOfInertia = state.mass * Math.pow(state.length, 2);
+                
+                state.angularAccel = totalTorque / momentOfInertia;
+                state.angularVel += state.angularAccel * subDt;
+                state.angle += state.angularVel * subDt;
+            }
+
+            // Update particle vortex phase
+            state.vortexPhase += state.angularVel * dt * 4.0;
+
+            // Calculate Energies
+            const h = state.length * (1 - Math.cos(state.angle));
+            const ep = state.mass * (state.gravity / 80) * (h / 10);
+            const vMeters = (state.length * state.angularVel) / 100;
+            const ek = 0.5 * state.mass * vMeters * vMeters;
+            
+            if (state.initialTotalEnergy === 0 || Math.abs(state.angle - state.angle0) < 0.01 && Math.abs(state.angularVel) < 0.01) {
+                state.initialTotalEnergy = ep + ek;
+            }
+
+            // Push to Scope History
+            state.history.push({
+                ep: ep,
+                ek: ek,
+                ej: state.dissipatedJoule,
+                angle: state.angle * 180 / Math.PI,
+                force: state.magneticForce
+            });
+            if (state.history.length > 300) state.history.shift();
+
+            // Update Telemetry UI
+            document.getElementById('valAngle').textContent = (state.angle * 180 / Math.PI).toFixed(1) + '°';
+            document.getElementById('valVelocity').textContent = (vMeters).toFixed(2) + ' m/s';
+            document.getElementById('valForce').textContent = (state.magneticForce * 0.1).toFixed(2) + ' N';
+            document.getElementById('valJoule').textContent = state.joulePower.toFixed(2) + ' W';
+
+            // Energy Bar Fills
+            const totalE = Math.max(0.001, state.initialTotalEnergy);
+            document.getElementById('dispEp').textContent = ep.toFixed(2) + ' J';
+            document.getElementById('fillEp').style.width = Math.min(100, (ep / totalE) * 100) + '%';
+            
+            document.getElementById('dispEk').textContent = ek.toFixed(2) + ' J';
+            document.getElementById('fillEk').style.width = Math.min(100, (ek / totalE) * 100) + '%';
+            
+            document.getElementById('dispEjoule').textContent = state.dissipatedJoule.toFixed(2) + ' J';
+            document.getElementById('fillEjoule').style.width = Math.min(100, (state.dissipatedJoule / totalE) * 100) + '%';
+        }
+
+        // RENDER FUNCTIONS
+
+        // Render Magnetic Field Region (with 'X' or '.' symbols)
+        function drawMagneticFieldRegion() {
+            const fz = state.fieldZone;
+            
+            ctx.save();
+            // Zone fill
+            ctx.fillStyle = 'rgba(245, 158, 11, 0.1)';
+            ctx.strokeStyle = 'rgba(245, 158, 11, 0.4)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([6, 6]);
+            ctx.fillRect(fz.x, fz.y, fz.width, fz.height);
+            ctx.strokeRect(fz.x, fz.y, fz.width, fz.height);
+            ctx.setLineDash([]);
+
+            // Title label
+            ctx.font = 'bold 11px system-ui';
+            ctx.fillStyle = 'var(--accent-amber)';
+            ctx.textAlign = 'center';
+            ctx.fillText(`Região de Campo Magnético B_ext (${state.bExt.toFixed(1)} T)`, fz.x + fz.width / 2, fz.y - 8);
+
+            // Symbols grid ('X' for into page, '•' for out of page)
+            const cols = 5;
+            const rows = 4;
+            const dx = fz.width / cols;
+            const dy = fz.height / rows;
+
+            ctx.font = 'bold 14px monospace';
+            ctx.fillStyle = 'rgba(245, 158, 11, 0.6)';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            const symbol = state.fieldDir === 1 ? '✕' : '•';
+
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const sx = fz.x + (c + 0.5) * dx;
+                    const sy = fz.y + (r + 0.5) * dy;
+                    ctx.fillText(symbol, sx, sy);
+                }
+            }
+
+            // Abrupt braking visual feedback (Freada Brusca)
+            if (state.isBrakingHard) {
+                ctx.save();
+                ctx.strokeStyle = '#ff007f';
+                ctx.lineWidth = 4;
+                ctx.shadowColor = '#ff007f';
+                ctx.shadowBlur = 25;
+                ctx.strokeRect(fz.x - 4, fz.y - 4, fz.width + 8, fz.height + 8);
+
+                ctx.font = 'bold 13px system-ui';
+                ctx.fillStyle = '#ff007f';
+                ctx.textAlign = 'center';
+                ctx.shadowColor = '#ff007f';
+                ctx.shadowBlur = 15;
+                ctx.fillText('⚡ FRENAGEM MAGNÉTICA BRUSCA!', fz.x + fz.width / 2, fz.y + fz.height + 22);
+                ctx.restore();
+            }
+
+            ctx.restore();
+        }
+
+        // Render Pendulum (Arm & Metal Plate)
+        function drawPendulum() {
+            const pivot = state.pivot;
+            const L = state.length;
+            const theta = state.angle;
+            
+            const px = pivot.x + L * Math.sin(theta);
+            const py = pivot.y + L * Math.cos(theta);
+
+            ctx.save();
+
+            // 1. Pivot Support Stand
+            ctx.fillStyle = '#475569';
+            ctx.fillRect(pivot.x - 30, pivot.y - 12, 60, 8);
+            ctx.beginPath();
+            ctx.arc(pivot.x, pivot.y, 7, 0, 2 * Math.PI);
+            ctx.fillStyle = '#94a3b8';
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // 2. Pendulum Arm (Metallic rod)
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(pivot.x, pivot.y);
+            ctx.lineTo(px, py);
+            ctx.stroke();
+
+            // 3. Metal Plate at extremity
+            ctx.save();
+            ctx.translate(px, py);
+            ctx.rotate(theta);
+
+            const pw = state.plate.width;
+            const ph = state.plate.height;
+
+            // Plate Metallic Gradient
+            const plateGrad = ctx.createLinearGradient(-pw / 2, -ph / 2, pw / 2, ph / 2);
+            plateGrad.addColorStop(0, '#cbd5e1');
+            plateGrad.addColorStop(0.5, '#64748b');
+            plateGrad.addColorStop(1, '#334155');
+
+            ctx.fillStyle = plateGrad;
+            ctx.strokeStyle = '#f8fafc';
+            ctx.lineWidth = 1.5;
+            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+            ctx.shadowBlur = 12;
+
+            if (state.plateType === 'solid') {
+                // Solid Plate
+                ctx.beginPath();
+                ctx.roundRect(-pw / 2, -ph / 2, pw, ph, 6);
+                ctx.fill();
+                ctx.stroke();
+            } else {
+                // Slotted/Comb Plate (Placa Ranhurada)
+                const slots = state.plate.slots;
+                const slotW = pw / (slots * 2 - 1);
+                
+                ctx.beginPath();
+                // Top spine connecting the comb
+                ctx.rect(-pw / 2, -ph / 2, pw, ph * 0.25);
+                
+                // Vertical comb teeth
+                for (let i = 0; i < slots; i++) {
+                    const tx = -pw / 2 + i * 2 * slotW;
+                    ctx.rect(tx, -ph / 2 + ph * 0.25, slotW, ph * 0.75);
+                }
+                ctx.fill();
+                ctx.stroke();
+            }
+
+            // 4. Eddy Current Swirling Loops (Correntes de Foucault)
+            const { overlapFraction } = calculateFieldOverlap(px, py, theta);
+            const linearVel = L * state.angularVel;
+            
+            if (overlapFraction > 0.05 && Math.abs(linearVel) > 5) {
+                // Determine Lenz's Law swirl direction:
+                // Entering field vs Exiting field
+                const isMovingRight = state.angularVel > 0;
+                const swirlDir = (isMovingRight ? 1 : -1) * state.fieldDir;
+
+                ctx.save();
+                ctx.shadowColor = 'var(--accent-cyan)';
+                ctx.shadowBlur = 15;
+                ctx.strokeStyle = 'var(--accent-cyan)';
+                ctx.lineWidth = 2;
+
+                if (state.plateType === 'solid') {
+                    // Macro Swirling Vortices spanning the plate
+                    const numLoops = 3;
+                    for (let l = 1; l <= numLoops; l++) {
+                        const radiusX = (pw * 0.38) * (l / numLoops);
+                        const radiusY = (ph * 0.38) * (l / numLoops);
+                        
+                        ctx.beginPath();
+                        ctx.ellipse(0, 0, radiusX, radiusY, 0, 0, 2 * Math.PI);
+                        ctx.stroke();
+
+                        // Swirling arrow particles on the loop
+                        const pAngle = state.vortexPhase * swirlDir + (l * Math.PI / 2);
+                        const ax = radiusX * Math.cos(pAngle);
+                        const ay = radiusY * Math.sin(pAngle);
+
+                        ctx.save();
+                        ctx.translate(ax, ay);
+                        const tangent = Math.atan2(radiusY * Math.cos(pAngle), -radiusX * Math.sin(pAngle)) + (swirlDir > 0 ? 0 : Math.PI);
+                        ctx.rotate(tangent);
+
+                        ctx.fillStyle = 'var(--accent-cyan)';
+                        ctx.beginPath();
+                        ctx.moveTo(5, 0);
+                        ctx.lineTo(-4, -3);
+                        ctx.lineTo(-4, 3);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.restore();
+                    }
+
+                    // Text label on plate
+                    ctx.font = 'bold 9px system-ui';
+                    ctx.fillStyle = 'var(--accent-cyan)';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('Correntes de Foucault (Macro)', 0, -ph / 2 - 8);
+
+                } else {
+                    // Micro loops constrained within narrow comb teeth (Placa Ranhurada)
+                    const slots = state.plate.slots;
+                    const slotW = pw / (slots * 2 - 1);
+                    ctx.lineWidth = 1;
+                    ctx.strokeStyle = 'rgba(0, 242, 254, 0.5)';
+
+                    for (let i = 0; i < slots; i++) {
+                        const tx = -pw / 2 + i * 2 * slotW + slotW / 2;
+                        const ty = ph * 0.12;
+
+                        ctx.beginPath();
+                        ctx.ellipse(tx, ty, slotW * 0.4, ph * 0.3, 0, 0, 2 * Math.PI);
+                        ctx.stroke();
+                    }
+
+                    ctx.font = 'bold 9px system-ui';
+                    ctx.fillStyle = 'var(--text-muted)';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('Micro-loops (Frenagem Nula)', 0, -ph / 2 - 8);
+                }
+                ctx.restore();
+            }
+
+            // 5. Vectors: Velocity (\vec{v}) & Magnetic Braking Force (\vec{F}_m)
+            if (Math.abs(linearVel) > 2) {
+                // Velocity Vector (Cyan)
+                const vLen = Math.min(80, Math.max(15, linearVel * 0.05));
+                ctx.save();
+                ctx.strokeStyle = 'var(--accent-cyan)';
+                ctx.fillStyle = 'var(--accent-cyan)';
+                ctx.lineWidth = 3.0;
+                ctx.shadowColor = 'var(--accent-cyan)';
+                ctx.shadowBlur = 10;
+
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(vLen, 0);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(vLen, 0);
+                const vDir = Math.sign(vLen);
+                ctx.lineTo(vLen - 6 * vDir, -4);
+                ctx.lineTo(vLen - 6 * vDir, 4);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.font = 'bold 11px monospace';
+                ctx.fillText('v⃗', vLen + 6 * vDir, 4);
+                ctx.restore();
+
+                // Braking Force Vector (Magenta) - Flares up brightly during abrupt brake!
+                if (state.magneticForce > 0.05) {
+                    const fLen = -Math.sign(linearVel) * Math.min(90, Math.max(20, state.magneticForce * 2.5));
+                    ctx.save();
+                    ctx.strokeStyle = state.isBrakingHard ? '#ff007f' : 'var(--accent-magenta)';
+                    ctx.fillStyle = state.isBrakingHard ? '#ff007f' : 'var(--accent-magenta)';
+                    ctx.lineWidth = state.isBrakingHard ? 4.5 : 3.0;
+                    ctx.shadowColor = '#ff007f';
+                    ctx.shadowBlur = state.isBrakingHard ? 20 : 10;
+
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(fLen, 0);
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.moveTo(fLen, 0);
+                    const fDir = Math.sign(fLen);
+                    ctx.lineTo(fLen - 8 * fDir, -6);
+                    ctx.lineTo(fLen - 8 * fDir, 6);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    ctx.font = 'bold 11px monospace';
+                    ctx.fillText('F⃗_m (Frenagem)', fLen + 10 * fDir, 4);
+                    ctx.restore();
+                }
+            }
+
+            ctx.restore();
+            ctx.restore();
+        }
+
+        // Render Scope Graph
+        function drawOscilloscope() {
+            const w = scopeCanvas.width / window.devicePixelRatio;
+            const h = scopeCanvas.height / window.devicePixelRatio;
+
+            scopeCtx.clearRect(0, 0, w, h);
+
+            // Grid
+            scopeCtx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            scopeCtx.lineWidth = 1;
+            const midY = h / 2;
+            
+            scopeCtx.beginPath();
+            scopeCtx.moveTo(0, midY);
+            scopeCtx.lineTo(w, midY);
+            scopeCtx.stroke();
+
+            if (state.history.length < 2) return;
+
+            const dx = w / 300;
+
+            // Plot Angle (Cyan)
+            scopeCtx.strokeStyle = 'var(--accent-cyan)';
+            scopeCtx.lineWidth = 1.8;
+            scopeCtx.beginPath();
+            state.history.forEach((pt, idx) => {
+                const x = idx * dx;
+                const y = midY - (pt.angle / 75) * (h * 0.4);
+                if (idx === 0) scopeCtx.moveTo(x, y);
+                else scopeCtx.lineTo(x, y);
+            });
+            scopeCtx.stroke();
+
+            // Plot Braking Force (Magenta)
+            scopeCtx.strokeStyle = 'var(--accent-magenta)';
+            scopeCtx.lineWidth = 2.0;
+            scopeCtx.beginPath();
+            state.history.forEach((pt, idx) => {
+                const x = idx * dx;
+                const y = h - 10 - (pt.force / 15) * (h * 0.7);
+                if (idx === 0) scopeCtx.moveTo(x, y);
+                else scopeCtx.lineTo(x, y);
+            });
+            scopeCtx.stroke();
+
+            // Legend Overlay
+            scopeCtx.font = '10px system-ui';
+            scopeCtx.fillStyle = 'var(--accent-cyan)';
+            scopeCtx.fillText('— Ângulo (θ)', 10, 16);
+            scopeCtx.fillStyle = 'var(--accent-magenta)';
+            scopeCtx.fillText('— Força Magnética (F_m)', 100, 16);
+        }
+
+        // Main Render Loop
+        function render() {
+            const width = canvas.width / window.devicePixelRatio;
+            const height = canvas.height / window.devicePixelRatio;
+
+            ctx.clearRect(0, 0, width, height);
+
+            drawMagneticFieldRegion();
+            drawPendulum();
+            drawOscilloscope();
+        }
+
+        // Animation Frame Loop
+        function animate(time) {
+            const dt = (time - state.lastTime) / 1000;
+            state.lastTime = time;
+
+            updatePhysics(dt);
+            render();
+
+            requestAnimationFrame(animate);
+        }
+
+        // INTERACTION & CONTROL BINDINGS
+
+        // Plate Geometry Selector
+        const btnSolid = document.getElementById('btnSolidPlate');
+        const btnSlotted = document.getElementById('btnSlottedPlate');
+        const badgePlateType = document.getElementById('badgePlateType');
+
+        btnSolid.addEventListener('click', () => {
+            state.plateType = 'solid';
+            btnSolid.classList.add('btn-active');
+            btnSlotted.classList.remove('btn-active');
+            badgePlateType.innerHTML = '<span>🔲 Placa Maciça (Frenagem Alta)</span>';
+            badgePlateType.style.borderColor = 'var(--accent-cyan)';
+            badgePlateType.style.color = 'var(--accent-cyan)';
+        });
+
+        btnSlotted.addEventListener('click', () => {
+            state.plateType = 'slotted';
+            btnSlotted.classList.add('btn-active');
+            btnSolid.classList.remove('btn-active');
+            badgePlateType.innerHTML = '<span>🏁 Placa Ranhurada (Frenagem Nula)</span>';
+            badgePlateType.style.borderColor = 'var(--accent-amber)';
+            badgePlateType.style.color = 'var(--accent-amber)';
+        });
+
+        // Sliders
+        const inputBext = document.getElementById('inputBext');
+        const dispBext = document.getElementById('dispBext');
+        inputBext.addEventListener('input', (e) => {
+            state.bExt = parseFloat(e.target.value);
+            dispBext.textContent = state.bExt.toFixed(2) + ' T';
+        });
+
+        const inputMass = document.getElementById('inputMass');
+        const dispMass = document.getElementById('dispMass');
+        inputMass.addEventListener('input', (e) => {
+            state.mass = parseFloat(e.target.value);
+            dispMass.textContent = state.mass.toFixed(2) + ' kg';
+        });
+
+        const inputAngle0 = document.getElementById('inputAngle0');
+        const dispAngle0 = document.getElementById('dispAngle0');
+        inputAngle0.addEventListener('input', (e) => {
+            const deg = parseInt(e.target.value);
+            state.angle0 = deg * Math.PI / 180;
+            dispAngle0.textContent = deg.toFixed(1) + '°';
+            resetPendulum();
+        });
+
+        // Buttons
+        document.getElementById('btnFieldDir').addEventListener('click', (e) => {
+            state.fieldDir *= -1;
+            e.target.textContent = state.fieldDir === 1 ? '🔀 Campo: Entrando (✕)' : '🔀 Campo: Saindo (•)';
+        });
+
+        const btnToggleAir = document.getElementById('btnToggleAir');
+        btnToggleAir.addEventListener('click', () => {
+            state.isAirOn = !state.isAirOn;
+            btnToggleAir.textContent = state.isAirOn ? '💨 Ar: Ligado' : '💨 Ar: Desligado';
+        });
+
+        const btnPlayPause = document.getElementById('btnPlayPause');
+        btnPlayPause.addEventListener('click', () => {
+            state.isRunning = !state.isRunning;
+            btnPlayPause.textContent = state.isRunning ? '⏸️ Pausar' : '▶️ Continuar';
+        });
+
+        function resetPendulum() {
+            state.angle = state.angle0;
+            state.angularVel = 0;
+            state.angularAccel = 0;
+            state.dissipatedJoule = 0;
+            state.initialTotalEnergy = 0;
+            state.history = [];
+        }
+
+        document.getElementById('btnReset').addEventListener('click', resetPendulum);
+
+        // Start Simulation
+        resizeCanvas();
+        requestAnimationFrame(animate);
+    </script>
+</body>
+</html>
