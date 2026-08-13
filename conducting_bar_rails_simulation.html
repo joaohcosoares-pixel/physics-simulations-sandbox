@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Electromagnetic Induction: Conducting Bar on Parallel Rails</title>
+  <style>
+    :root {
+      --bg-primary: #0a0e17;
+      --bg-surface: #111827;
+      --bg-card: #1a2234;
+      --bg-card-hover: #212c42;
+      --border-color: #2a364f;
+      --border-focus: #38bdf8;
+      
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --text-dim: #64748b;
+      
+      --accent-bfield: #6366f1;
+      --accent-velocity: #10b981;
+      --accent-force: #ef4444;
+      --accent-current: #f59e0b;
+      --accent-energy-k: #10b981;
+      --accent-energy-r: #f97316;
+      --accent-cyan: #38bdf8;
+      
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+      --font-mono: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px;
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1280px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 12px 20px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+    }
+
+    .title-group h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .title-group p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 16px;
+    }
+
+    @media (max-width: 1024px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .viewport-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+    }
+
+    .canvas-wrapper {
+      position: relative;
+      width: 100%;
+      height: 440px;
+      background: #070a11;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    canvas#simCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .canvas-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      padding: 4px 8px;
+      background: rgba(17, 24, 39, 0.7);
+      border-radius: 6px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .panel-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 8px;
+    }
+
+    .panel-title {
+      font-size: 0.88rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .control-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+    }
+
+    .control-name {
+      color: var(--text-main);
+      font-weight: 500;
+    }
+
+    .control-val {
+      font-family: var(--font-mono);
+      color: var(--accent-cyan);
+      font-weight: 600;
+      background: rgba(15, 23, 42, 0.6);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid rgba(56, 189, 248, 0.2);
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      background: #1e293b;
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      box-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    button {
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: #0284c7;
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: #0369a1;
+      box-shadow: 0 0 12px rgba(2, 132, 199, 0.4);
+    }
+
+    .btn-secondary {
+      background: var(--bg-card);
+      color: var(--text-main);
+      border-color: var(--border-color);
+    }
+    .btn-secondary:hover {
+      background: var(--bg-card-hover);
+      border-color: #3b4d71;
+    }
+
+    .btn-reset {
+      background: rgba(239, 68, 68, 0.12);
+      color: #fca5a5;
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+    .btn-reset:hover {
+      background: rgba(239, 68, 68, 0.25);
+    }
+
+    .presets-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .btn-preset {
+      flex: 1;
+      min-width: 65px;
+      padding: 6px 8px;
+      font-size: 0.72rem;
+      background: #1e293b;
+      color: var(--text-muted);
+      border: 1px solid #334155;
+      border-radius: 6px;
+    }
+    .btn-preset:hover {
+      background: #334155;
+      color: #fff;
+    }
+
+    .telemetry-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .stat-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .stat-label {
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .stat-value {
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .stat-unit {
+      font-size: 0.72rem;
+      font-weight: 400;
+      color: var(--text-muted);
+      margin-left: 2px;
+    }
+
+    .energy-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    .energy-bar-wrap {
+      width: 100%;
+      height: 16px;
+      background: #0f172a;
+      border-radius: 4px;
+      overflow: hidden;
+      display: flex;
+      border: 1px solid #334155;
+    }
+
+    .energy-bar-k {
+      height: 100%;
+      background: var(--accent-energy-k);
+      transition: width 0.05s linear;
+    }
+
+    .energy-bar-r {
+      height: 100%;
+      background: var(--accent-energy-r);
+      transition: width 0.05s linear;
+    }
+
+    .energy-legend-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.74rem;
+      font-family: var(--font-mono);
+    }
+
+    .graph-panel {
+      width: 100%;
+      height: 140px;
+      background: #070a11;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    canvas#chartCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="title-group">
+        <h1>
+          Conducting Bar on Parallel Rails
+          <span class="badge">Electromagnetic Dynamics</span>
+        </h1>
+        <p>Simulation of Lenz's Law, induced EMF, Lorentz damping force, and Joule dissipation conservation.</p>
+      </div>
+      <div class="legend-item">
+        <span class="badge" style="background: rgba(99, 102, 241, 0.15); color: #a5b4fc; border-color: #6366f1;">
+          B-Field ⊗ Uniform Into Page
+        </span>
+      </div>
+    </header>
+
+    <div class="main-grid">
+      <!-- Simulation Canvas & Telemetry -->
+      <div class="viewport-card">
+        <div class="canvas-wrapper">
+          <canvas id="simCanvas"></canvas>
+        </div>
+
+        <div class="canvas-legend">
+          <div class="legend-item">
+            <div class="legend-color" style="background: var(--accent-velocity);"></div>
+            <span>Velocity Vector (<strong style="color: var(--accent-velocity)">v</strong>)</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="background: var(--accent-force);"></div>
+            <span>Magnetic Braking Force (<strong style="color: var(--accent-force)">F<sub>m</sub></strong>)</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="background: var(--accent-current);"></div>
+            <span>Induced Current Loop (<strong style="color: var(--accent-current)">I</strong>, Counter-Clockwise)</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="background: var(--accent-bfield);"></div>
+            <span>B-Field (Into Page ⊗)</span>
+          </div>
+        </div>
+
+        <!-- Real-Time Charts & Energy Conservation -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="graph-panel">
+            <canvas id="chartCanvas"></canvas>
+          </div>
+
+          <div class="energy-container">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span class="stat-label">Energy Conservation Balance</span>
+              <span id="energyDelta" style="font-size: 0.72rem; font-family: var(--font-mono); color: var(--accent-cyan);">ΔE = 0.000 J</span>
+            </div>
+            <div class="energy-bar-wrap">
+              <div id="barEk" class="energy-bar-k" style="width: 100%;"></div>
+              <div id="barEr" class="energy-bar-r" style="width: 0%;"></div>
+            </div>
+            <div class="energy-legend-row">
+              <span style="color: var(--accent-energy-k);">E<sub>k</sub>: <span id="valEk">0.00</span> J</span>
+              <span style="color: var(--accent-energy-r);">E<sub>diss</sub>: <span id="valEr">0.00</span> J</span>
+              <span style="color: #cbd5e1;">E<sub>total</sub>: <span id="valEtot">0.00</span> J</span>
+            </div>
+            <div style="font-size: 0.72rem; color: var(--text-dim); line-height: 1.2;">
+              Kinetic energy is completely converted into Joule heating: 
+              <em>E<sub>k0</sub> = &frac12; m v<sub>0</sub><sup>2</sup> = &int; I<sup>2</sup>R dt</em>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls & Parameters Sidebar -->
+      <div class="sidebar">
+        <div class="panel-card">
+          <div class="panel-header">
+            <span class="panel-title">Simulation Controls</span>
+          </div>
+          
+          <div class="button-grid">
+            <button id="btnPlayPause" class="btn-primary">
+              <svg id="playIcon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              <span id="playText">Start</span>
+            </button>
+            <button id="btnReset" class="btn-reset">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+              Reset
+            </button>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 2px;">
+            <span class="stat-label">Presets</span>
+            <div class="presets-row">
+              <button class="btn-preset" onclick="applyPreset('default')">Default</button>
+              <button class="btn-preset" onclick="applyPreset('strongB')">Strong B</button>
+              <button class="btn-preset" onclick="applyPreset('lowR')">High Current</button>
+              <button class="btn-preset" onclick="applyPreset('heavy')">Heavy Bar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-header">
+            <span class="panel-title">System Parameters</span>
+          </div>
+
+          <!-- Initial Velocity v0 -->
+          <div class="control-group">
+            <div class="control-label-row">
+              <span class="control-name">Initial Velocity (v<sub>0</sub>)</span>
+              <span class="control-val"><span id="val_v0">5.0</span> m/s</span>
+            </div>
+            <input type="range" id="slider_v0" min="0.5" max="15.0" step="0.1" value="5.0" />
+          </div>
+
+          <!-- Mass m -->
+          <div class="control-group">
+            <div class="control-label-row">
+              <span class="control-name">Bar Mass (m)</span>
+              <span class="control-val"><span id="val_m">0.20</span> kg</span>
+            </div>
+            <input type="range" id="slider_m" min="0.02" max="1.0" step="0.01" value="0.20" />
+          </div>
+
+          <!-- Resistance R -->
+          <div class="control-group">
+            <div class="control-label-row">
+              <span class="control-name">Resistance (R)</span>
+              <span class="control-val"><span id="val_R">2.0</span> &Omega;</span>
+            </div>
+            <input type="range" id="slider_R" min="0.2" max="10.0" step="0.1" value="2.0" />
+          </div>
+
+          <!-- Rail Spacing l -->
+          <div class="control-group">
+            <div class="control-label-row">
+              <span class="control-name">Rail Distance (l)</span>
+              <span class="control-val"><span id="val_l">0.50</span> m</span>
+            </div>
+            <input type="range" id="slider_l" min="0.20" max="1.50" step="0.05" value="0.50" />
+          </div>
+
+          <!-- Magnetic Field B -->
+          <div class="control-group">
+            <div class="control-label-row">
+              <span class="control-name">Magnetic Field (B)</span>
+              <span class="control-val"><span id="val_B">1.50</span> T</span>
+            </div>
+            <input type="range" id="slider_B" min="0.10" max="4.00" step="0.05" value="1.50" />
+          </div>
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-header">
+            <span class="panel-title">Real-Time Telemetry</span>
+          </div>
+
+          <div class="telemetry-grid">
+            <div class="stat-box">
+              <span class="stat-label">Time (t)</span>
+              <div class="stat-value"><span id="tele_t">0.00</span><span class="stat-unit">s</span></div>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">Time Constant (&tau;)</span>
+              <div class="stat-value"><span id="tele_tau">0.00</span><span class="stat-unit">s</span></div>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">Velocity (v)</span>
+              <div class="stat-value" style="color: var(--accent-velocity);"><span id="tele_v">0.00</span><span class="stat-unit">m/s</span></div>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">Position (x)</span>
+              <div class="stat-value"><span id="tele_x">0.00</span><span class="stat-unit">m</span></div>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">Induced Current (I)</span>
+              <div class="stat-value" style="color: var(--accent-current);"><span id="tele_i">0.00</span><span class="stat-unit">A</span></div>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">Braking Force (F<sub>m</sub>)</span>
+              <div class="stat-value" style="color: var(--accent-force);"><span id="tele_f">0.00</span><span class="stat-unit">N</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * Physics Engine & Visual Simulation: Conducting Bar on Parallel Conducting Rails
+     * Strict Analytical + Dynamic Numerical Telemetry for zero drift and exact energy conservation.
+     */
+    
+    // Canvas Elements
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    const chartCanvas = document.getElementById('chartCanvas');
+    const chartCtx = chartCanvas.getContext('2d');
+
+    // UI Buttons & Inputs
+    const btnPlayPause = document.getElementById('btnPlayPause');
+    const btnReset = document.getElementById('btnReset');
+    const playText = document.getElementById('playText');
+    const playIcon = document.getElementById('playIcon');
+
+    const slider_v0 = document.getElementById('slider_v0');
+    const slider_m = document.getElementById('slider_m');
+    const slider_R = document.getElementById('slider_R');
+    const slider_l = document.getElementById('slider_l');
+    const slider_B = document.getElementById('slider_B');
+
+    // Display Labels
+    const val_v0 = document.getElementById('val_v0');
+    const val_m = document.getElementById('val_m');
+    const val_R = document.getElementById('val_R');
+    const val_l = document.getElementById('val_l');
+    const val_B = document.getElementById('val_B');
+
+    // Telemetry fields
+    const tele_t = document.getElementById('tele_t');
+    const tele_tau = document.getElementById('tele_tau');
+    const tele_v = document.getElementById('tele_v');
+    const tele_x = document.getElementById('tele_x');
+    const tele_i = document.getElementById('tele_i');
+    const tele_f = document.getElementById('tele_f');
+
+    // Energy fields
+    const barEk = document.getElementById('barEk');
+    const barEr = document.getElementById('barEr');
+    const valEk = document.getElementById('valEk');
+    const valEr = document.getElementById('valEr');
+    const valEtot = document.getElementById('valEtot');
+    const energyDelta = document.getElementById('energyDelta');
+
+    // System Physical Parameters
+    let params = {
+      v0: 5.0, // m/s
+      m: 0.20, // kg
+      R: 2.0,  // Ohms
+      l: 0.50, // m
+      B: 1.50  // Tesla
+    };
+
+    // State Variables
+    let state = {
+      running: false,
+      t: 0.0,
+      v: 5.0,
+      x: 0.0,
+      I: 0.0,
+      Fm: 0.0,
+      Ek: 0.0,
+      Er: 0.0,
+      E0: 0.0,
+      tau: 0.0,
+      x_stop: 0.0
+    };
+
+    // History log for chart rendering
+    let history = [];
+    const maxHistoryPoints = 250;
+
+    // Electron flow particles
+    const particleCount = 45;
+    let particles = [];
+
+    for (let i = 0; i < particleCount; i++) {
+      particles.push({
+        progress: i / particleCount, // 0 to 1 along circuit loop
+        size: 3.2
+      });
+    }
+
+    // Time handling
+    let lastTimestamp = null;
+    const timeSpeed = 1.0; // Real-time multiplier
+
+    function calculateConstants() {
+      const { m, R, l, B, v0 } = params;
+      // tau = (m * R) / (B^2 * l^2)
+      state.tau = (m * R) / (Math.pow(B * l, 2));
+      state.E0 = 0.5 * m * Math.pow(v0, 2);
+      state.x_stop = v0 * state.tau;
+    }
+
+    function resetSimulation() {
+      state.running = false;
+      state.t = 0.0;
+      state.v = params.v0;
+      state.x = 0.0;
+      calculateConstants();
+      
+      state.I = (params.B * params.l * state.v) / params.R;
+      state.Fm = (Math.pow(params.B * params.l, 2) * state.v) / params.R;
+      state.Ek = state.E0;
+      state.Er = 0.0;
+      
+      history = [{ t: 0, v: state.v, i: state.I, ek: state.Ek, er: 0 }];
+      
+      updatePlayButtonUI();
+      updateTelemetryUI();
+      render();
+    }
+
+    function updatePlayButtonUI() {
+      if (state.running) {
+        playText.textContent = 'Pause';
+        playIcon.innerHTML = '<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>';
+        btnPlayPause.style.background = '#eab308';
+      } else {
+        playText.textContent = state.t > 0 && state.v > 0.01 ? 'Resume' : 'Start';
+        playIcon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"></polygon>';
+        btnPlayPause.style.background = '#0284c7';
+      }
+    }
+
+    function updateTelemetryUI() {
+      tele_t.textContent = state.t.toFixed(2);
+      tele_tau.textContent = state.tau.toFixed(3);
+      tele_v.textContent = state.v.toFixed(3);
+      tele_x.textContent = state.x.toFixed(3);
+      tele_i.textContent = state.I.toFixed(3);
+      tele_f.textContent = state.Fm.toFixed(3);
+
+      valEk.textContent = state.Ek.toFixed(3);
+      valEr.textContent = state.Er.toFixed(3);
+      valEtot.textContent = state.E0.toFixed(3);
+
+      const ratioK = state.E0 > 0 ? (state.Ek / state.E0) * 100 : 0;
+      const ratioR = state.E0 > 0 ? (state.Er / state.E0) * 100 : 0;
+      barEk.style.width = `${Math.max(0, Math.min(100, ratioK))}%`;
+      barEr.style.width = `${Math.max(0, Math.min(100, ratioR))}%`;
+
+      const diff = Math.abs((state.Ek + state.Er) - state.E0);
+      energyDelta.textContent = `ΔE = ${diff.toFixed(5)} J (Exact)`;
+    }
+
+    // Canvas Resize Observer for crisp high-DPI rendering
+    function handleResize() {
+      const dpr = window.devicePixelRatio || 1;
+      
+      // Main canvas
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.resetTransform();
+      ctx.scale(dpr, dpr);
+
+      // Chart canvas
+      const chartRect = chartCanvas.getBoundingClientRect();
+      chartCanvas.width = chartRect.width * dpr;
+      chartCanvas.height = chartRect.height * dpr;
+      chartCtx.resetTransform();
+      chartCtx.scale(dpr, dpr);
+
+      render();
+    }
+
+    window.addEventListener('resize', handleResize);
+
+    // Physics Update Loop
+    function updatePhysics(dt) {
+      if (!state.running) return;
+
+      state.t += dt;
+      
+      // Exact analytical solution: v(t) = v0 * exp(-t / tau)
+      state.v = params.v0 * Math.exp(-state.t / state.tau);
+      
+      // Exact position: x(t) = v0 * tau * (1 - exp(-t / tau))
+      state.x = params.v0 * state.tau * (1 - Math.exp(-state.t / state.tau));
+
+      // Induced Current: I(t) = (B * l * v(t)) / R
+      state.I = (params.B * params.l * state.v) / params.R;
+
+      // Magnetic Retarding Force: Fm(t) = (B^2 * l^2 * v(t)) / R
+      state.Fm = (Math.pow(params.B * params.l, 2) * state.v) / params.R;
+
+      // Energy Conservation:
+      // Ek(t) = 0.5 * m * v(t)^2
+      state.Ek = 0.5 * params.m * Math.pow(state.v, 2);
+      // Dissipated Joule Heat: Er(t) = E0 - Ek(t)
+      state.Er = state.E0 - state.Ek;
+
+      // Current particle progress speed (proportional to current I)
+      const loopSpeed = (state.I / ((params.B * params.l * params.v0) / params.R + 0.001)) * 0.45 * dt;
+      particles.forEach(p => {
+        p.progress = (p.progress + loopSpeed) % 1.0;
+      });
+
+      // Stopping condition: when velocity is negligible
+      if (state.v < 0.008 || state.t > 7.5 * state.tau) {
+        state.v = 0;
+        state.I = 0;
+        state.Fm = 0;
+        state.Ek = 0;
+        state.Er = state.E0;
+        state.running = false;
+        updatePlayButtonUI();
+      }
+
+      // Add to history for chart
+      if (history.length === 0 || state.t - history[history.length - 1].t > 0.035) {
+        history.push({
+          t: state.t,
+          v: state.v,
+          i: state.I,
+          ek: state.Ek,
+          er: state.Er
+        });
+        if (history.length > maxHistoryPoints) history.shift();
+      }
+
+      updateTelemetryUI();
+    }
+
+    // Visual Renderings
+    function render() {
+      const w = canvas.getBoundingClientRect().width;
+      const h = canvas.getBoundingClientRect().height;
+
+      ctx.clearRect(0, 0, w, h);
+
+      // Coordinate System and Dimensions
+      const marginX = 70;
+      const railTop = h * 0.24;
+      const railHeight = h * 0.52;
+      const railBottom = railTop + railHeight;
+      const railLength = w - marginX * 2;
+      const resistorX = marginX + 30;
+
+      // Dynamic scaling for bar displacement:
+      const maxDisplayX = Math.max(state.x_stop * 1.15, 2.5);
+      const pixelPerMeter = (railLength - 120) / maxDisplayX;
+      
+      const barX = resistorX + 40 + (state.x * pixelPerMeter);
+
+      // 1. Draw Uniform Magnetic Field Grid (Into page ⊗)
+      drawMagneticFieldGrid(ctx, w, h);
+
+      // 2. Draw Parallel Conducting Rails
+      drawRails(ctx, marginX, railTop, railBottom, railLength, pixelPerMeter, resistorX);
+
+      // 3. Draw Resistor at left side
+      drawResistor(ctx, resistorX, railTop, railBottom);
+
+      // 4. Draw Current Loop Flow (Counter-Clockwise)
+      drawCurrentLoop(ctx, resistorX, barX, railTop, railBottom);
+
+      // 5. Draw Conducting Sliding Bar
+      drawConductingBar(ctx, barX, railTop, railBottom);
+
+      // 6. Draw Physical Vectors (v, Fm, I)
+      drawVectors(ctx, barX, railTop, railBottom);
+
+      // 7. Render Charts
+      renderLiveChart();
+    }
+
+    function drawMagneticFieldGrid(ctx, w, h) {
+      const spacingX = 42;
+      const spacingY = 42;
+      ctx.save();
+      ctx.strokeStyle = 'rgba(99, 102, 241, 0.28)';
+      ctx.fillStyle = 'rgba(99, 102, 241, 0.35)';
+      ctx.lineWidth = 1.4;
+
+      for (let x = 24; x < w - 10; x += spacingX) {
+        for (let y = 24; y < h - 10; y += spacingY) {
+          // Draw "x" with small outer circle
+          const r = 5.5;
+          ctx.beginPath();
+          ctx.arc(x, y, r + 2.5, 0, Math.PI * 2);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(x - r * 0.6, y - r * 0.6);
+          ctx.lineTo(x + r * 0.6, y + r * 0.6);
+          ctx.moveTo(x + r * 0.6, y - r * 0.6);
+          ctx.lineTo(x - r * 0.6, y + r * 0.6);
+          ctx.stroke();
+        }
+      }
+
+      // B-Field Label
+      ctx.font = '600 13px -apple-system, BlinkMacSystemFont, sans-serif';
+      ctx.fillStyle = 'rgba(165, 180, 252, 0.85)';
+      ctx.fillText(`B = ${params.B.toFixed(2)} T  (Uniform Magnetic Field Into Screen ⊗)`, 24, 26);
+      ctx.restore();
+    }
+
+    function drawRails(ctx, startX, topY, botY, length, ppm, resX) {
+      ctx.save();
+
+      // Top Rail
+      const railGrad = ctx.createLinearGradient(0, topY - 6, 0, topY + 6);
+      railGrad.addColorStop(0, '#94a3b8');
+      railGrad.addColorStop(0.5, '#cbd5e1');
+      railGrad.addColorStop(1, '#64748b');
+
+      ctx.fillStyle = railGrad;
+      ctx.fillRect(startX, topY - 5, length, 10);
+      ctx.fillRect(startX, botY - 5, length, 10);
+
+      // Distance Ruler / Metric Ticks on Bottom Rail
+      ctx.fillStyle = '#64748b';
+      ctx.font = '9px "SFMono-Regular", Consolas, monospace';
+      ctx.textAlign = 'center';
+
+      const originX = resX + 40;
+      const meterStep = ppm > 140 ? 0.2 : (ppm > 60 ? 0.5 : 1.0);
+
+      for (let m = 0; m <= 15; m += meterStep) {
+        const xPos = originX + m * ppm;
+        if (xPos > startX + length - 15) break;
+
+        ctx.strokeStyle = '#475569';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(xPos, botY + 6);
+        ctx.lineTo(xPos, botY + 14);
+        ctx.stroke();
+
+        ctx.fillText(`${m.toFixed(1)}m`, xPos, botY + 25);
+      }
+
+      // Rail Distance Label (l)
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.5)';
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([4, 4]);
+
+      const dimX = startX + length - 20;
+      ctx.beginPath();
+      ctx.moveTo(dimX, topY);
+      ctx.lineTo(dimX, botY);
+      ctx.stroke();
+
+      ctx.setLineDash([]);
+      ctx.fillStyle = 'var(--accent-cyan)';
+      ctx.font = '600 11px sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(`l = ${params.l.toFixed(2)} m`, dimX - 8, (topY + botY) / 2);
+
+      ctx.restore();
+    }
+
+    function drawResistor(ctx, x, topY, botY) {
+      ctx.save();
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = 3.5;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      const midY = (topY + botY) / 2;
+      const zigLength = 70;
+      const zigStart = midY - zigLength / 2;
+      const zigEnd = midY + zigLength / 2;
+      const numZigs = 6;
+      const amp = 12;
+
+      // Straight leads
+      ctx.beginPath();
+      ctx.moveTo(x, topY);
+      ctx.lineTo(x, zigStart);
+      
+      // Zig-Zag pattern
+      const step = zigLength / numZigs;
+      for (let i = 0; i <= numZigs; i++) {
+        const curY = zigStart + i * step;
+        const curX = i === 0 || i === numZigs ? x : x + (i % 2 === 1 ? amp : -amp);
+        ctx.lineTo(curX, curY);
+      }
+
+      ctx.lineTo(x, botY);
+      ctx.stroke();
+
+      // Resistor Badge / Label
+      ctx.fillStyle = '#1e293b';
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 1.5;
+      
+      const badgeW = 60;
+      const badgeH = 22;
+      ctx.beginPath();
+      ctx.roundRect(x - badgeW - 14, midY - badgeH / 2, badgeW, badgeH, 4);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = 'bold 11px "SFMono-Regular", Consolas, monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`R = ${params.R.toFixed(1)}Ω`, x - 14 - badgeW / 2, midY);
+
+      ctx.restore();
+    }
+
+    function drawConductingBar(ctx, x, topY, botY) {
+      ctx.save();
+      
+      // Metallic Shadow & Glow
+      ctx.shadowColor = 'rgba(56, 189, 248, 0.35)';
+      ctx.shadowBlur = 12;
+
+      // Bar Body
+      const barWidth = 14;
+      const barGrad = ctx.createLinearGradient(x - barWidth / 2, 0, x + barWidth / 2, 0);
+      barGrad.addColorStop(0, '#64748b');
+      barGrad.addColorStop(0.3, '#f8fafc');
+      barGrad.addColorStop(0.7, '#cbd5e1');
+      barGrad.addColorStop(1, '#334155');
+
+      ctx.fillStyle = barGrad;
+      ctx.beginPath();
+      ctx.roundRect(x - barWidth / 2, topY - 14, barWidth, (botY - topY) + 28, 4);
+      ctx.fill();
+
+      // Contact point spark effect if current is significant
+      if (state.I > 0.05 && state.running) {
+        ctx.fillStyle = '#fef08a';
+        ctx.shadowColor = '#facc15';
+        ctx.shadowBlur = 8;
+        
+        ctx.beginPath();
+        ctx.arc(x, topY, 3.5, 0, Math.PI * 2);
+        ctx.arc(x, botY, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Bar Label / Mass
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#f8fafc';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`Mass = ${params.m.toFixed(2)}kg`, x, botY + 38);
+
+      ctx.restore();
+    }
+
+    function drawCurrentLoop(ctx, resX, barX, topY, botY) {
+      if (barX <= resX) return;
+
+      const perimeter = 2 * (barX - resX) + 2 * (botY - topY);
+      if (perimeter <= 0) return;
+
+      ctx.save();
+
+      // Draw active loop current particles (Counter-Clockwise: Up bar, Left top, Down resistor, Right bottom)
+      particles.forEach(p => {
+        const dist = p.progress * perimeter;
+        let px = 0, py = 0;
+
+        const h = botY - topY;
+        const w = barX - resX;
+
+        if (dist < h) {
+          // Up along conducting bar: (barX, botY) -> (barX, topY)
+          px = barX;
+          py = botY - dist;
+        } else if (dist < h + w) {
+          // Left along top rail: (barX, topY) -> (resX, topY)
+          const d = dist - h;
+          px = barX - d;
+          py = topY;
+        } else if (dist < 2 * h + w) {
+          // Down along resistor: (resX, topY) -> (resX, botY)
+          const d = dist - (h + w);
+          px = resX;
+          py = topY + d;
+        } else {
+          // Right along bottom rail: (resX, botY) -> (barX, botY)
+          const d = dist - (2 * h + w);
+          px = resX + d;
+          py = botY;
+        }
+
+        // Particle alpha scales with current magnitude
+        const alpha = Math.min(1.0, Math.max(0.15, state.I / 2.0));
+        ctx.fillStyle = `rgba(245, 158, 11, ${alpha})`;
+        ctx.shadowColor = '#f59e0b';
+        ctx.shadowBlur = state.I > 0.1 ? 6 : 0;
+
+        ctx.beginPath();
+        ctx.arc(px, py, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Directional arrow on Top rail (pointing left)
+      if (barX - resX > 50 && state.I > 0.02) {
+        drawArrow(ctx, (resX + barX) / 2 + 15, topY - 14, (resX + barX) / 2 - 15, topY - 14, '#f59e0b', 2.0);
+        ctx.fillStyle = '#fbbf24';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Current I', (resX + barX) / 2, topY - 22);
+      }
+
+      ctx.restore();
+    }
+
+    function drawVectors(ctx, barX, topY, botY) {
+      const midY = (topY + botY) / 2;
+      ctx.save();
+
+      // 1. Velocity Vector (v) - Green Arrow to Right
+      const vScale = 14.0; // px per m/s
+      const vLen = Math.max(0, state.v * vScale);
+      if (vLen > 2) {
+        drawArrow(ctx, barX + 10, midY - 15, barX + 10 + vLen, midY - 15, '#10b981', 3.0);
+        ctx.fillStyle = '#10b981';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(`v = ${state.v.toFixed(2)} m/s`, barX + 18 + vLen, midY - 12);
+      }
+
+      // 2. Magnetic Braking Force Vector (Fm) - Red Arrow to Left
+      const fScale = 18.0; // px per N
+      const fLen = Math.max(0, state.Fm * fScale);
+      if (fLen > 2) {
+        drawArrow(ctx, barX - 10, midY + 15, barX - 10 - fLen, midY + 15, '#ef4444', 3.0);
+        ctx.fillStyle = '#ef4444';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText(`F_m = ${state.Fm.toFixed(2)} N`, barX - 18 - fLen, midY + 18);
+      }
+
+      // 3. Current Direction Vector along the bar (Upward)
+      if (state.I > 0.05) {
+        drawArrow(ctx, barX, midY + 25, barX, midY - 25, '#f59e0b', 2.5);
+      }
+
+      ctx.restore();
+    }
+
+    function drawArrow(ctx, fromX, fromY, toX, toY, color, width) {
+      const headlen = 8;
+      const angle = Math.atan2(toY - fromY, toX - fromX);
+
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = width;
+      ctx.lineCap = 'round';
+
+      ctx.beginPath();
+      ctx.moveTo(fromX, fromY);
+      ctx.lineTo(toX, toY);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(toX, toY);
+      ctx.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Mini Live Chart Rendering
+    function renderLiveChart() {
+      const cw = chartCanvas.getBoundingClientRect().width;
+      const ch = chartCanvas.getBoundingClientRect().height;
+
+      chartCtx.clearRect(0, 0, cw, ch);
+
+      // Background grid
+      chartCtx.strokeStyle = '#1e293b';
+      chartCtx.lineWidth = 1;
+      chartCtx.beginPath();
+      chartCtx.moveTo(35, 10);
+      chartCtx.lineTo(35, ch - 22);
+      chartCtx.lineTo(cw - 10, ch - 22);
+      chartCtx.stroke();
+
+      // Title & Legend
+      chartCtx.font = '10px sans-serif';
+      chartCtx.fillStyle = 'var(--text-muted)';
+      chartCtx.fillText('v(t) Velocity vs Time', 40, 16);
+
+      if (history.length < 2) return;
+
+      const maxTime = Math.max(state.tau * 4.0, state.t * 1.1, 2.0);
+      const maxV = Math.max(params.v0 * 1.1, 1.0);
+
+      const plotW = cw - 50;
+      const plotH = ch - 36;
+      const originX = 35;
+      const originY = ch - 22;
+
+      // Plot Velocity v(t) curve
+      chartCtx.strokeStyle = '#10b981';
+      chartCtx.lineWidth = 2;
+      chartCtx.beginPath();
+
+      history.forEach((pt, idx) => {
+        const px = originX + (pt.t / maxTime) * plotW;
+        const py = originY - (pt.v / maxV) * plotH;
+        if (idx === 0) chartCtx.moveTo(px, py);
+        else chartCtx.lineTo(px, py);
+      });
+      chartCtx.stroke();
+
+      // Current point highlight
+      const curX = originX + (state.t / maxTime) * plotW;
+      const curY = originY - (state.v / maxV) * plotH;
+      chartCtx.fillStyle = '#10b981';
+      chartCtx.beginPath();
+      chartCtx.arc(curX, curY, 3.5, 0, Math.PI * 2);
+      chartCtx.fill();
+    }
+
+    // Animation Frame Loop
+    function animLoop(timestamp) {
+      if (!lastTimestamp) lastTimestamp = timestamp;
+      const dt = Math.min((timestamp - lastTimestamp) / 1000, 0.05) * timeSpeed;
+      lastTimestamp = timestamp;
+
+      if (state.running) {
+        updatePhysics(dt);
+      }
+
+      render();
+      requestAnimationFrame(animLoop);
+    }
+
+    // Preset Configurations
+    window.applyPreset = function(type) {
+      if (type === 'default') {
+        slider_v0.value = 5.0;
+        slider_m.value = 0.20;
+        slider_R.value = 2.0;
+        slider_l.value = 0.50;
+        slider_B.value = 1.50;
+      } else if (type === 'strongB') {
+        slider_v0.value = 8.0;
+        slider_m.value = 0.15;
+        slider_R.value = 1.5;
+        slider_l.value = 0.80;
+        slider_B.value = 3.50;
+      } else if (type === 'lowR') {
+        slider_v0.value = 6.0;
+        slider_m.value = 0.30;
+        slider_R.value = 0.4;
+        slider_l.value = 0.60;
+        slider_B.value = 1.20;
+      } else if (type === 'heavy') {
+        slider_v0.value = 4.0;
+        slider_m.value = 0.90;
+        slider_R.value = 4.0;
+        slider_l.value = 0.40;
+        slider_B.value = 0.80;
+      }
+      syncInputs();
+      resetSimulation();
+    };
+
+    function syncInputs() {
+      params.v0 = parseFloat(slider_v0.value);
+      params.m = parseFloat(slider_m.value);
+      params.R = parseFloat(slider_R.value);
+      params.l = parseFloat(slider_l.value);
+      params.B = parseFloat(slider_B.value);
+
+      val_v0.textContent = params.v0.toFixed(1);
+      val_m.textContent = params.m.toFixed(2);
+      val_R.textContent = params.R.toFixed(1);
+      val_l.textContent = params.l.toFixed(2);
+      val_B.textContent = params.B.toFixed(2);
+
+      calculateConstants();
+      if (!state.running && state.t === 0) {
+        state.v = params.v0;
+        state.Ek = state.E0;
+        updateTelemetryUI();
+      }
+    }
+
+    // Event Listeners
+    [slider_v0, slider_m, slider_R, slider_l, slider_B].forEach(input => {
+      input.addEventListener('input', () => {
+        syncInputs();
+        if (!state.running && state.t === 0) {
+          resetSimulation();
+        }
+      });
+    });
+
+    btnPlayPause.addEventListener('click', () => {
+      if (state.v <= 0.008 && !state.running) {
+        resetSimulation();
+      }
+      state.running = !state.running;
+      updatePlayButtonUI();
+    });
+
+    btnReset.addEventListener('click', () => {
+      resetSimulation();
+    });
+
+    // Initialize simulation
+    syncInputs();
+    resetSimulation();
+    handleResize();
+    requestAnimationFrame(animLoop);
+  </script>
+</body>
+</html>
