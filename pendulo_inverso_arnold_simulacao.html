@@ -1,0 +1,1733 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fluxo de Fase do Pêndulo Inverso | Deformação Geométrica de Arnold</title>
+  <style>
+    :root {
+      --bg-primary: #0a0d14;
+      --bg-secondary: #121824;
+      --bg-tertiary: #1b2436;
+      --bg-panel: rgba(18, 24, 36, 0.90);
+      --border-subtle: #243048;
+      --border-focus: #3d5a80;
+      
+      --text-main: #f0f4fc;
+      --text-muted: #8e9cb2;
+      --text-dim: #5c6b84;
+      
+      --accent-unstable: #ff4757;  /* Variedade Instável W^u (y = x) */
+      --accent-stable: #2ed573;    /* Variedade Estável W^s (y = -x) */
+      --accent-circle: #00d2d3;    /* Círculo Inicial t = 0 */
+      --accent-deformed: #ffa502;  /* Geometria Deformada t */
+      --accent-center: #ffd32a;    /* Trajetória do Centro */
+      --accent-hyperbola: #3a4a66; /* Curvas de Fase / Energia */
+      --accent-grid: #1e283d;      /* Grade cartesiana */
+      --accent-axes: #64748b;      /* Eixos x, y */
+      
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: "JetBrains Mono", "Fira Code", Menlo, Monaco, Consolas, monospace;
+      --font-math: "Cambria Math", "Latin Modern Math", "STIX Two Math", "Times New Roman", serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+      flex-shrink: 0;
+    }
+
+    .title-group h1 {
+      font-size: 1.12rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .title-group h1 .badge {
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-focus);
+      color: var(--accent-circle);
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+    }
+
+    .subtitle {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+      font-family: var(--font-mono);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .btn {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      font-family: var(--font-sans);
+    }
+
+    .btn:hover {
+      background: var(--border-subtle);
+      border-color: var(--border-focus);
+      color: #fff;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-primary {
+      background: #1e3a8a;
+      border-color: #3b82f6;
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #2563eb;
+    }
+
+    .btn-icon {
+      padding: 6px 10px;
+      font-family: var(--font-mono);
+    }
+
+    /* Main Layout */
+    .main-container {
+      display: flex;
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Canvas Viewport */
+    .canvas-container {
+      flex: 1;
+      position: relative;
+      background: var(--bg-primary);
+      overflow: hidden;
+      cursor: grab;
+    }
+
+    .canvas-container:active {
+      cursor: grabbing;
+    }
+
+    canvas {
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Overlay HUD Controls */
+    .hud-controls {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      background: var(--bg-panel);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 8px 12px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      z-index: 5;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+
+    .legend-overlay {
+      position: absolute;
+      bottom: 14px;
+      left: 14px;
+      background: var(--bg-panel);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.75rem;
+      z-index: 5;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      max-width: 330px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-muted);
+    }
+
+    .legend-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    .legend-line {
+      width: 16px;
+      height: 2px;
+      flex-shrink: 0;
+    }
+
+    /* Sidebar Dashboard */
+    .sidebar {
+      width: 440px;
+      background: var(--bg-secondary);
+      border-left: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      z-index: 10;
+      flex-shrink: 0;
+    }
+
+    .sidebar-section {
+      padding: 15px 18px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .sidebar-section:last-child {
+      border-bottom: none;
+    }
+
+    .section-title {
+      font-size: 0.76rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Timeline Slider */
+    .timeline-card {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+
+    .time-readout {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 8px;
+    }
+
+    .time-label {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .time-value {
+      font-family: var(--font-mono);
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--accent-deformed);
+    }
+
+    .slider-container {
+      margin-bottom: 10px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: var(--bg-tertiary);
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent-deformed);
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(255, 165, 2, 0.6);
+      border: 2px solid #fff;
+      transition: transform 0.1s ease;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    .slider-ticks {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+
+    .playback-toolbar {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      justify-content: center;
+      margin-top: 8px;
+    }
+
+    .preset-chips {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .chip {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      padding: 3px 7px;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-family: var(--font-mono);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .chip:hover {
+      background: var(--border-subtle);
+      color: #fff;
+    }
+
+    .chip.active {
+      background: #1e293b;
+      border-color: var(--accent-deformed);
+      color: var(--accent-deformed);
+      font-weight: 700;
+    }
+
+    /* Math Matrix & Metrics Box */
+    .math-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .metric-card {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 9px 11px;
+    }
+
+    .metric-title {
+      font-size: 0.68rem;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      margin-bottom: 3px;
+    }
+
+    .metric-value {
+      font-family: var(--font-mono);
+      font-size: 1.02rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .metric-sub {
+      font-size: 0.66rem;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+
+    /* Matrix Display */
+    .matrix-box {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-top: 8px;
+      font-family: var(--font-mono);
+    }
+
+    .matrix-formula {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 0.85rem;
+    }
+
+    .matrix-bracket {
+      display: inline-grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px 10px;
+      padding: 4px 8px;
+      border-left: 2px solid var(--text-muted);
+      border-right: 2px solid var(--text-muted);
+      border-radius: 4px;
+      text-align: right;
+      font-size: 0.82rem;
+    }
+
+    .matrix-bracket span {
+      color: #38bdf8;
+    }
+
+    /* Theoretical Panel */
+    .theory-panel {
+      font-size: 0.8rem;
+      line-height: 1.5;
+      color: var(--text-muted);
+    }
+
+    .theory-panel p {
+      margin-bottom: 8px;
+    }
+
+    .theory-panel strong {
+      color: var(--text-main);
+    }
+
+    .math-formula {
+      font-family: var(--font-math), var(--font-mono);
+      background: var(--bg-primary);
+      border: 1px solid var(--border-subtle);
+      padding: 6px 10px;
+      border-radius: 5px;
+      text-align: center;
+      margin: 8px 0;
+      color: #93c5fd;
+      font-size: 0.88rem;
+      letter-spacing: 0.02em;
+    }
+
+    /* Layer Toggles */
+    .toggles-list {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.77rem;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .toggle-row:hover {
+      color: var(--text-main);
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 32px;
+      height: 18px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider-round {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: var(--bg-tertiary);
+      border: 1px solid var(--border-subtle);
+      transition: .2s;
+      border-radius: 18px;
+    }
+
+    .slider-round:before {
+      position: absolute;
+      content: "";
+      height: 12px;
+      width: 12px;
+      left: 2px;
+      bottom: 2px;
+      background-color: var(--text-muted);
+      transition: .2s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider-round {
+      background-color: #2563eb;
+      border-color: #3b82f6;
+    }
+
+    input:checked + .slider-round:before {
+      transform: translateX(14px);
+      background-color: #fff;
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-focus);
+      border-radius: 12px;
+      max-width: 680px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 24px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .modal-header h2 {
+      font-size: 1.15rem;
+      color: #fff;
+    }
+
+    .close-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.3rem;
+      cursor: pointer;
+    }
+
+    .close-btn:hover {
+      color: #fff;
+    }
+
+    @media (max-width: 1024px) {
+      .main-container {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        height: 380px;
+        border-left: none;
+        border-top: 1px solid var(--border-subtle);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="title-group">
+      <h1>
+        Fluxo de Fase do Pêndulo Inverso
+        <span class="badge">V. I. Arnold</span>
+      </h1>
+      <div class="subtitle">Evolução e Deformação do Círculo Inicial x² + (y - 1)² &lt; 1/4 sob o Sistema ẍ = x</div>
+    </div>
+    <div class="header-actions">
+      <button class="btn" id="btn-theory">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+        Fundamentação Teórica
+      </button>
+      <button class="btn btn-primary" id="btn-reset-view">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+        Centralizar Vista
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Viewport -->
+  <div class="main-container">
+    
+    <!-- Interactive Canvas Stage -->
+    <div class="canvas-container" id="canvas-container">
+      <canvas id="phaseCanvas"></canvas>
+      
+      <!-- Top HUD Navigation / Quick Zoom -->
+      <div class="hud-controls">
+        <button class="btn btn-icon" id="btn-zoom-in" title="Aumentar Zoom">+</button>
+        <button class="btn btn-icon" id="btn-zoom-out" title="Diminuir Zoom">−</button>
+        <button class="btn btn-icon" id="btn-zoom-reset" title="Restaurar Escala (1x)">1:1</button>
+        <div style="width: 1px; height: 16px; background: var(--border-subtle);"></div>
+        <span style="font-size: 0.72rem; font-family: var(--font-mono); color: var(--text-muted);" id="hud-scale-readout">Escala: 130 px/un</span>
+      </div>
+
+      <!-- Bottom HUD Legend -->
+      <div class="legend-overlay">
+        <div style="font-weight: 700; color: #fff; font-size: 0.76rem; margin-bottom: 2px;">ELEMENTOS DO PLANO DE FASE</div>
+        <div class="legend-item">
+          <div class="legend-line" style="background: var(--accent-unstable);"></div>
+          <span>Variedade Instável W<sup>u</sup>: y = x (λ = +1, estiramento e<sup>t</sup>)</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-line" style="background: var(--accent-stable);"></div>
+          <span>Variedade Estável W<sup>s</sup>: y = -x (λ = -1, compressão e<sup>-t</sup>)</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-indicator" style="background: rgba(0, 210, 211, 0.2); border: 1.5px dashed var(--accent-circle);"></div>
+          <span>Círculo Inicial D₀ (t = 0, raio r = 1/2, centro (0,1))</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-indicator" style="background: rgba(255, 165, 2, 0.35); border: 2px solid var(--accent-deformed);"></div>
+          <span>Região Deformada D<sub>t</sub> = g<sup>t</sup>(D₀) (Área Invariante = π/4)</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-line" style="background: var(--accent-center); border-top: 1px dashed var(--accent-center);"></div>
+          <span>Trajetória do Centro (x(t) = sinh t, y(t) = cosh t)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar Analytical Controls & Metrics -->
+    <div class="sidebar">
+      
+      <!-- Parameter t & Animation Controls -->
+      <div class="sidebar-section">
+        <div class="section-title">
+          <span>Parâmetro Temporal</span>
+          <span style="color: var(--accent-deformed); font-family: var(--font-mono);">Fluxo de Fase g<sup>t</sup></span>
+        </div>
+
+        <div class="timeline-card">
+          <div class="time-readout">
+            <span class="time-label">Tempo t:</span>
+            <span class="time-value" id="time-display">0.00</span>
+          </div>
+
+          <div class="slider-container">
+            <input type="range" id="time-slider" min="-2.50" max="2.50" step="0.01" value="0.00">
+            <div class="slider-ticks">
+              <span>-2.50 (Passado)</span>
+              <span>t = 0</span>
+              <span>+2.50 (Futuro)</span>
+            </div>
+          </div>
+
+          <div class="playback-toolbar">
+            <button class="btn btn-icon" id="btn-step-back" title="Recuar 0.05s">◀❚</button>
+            <button class="btn btn-icon" id="btn-play-reverse" title="Reproduzir no Passado">◀</button>
+            <button class="btn btn-primary btn-icon" id="btn-play-pause" title="Reproduzir / Pausar">▶</button>
+            <button class="btn btn-icon" id="btn-step-fwd" title="Avançar 0.05s">❚▶</button>
+            <button class="btn btn-icon" id="btn-reset-time" title="Resetar para t = 0">↺ t=0</button>
+          </div>
+
+          <div class="preset-chips">
+            <span style="font-size: 0.7rem; color: var(--text-dim); align-self: center; margin-right: 2px;">Presets:</span>
+            <button class="chip active" data-t="0.00">t = 0.00</button>
+            <button class="chip" data-t="0.50">t = 0.50</button>
+            <button class="chip" data-t="1.00">t = 1.00</button>
+            <button class="chip" data-t="1.50">t = 1.50</button>
+            <button class="chip" data-t="2.00">t = 2.00</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Real-time Linear Operator & Invariants -->
+      <div class="sidebar-section">
+        <div class="section-title">
+          <span>Matriz de Evolução &amp; Invariantes</span>
+          <span style="color: #38bdf8; font-family: var(--font-mono);">exp(At)</span>
+        </div>
+
+        <div class="matrix-box">
+          <div class="matrix-formula">
+            <span>Φ(t) = e<sup>At</sup> =</span>
+            <div class="matrix-bracket">
+              <span id="m00">1.000</span>
+              <span id="m01">0.000</span>
+              <span id="m10">0.000</span>
+              <span id="m11">1.000</span>
+            </div>
+            <div style="font-size: 0.72rem; color: var(--text-dim); line-height: 1.2;">
+              [ cosh(t) &nbsp; sinh(t) ]<br>
+              [ sinh(t) &nbsp; cosh(t) ]
+            </div>
+          </div>
+        </div>
+
+        <div class="math-grid" style="margin-top: 10px;">
+          <div class="metric-card">
+            <div class="metric-title">Determinante det(Φ)</div>
+            <div class="metric-value" style="color: #2ed573;" id="det-value">1.00000</div>
+            <div class="metric-sub">Teorema de Liouville (Área cte)</div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-title">Área do Conjunto D<sub>t</sub></div>
+            <div class="metric-value" style="color: #2ed573;" id="area-value">0.7854 (π/4)</div>
+            <div class="metric-sub">Conservação de Fase</div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-title">Estiramento (e<sup>t</sup>)</div>
+            <div class="metric-value" style="color: var(--accent-unstable);" id="stretch-value">1.000×</div>
+            <div class="metric-sub">Eixo Instável (y = x)</div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-title">Compressão (e<sup>-t</sup>)</div>
+            <div class="metric-value" style="color: var(--accent-stable);" id="compress-value">1.000×</div>
+            <div class="metric-sub">Eixo Estável (y = -x)</div>
+          </div>
+
+          <div class="metric-card" style="grid-column: span 2;">
+            <div class="metric-title">Posição do Centro [x(t), y(t)]</div>
+            <div class="metric-value" style="color: var(--accent-center); font-size: 0.95rem;" id="center-coords">[ 0.000 , 1.000 ]</div>
+            <div class="metric-sub">Energia H = ½(y² - x²) = 0.5000 (Constante)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Visual Layer Toggles -->
+      <div class="sidebar-section">
+        <div class="section-title">Camadas Visuais &amp; Geometria</div>
+        <div class="toggles-list">
+          <label class="toggle-row">
+            <span>Curvas de Fase Hiperbólicas (Níveis de Energia)</span>
+            <span class="switch">
+              <input type="checkbox" id="toggle-hyperbolas" checked>
+              <span class="slider-round"></span>
+            </span>
+          </label>
+
+          <label class="toggle-row">
+            <span>Variedades Invariantes (Assíntotas W<sup>u</sup> e W<sup>s</sup>)</span>
+            <span class="switch">
+              <input type="checkbox" id="toggle-separatrices" checked>
+              <span class="slider-round"></span>
+            </span>
+          </label>
+
+          <label class="toggle-row">
+            <span>Campo Vetorial v(x, y) = (y, x)</span>
+            <span class="switch">
+              <input type="checkbox" id="toggle-vectorfield" checked>
+              <span class="slider-round"></span>
+            </span>
+          </label>
+
+          <label class="toggle-row">
+            <span>Malha Interna Deformada (Difeomorfismo)</span>
+            <span class="switch">
+              <input type="checkbox" id="toggle-mesh" checked>
+              <span class="slider-round"></span>
+            </span>
+          </label>
+
+          <label class="toggle-row">
+            <span>Trajetória do Centro de Massa</span>
+            <span class="switch">
+              <input type="checkbox" id="toggle-trajectory" checked>
+              <span class="slider-round"></span>
+            </span>
+          </label>
+
+          <label class="toggle-row">
+            <span>Eixos Principais da Elipse Deformada</span>
+            <span class="switch">
+              <input type="checkbox" id="toggle-axes" checked>
+              <span class="slider-round"></span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Quick Theory Snippet -->
+      <div class="sidebar-section">
+        <div class="section-title">Síntese Matemática</div>
+        <div class="theory-panel">
+          <p>Para o sistema <strong>ẍ = x</strong> com estado <strong>z = (x, y)ᵀ</strong> (onde <strong>y = ẋ</strong>):</p>
+          <div class="math-formula">
+            ż = [ 0 &nbsp; 1 ; &nbsp; 1 &nbsp; 0 ] z &nbsp;⟹&nbsp; g<sup>t</sup>(z₀) = [ cosh(t) &nbsp; sinh(t) ; &nbsp; sinh(t) &nbsp; cosh(t) ] z₀
+          </div>
+          <p>Nas coordenadas diagonais <strong>ξ = x + y</strong> e <strong>η = x - y</strong>, o sistema se desacopla em <strong>ξ(t) = ξ₀ e<sup>t</sup></strong> e <strong>η(t) = η₀ e<sup>-t</sup></strong>.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Theory Modal -->
+  <div class="modal" id="theory-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Fundamentação Teórica e Formulação de V. I. Arnold</h2>
+        <button class="close-btn" id="modal-close">&times;</button>
+      </div>
+      <div class="theory-panel" style="font-size: 0.88rem; color: #cbd5e1;">
+        <h3 style="color: #fff; margin-bottom: 6px;">1. A Equação do Pêndulo Inverso</h3>
+        <p>
+          Considere o pêndulo na vizinhança de sua posição vertical instável superior. A equação não linear é $\ddot{\theta} = \frac{g}{l} \sin\theta$. Linearizando em torno de $\theta = 0$, e reescalando o tempo tal que $g/l = 1$, obtemos a equação canônica:
+        </p>
+        <div class="math-formula">$\ddot{x} = x$</div>
+
+        <h3 style="color: #fff; margin-top: 14px; margin-bottom: 6px;">2. Sistema no Plano de Fase</h3>
+        <p>
+          Definindo a velocidade $y = \dot{x}$, o sistema de segunda ordem se reduz ao sistema linear de primeira ordem:
+        </p>
+        <div class="math-formula">
+          $\dot{x} = y, \quad \dot{y} = x \quad \iff \quad \begin{pmatrix} \dot{x} \\ \dot{y} \end{pmatrix} = \begin{pmatrix} 0 & 1 \\ 1 & 0 \end{pmatrix} \begin{pmatrix} x \\ y \end{pmatrix}$
+        </div>
+        <p>
+          A matriz do sistema $A = \begin{pmatrix} 0 & 1 \\ 1 & 0 \end{pmatrix}$ possui autovalores reais $\lambda_1 = +1$ e $\lambda_2 = -1$, caracterizando um <strong>ponto de sela hiperbólico</strong> na origem $(0,0)$.
+        </p>
+
+        <h3 style="color: #fff; margin-top: 14px; margin-bottom: 6px;">3. O Fluxo de Fase e a Exponencial de Matriz</h3>
+        <p>
+          O grupo a um parâmetro de transformações lineares (o fluxo de fase $g^t = \exp(At)$) é dado pela exponencial da matriz:
+        </p>
+        <div class="math-formula">
+          $\Phi(t) = e^{At} = I \cosh(t) + A \sinh(t) = \begin{pmatrix} \cosh(t) & \sinh(t) \\ \sinh(t) & \cosh(t) \end{pmatrix}$
+        </div>
+        <p>
+          Assim, a evolução temporal de qualquer estado inicial $(x_0, y_0)^T$ é dada exatamente por:
+        </p>
+        <div class="math-formula">
+          $x(t) = x_0 \cosh(t) + y_0 \sinh(t)$<br>
+          $y(t) = x_0 \sinh(t) + y_0 \cosh(t)$
+        </div>
+
+        <h3 style="color: #fff; margin-top: 14px; margin-bottom: 6px;">4. Deformação do Círculo Inicial de Arnold</h3>
+        <p>
+          No clássico <em>"Ordinary Differential Equations"</em> de V. I. Arnold, é proposto o problema de acompanhar a deformação do conjunto inicial definido pela desigualdade circular:
+        </p>
+        <div class="math-formula">$D_0 = \{ (x, y) \in \mathbb{R}^2 \mid x^2 + (y - 1)^2 < 1/4 \}$</div>
+        <p>
+          Sob a ação do fluxo $g^t$, o círculo se transforma numa elipse de excentricidade crescente:
+        </p>
+        <ul style="padding-left: 20px; margin-bottom: 10px;">
+          <li>O centro $(0, 1)$ move-se ao longo do ramo de hipérbole $y^2 - x^2 = 1$, ocupando $(\sinh t, \cosh t)$.</li>
+          <li>A forma é <strong>estirada exponencialmente</strong> pelo fator $e^t$ ao longo da direção assintótica instável $y = x$.</li>
+          <li>A forma é <strong>comprimida exponencialmente</strong> pelo fator $e^{-t}$ ao longo da direção estável $y = -x$.</li>
+          <li>Pelo <strong>Teorema de Liouville</strong>, como $\text{tr}(A) = 0 \implies \det(\Phi(t)) = \cosh^2(t) - \sinh^2(t) = 1$, o fluxo é incompressível (preserva estritamente a área): $\text{Área}(D_t) = \text{Área}(D_0) = \pi (1/2)^2 = \pi/4 \approx 0.785398$.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main JavaScript Logic -->
+  <script>
+    (function() {
+      // --- DOM Elements ---
+      const canvas = document.getElementById('phaseCanvas');
+      const ctx = canvas.getContext('2d');
+      const container = document.getElementById('canvas-container');
+      
+      const timeSlider = document.getElementById('time-slider');
+      const timeDisplay = document.getElementById('time-display');
+      const btnPlayPause = document.getElementById('btn-play-pause');
+      const btnPlayReverse = document.getElementById('btn-play-reverse');
+      const btnStepBack = document.getElementById('btn-step-back');
+      const btnStepFwd = document.getElementById('btn-step-fwd');
+      const btnResetTime = document.getElementById('btn-reset-time');
+      const presetChips = document.querySelectorAll('.chip');
+      
+      const m00El = document.getElementById('m00');
+      const m01El = document.getElementById('m01');
+      const m10El = document.getElementById('m10');
+      const m11El = document.getElementById('m11');
+      const detValEl = document.getElementById('det-value');
+      const stretchValEl = document.getElementById('stretch-value');
+      const compressValEl = document.getElementById('compress-value');
+      const centerCoordsEl = document.getElementById('center-coords');
+      const hudScaleReadout = document.getElementById('hud-scale-readout');
+
+      const btnZoomIn = document.getElementById('btn-zoom-in');
+      const btnZoomOut = document.getElementById('btn-zoom-out');
+      const btnZoomReset = document.getElementById('btn-zoom-reset');
+      const btnResetView = document.getElementById('btn-reset-view');
+
+      const toggleHyperbolas = document.getElementById('toggle-hyperbolas');
+      const toggleSeparatrices = document.getElementById('toggle-separatrices');
+      const toggleVectorField = document.getElementById('toggle-vectorfield');
+      const toggleMesh = document.getElementById('toggle-mesh');
+      const toggleTrajectory = document.getElementById('toggle-trajectory');
+      const toggleAxes = document.getElementById('toggle-axes');
+
+      const modal = document.getElementById('theory-modal');
+      const btnTheory = document.getElementById('btn-theory');
+      const modalClose = document.getElementById('modal-close');
+
+      // --- Simulation State ---
+      let t = 0.0;
+      let isPlaying = false;
+      let playDirection = 1; // +1 forward, -1 reverse
+      let lastTimestamp = 0;
+      const tMin = -2.50;
+      const tMax = 2.50;
+
+      // Viewport Transform (Canvas to World)
+      // World coordinates: x (horizontal), y (vertical, velocity)
+      let scale = 130.0; // pixels per unit
+      let offsetX = 0.0; // origin shift in world units
+      let offsetY = -0.5; // shift view slightly so circle (0,1) is well centered
+
+      let isDragging = false;
+      let dragStartX = 0;
+      let dragStartY = 0;
+      let startOffsetX = 0;
+      let startOffsetY = 0;
+
+      // Arnold Circle Parameters: (x - x0)^2 + (y - y0)^2 < r^2
+      const circleCenter0 = { x: 0.0, y: 1.0 };
+      const circleRadius0 = 0.5;
+      const numPerimeterPoints = 400;
+
+      // Pre-compute perimeter points at t = 0
+      const basePerimeter = [];
+      for (let i = 0; i < numPerimeterPoints; i++) {
+        const theta = (i / numPerimeterPoints) * 2 * Math.PI;
+        basePerimeter.push({
+          x: circleCenter0.x + circleRadius0 * Math.cos(theta),
+          y: circleCenter0.y + circleRadius0 * Math.sin(theta)
+        });
+      }
+
+      // Pre-compute interior concentric rings and radial spokes for deformation mesh
+      const meshRings = [0.25, 0.5, 0.75];
+      const meshSpokes = 8;
+      const meshCurves = [];
+
+      meshRings.forEach(ratio => {
+        const ring = [];
+        const r = circleRadius0 * ratio;
+        const pts = 120;
+        for (let i = 0; i <= pts; i++) {
+          const theta = (i / pts) * 2 * Math.PI;
+          ring.push({
+            x: circleCenter0.x + r * Math.cos(theta),
+            y: circleCenter0.y + r * Math.sin(theta)
+          });
+        }
+        meshCurves.push(ring);
+      });
+
+      for (let s = 0; s < meshSpokes; s++) {
+        const theta = (s / meshSpokes) * 2 * Math.PI;
+        const spoke = [];
+        const pts = 25;
+        for (let k = 0; k <= pts; k++) {
+          const r = circleRadius0 * (k / pts);
+          spoke.push({
+            x: circleCenter0.x + r * Math.cos(theta),
+            y: circleCenter0.y + r * Math.sin(theta)
+          });
+        }
+        meshCurves.push(spoke);
+      }
+
+      // --- High-DPI Canvas Resizing ---
+      function resizeCanvas() {
+        const rect = container.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        ctx.resetTransform();
+        ctx.scale(dpr, dpr);
+        draw();
+      }
+
+      window.addEventListener('resize', resizeCanvas);
+
+      // --- Coordinate Conversions ---
+      function worldToScreen(wx, wy) {
+        const rect = container.getBoundingClientRect();
+        const cx = rect.width / 2;
+        const cy = rect.height / 2;
+        return {
+          x: cx + (wx - offsetX) * scale,
+          y: cy - (wy - offsetY) * scale // inverted Y for Cartesian
+        };
+      }
+
+      function screenToWorld(sx, sy) {
+        const rect = container.getBoundingClientRect();
+        const cx = rect.width / 2;
+        const cy = rect.height / 2;
+        return {
+          x: (sx - cx) / scale + offsetX,
+          y: -(sy - cy) / scale + offsetY
+        };
+      }
+
+      // --- Exact Phase Flow Operator Phi(t) ---
+      function getEvolutionMatrix(time) {
+        const c = Math.cosh(time);
+        const s = Math.sinh(time);
+        return {
+          m00: c, m01: s,
+          m10: s, m11: c,
+          cosh: c, sinh: s
+        };
+      }
+
+      function transformPoint(pt, mat) {
+        return {
+          x: mat.m00 * pt.x + mat.m01 * pt.y,
+          y: mat.m10 * pt.x + mat.m11 * pt.y
+        };
+      }
+
+      // --- Rendering Routine ---
+      function draw() {
+        const rect = container.getBoundingClientRect();
+        const width = rect.width;
+        const height = rect.height;
+
+        ctx.clearRect(0, 0, width, height);
+
+        // Get world bounds currently visible
+        const topLeft = screenToWorld(0, 0);
+        const bottomRight = screenToWorld(width, height);
+        const minX = topLeft.x;
+        const maxX = bottomRight.x;
+        const minY = bottomRight.y;
+        const maxY = topLeft.y;
+
+        // 1. Grid & Axes
+        drawGridAndAxes(minX, maxX, minY, maxY);
+
+        // 2. Hyperbolic Energy Level Curves: y^2 - x^2 = C
+        if (toggleHyperbolas.checked) {
+          drawHyperbolas(minX, maxX, minY, maxY);
+        }
+
+        // 3. Separatrices / Invariant Manifolds: y = x and y = -x
+        if (toggleSeparatrices.checked) {
+          drawSeparatrices(minX, maxX, minY, maxY);
+        }
+
+        // 4. Vector Field v(x, y) = (y, x)
+        if (toggleVectorField.checked) {
+          drawVectorField(minX, maxX, minY, maxY);
+        }
+
+        // 5. Ghost of Initial Arnold Circle (t = 0)
+        drawInitialCircleGhost();
+
+        // 6. Trajectory of Center of Mass along y^2 - x^2 = 1
+        if (toggleTrajectory.checked) {
+          drawCenterTrajectory();
+        }
+
+        // 7. Deformed Geometry D_t = g^t(D_0)
+        drawDeformedRegion();
+
+        // Update Matrix and Metric Readouts in Sidebar
+        updateAnalyticalDashboard();
+      }
+
+      // --- Draw Grid & Cartesian Axes ---
+      function drawGridAndAxes(minX, maxX, minY, maxY) {
+        let step = 1.0;
+        if (scale > 200) step = 0.5;
+        if (scale > 400) step = 0.25;
+        if (scale < 70) step = 2.0;
+        if (scale < 35) step = 5.0;
+
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(30, 40, 61, 0.7)';
+        ctx.fillStyle = '#5c6b84';
+        ctx.font = '10px "JetBrains Mono", monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+
+        // Vertical Grid Lines (const x)
+        const startX = Math.floor(minX / step) * step;
+        for (let x = startX; x <= maxX; x += step) {
+          const p1 = worldToScreen(x, minY);
+          const p2 = worldToScreen(x, maxY);
+          ctx.beginPath();
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.stroke();
+
+          // Label
+          if (Math.abs(x) > 1e-4) {
+            const labelP = worldToScreen(x, 0);
+            ctx.fillText(x.toFixed(step < 1 ? 2 : (step === 1 ? 0 : 0)), labelP.x, Math.min(Math.max(labelP.y + 4, 15), container.clientHeight - 20));
+          }
+        }
+
+        // Horizontal Grid Lines (const y)
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        const startY = Math.floor(minY / step) * step;
+        for (let y = startY; y <= maxY; y += step) {
+          const p1 = worldToScreen(minX, y);
+          const p2 = worldToScreen(maxX, y);
+          ctx.beginPath();
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.stroke();
+
+          // Label
+          if (Math.abs(y) > 1e-4) {
+            const labelP = worldToScreen(0, y);
+            ctx.fillText(y.toFixed(step < 1 ? 2 : (step === 1 ? 0 : 0)), Math.min(Math.max(labelP.x - 6, 30), container.clientWidth - 15), labelP.y);
+          }
+        }
+
+        // Main Axes (x = 0 and y = 0)
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#64748b';
+
+        // X-Axis
+        const axLeft = worldToScreen(minX, 0);
+        const axRight = worldToScreen(maxX, 0);
+        ctx.beginPath();
+        ctx.moveTo(axLeft.x, axLeft.y);
+        ctx.lineTo(axRight.x, axRight.y);
+        ctx.stroke();
+
+        // Y-Axis
+        const axBottom = worldToScreen(0, minY);
+        const axTop = worldToScreen(0, maxY);
+        ctx.beginPath();
+        ctx.moveTo(axBottom.x, axBottom.y);
+        ctx.lineTo(axTop.x, axTop.y);
+        ctx.stroke();
+
+        // Axis Names
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = 'bold 12px "JetBrains Mono", sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText('x (Posição)', container.clientWidth - 16, Math.min(Math.max(axRight.y - 10, 20), container.clientHeight - 30));
+        
+        ctx.textAlign = 'left';
+        ctx.fillText('y = ẋ (Velocidade)', Math.min(Math.max(axTop.x + 10, 20), container.clientWidth - 140), 25);
+
+        // Origin (0,0) label
+        const originP = worldToScreen(0, 0);
+        ctx.textAlign = 'right';
+        ctx.fillText('0', originP.x - 5, originP.y + 5);
+      }
+
+      // --- Draw Hyperbolic Phase Curves (Energy Levels H = 1/2(y^2 - x^2) = E) ---
+      function drawHyperbolas(minX, maxX, minY, maxY) {
+        ctx.save();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(70, 95, 135, 0.45)';
+
+        // Energy levels for C = y^2 - x^2 = 2E
+        const positiveC = [0.25, 1.0, 2.25, 4.0, 6.25, 9.0];
+        positiveC.forEach(C => {
+          // Upper branch: y = +√(x^2 + C)
+          ctx.beginPath();
+          let started = false;
+          const step = (maxX - minX) / 200;
+          for (let x = minX; x <= maxX; x += step) {
+            const y = Math.sqrt(x * x + C);
+            const pt = worldToScreen(x, y);
+            if (!started) { ctx.moveTo(pt.x, pt.y); started = true; }
+            else { ctx.lineTo(pt.x, pt.y); }
+          }
+          ctx.stroke();
+
+          // Lower branch: y = -√(x^2 + C)
+          ctx.beginPath();
+          started = false;
+          for (let x = minX; x <= maxX; x += step) {
+            const y = -Math.sqrt(x * x + C);
+            const pt = worldToScreen(x, y);
+            if (!started) { ctx.moveTo(pt.x, pt.y); started = true; }
+            else { ctx.lineTo(pt.x, pt.y); }
+          }
+          ctx.stroke();
+        });
+
+        // Negative C (horizontal branches: x^2 - y^2 = K > 0 => x = ±√(y^2 + K))
+        const negativeC = [0.25, 1.0, 2.25, 4.0, 6.25, 9.0];
+        negativeC.forEach(K => {
+          // Right branch: x = +√(y^2 + K)
+          ctx.beginPath();
+          let started = false;
+          const step = (maxY - minY) / 200;
+          for (let y = minY; y <= maxY; y += step) {
+            const x = Math.sqrt(y * y + K);
+            const pt = worldToScreen(x, y);
+            if (!started) { ctx.moveTo(pt.x, pt.y); started = true; }
+            else { ctx.lineTo(pt.x, pt.y); }
+          }
+          ctx.stroke();
+
+          // Left branch: x = -√(y^2 + K)
+          ctx.beginPath();
+          started = false;
+          for (let y = minY; y <= maxY; y += step) {
+            const x = -Math.sqrt(y * y + K);
+            const pt = worldToScreen(x, y);
+            if (!started) { ctx.moveTo(pt.x, pt.y); started = true; }
+            else { ctx.lineTo(pt.x, pt.y); }
+          }
+          ctx.stroke();
+        });
+
+        ctx.restore();
+      }
+
+      // --- Draw Separatrices (Unstable W^u: y = x, Stable W^s: y = -x) ---
+      function drawSeparatrices(minX, maxX, minY, maxY) {
+        ctx.save();
+        const limit = Math.max(Math.abs(minX), Math.abs(maxX), Math.abs(minY), Math.abs(maxY)) * 1.5;
+
+        // Unstable Manifold W^u: y = x (Red / Coral)
+        ctx.strokeStyle = '#ff4757';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 4]);
+        const p1u = worldToScreen(-limit, -limit);
+        const p2u = worldToScreen(limit, limit);
+        ctx.beginPath();
+        ctx.moveTo(p1u.x, p1u.y);
+        ctx.lineTo(p2u.x, p2u.y);
+        ctx.stroke();
+
+        // Arrows along W^u pointing outward from origin
+        drawManifoldArrow(1.8, 1.8, '#ff4757', true);
+        drawManifoldArrow(-1.8, -1.8, '#ff4757', true);
+
+        // Stable Manifold W^s: y = -x (Green / Emerald)
+        ctx.strokeStyle = '#2ed573';
+        const p1s = worldToScreen(-limit, limit);
+        const p2s = worldToScreen(limit, -limit);
+        ctx.beginPath();
+        ctx.moveTo(p1s.x, p1s.y);
+        ctx.lineTo(p2s.x, p2s.y);
+        ctx.stroke();
+
+        // Arrows along W^s pointing inward toward origin
+        drawManifoldArrow(1.8, -1.8, '#2ed573', false);
+        drawManifoldArrow(-1.8, 1.8, '#2ed573', false);
+
+        ctx.setLineDash([]);
+        ctx.restore();
+      }
+
+      function drawManifoldArrow(wx, wy, color, isOutward) {
+        const pt = worldToScreen(wx, wy);
+
+        ctx.save();
+        ctx.fillStyle = color;
+        ctx.translate(pt.x, pt.y);
+        ctx.rotate(-Math.atan2(wy, wx) + (isOutward ? 0 : Math.PI));
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(-8, -4);
+        ctx.lineTo(-6, 0);
+        ctx.lineTo(-8, 4);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // --- Draw Vector Field Grid ---
+      function drawVectorField(minX, maxX, minY, maxY) {
+        ctx.save();
+        const spacing = scale > 150 ? 0.4 : (scale > 80 ? 0.6 : 1.0);
+        const arrowLength = 12;
+
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
+        ctx.fillStyle = 'rgba(148, 163, 184, 0.35)';
+        ctx.lineWidth = 1;
+
+        const startX = Math.floor(minX / spacing) * spacing;
+        const startY = Math.floor(minY / spacing) * spacing;
+
+        for (let x = startX; x <= maxX; x += spacing) {
+          for (let y = startY; y <= maxY; y += spacing) {
+            // Vector: dx/dt = y, dy/dt = x
+            const vx = y;
+            const vy = x;
+            const mag = Math.sqrt(vx * vx + vy * vy);
+            if (mag < 0.05) continue;
+
+            const u = vx / mag;
+            const v = vy / mag;
+
+            const p = worldToScreen(x, y);
+            const pEnd = {
+              x: p.x + u * arrowLength,
+              y: p.y - v * arrowLength // flip vy for screen
+            };
+
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(pEnd.x, pEnd.y);
+            ctx.stroke();
+
+            // Arrowhead
+            const angle = Math.atan2(-v, u);
+            ctx.beginPath();
+            ctx.moveTo(pEnd.x, pEnd.y);
+            ctx.lineTo(pEnd.x - 4 * Math.cos(angle - Math.PI / 6), pEnd.y - 4 * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(pEnd.x - 4 * Math.cos(angle + Math.PI / 6), pEnd.y - 4 * Math.sin(angle + Math.PI / 6));
+            ctx.closePath();
+            ctx.fill();
+          }
+        }
+        ctx.restore();
+      }
+
+      // --- Draw Ghost of Initial Circle (t = 0) ---
+      function drawInitialCircleGhost() {
+        ctx.save();
+        const pCenter = worldToScreen(circleCenter0.x, circleCenter0.y);
+        const radiusPx = circleRadius0 * scale;
+
+        // Translucent fill
+        ctx.fillStyle = 'rgba(0, 210, 211, 0.07)';
+        ctx.beginPath();
+        ctx.arc(pCenter.x, pCenter.y, radiusPx, 0, 2 * Math.PI);
+        ctx.fill();
+
+        // Dashed border
+        ctx.strokeStyle = 'rgba(0, 210, 211, 0.7)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Mark Initial Center
+        ctx.fillStyle = 'var(--accent-circle)';
+        ctx.beginPath();
+        ctx.arc(pCenter.x, pCenter.y, 3.5, 0, 2 * Math.PI);
+        ctx.fill();
+
+        // Text label
+        ctx.fillStyle = '#00d2d3';
+        ctx.font = '10px "JetBrains Mono", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('D₀ (t = 0)', pCenter.x, pCenter.y + radiusPx + 14);
+
+        ctx.restore();
+      }
+
+      // --- Draw Trajectory of the Center of Mass ---
+      function drawCenterTrajectory() {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255, 211, 42, 0.75)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([3, 3]);
+
+        ctx.beginPath();
+        let started = false;
+        // Trace center (sinh(tau), cosh(tau)) from -2.5 to 2.5
+        for (let tau = -2.5; tau <= 2.5; tau += 0.05) {
+          const cx = Math.sinh(tau);
+          const cy = Math.cosh(tau);
+          const pt = worldToScreen(cx, cy);
+          if (!started) { ctx.moveTo(pt.x, pt.y); started = true; }
+          else { ctx.lineTo(pt.x, pt.y); }
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+      }
+
+      // --- Draw Deformed Region D_t = g^t(D_0) ---
+      function drawDeformedRegion() {
+        ctx.save();
+        const mat = getEvolutionMatrix(t);
+
+        // 1. Calculate transformed perimeter polygon
+        const transformedPerimeter = basePerimeter.map(pt => transformPoint(pt, mat));
+
+        // Draw filled deformed ellipse
+        ctx.beginPath();
+        const p0 = worldToScreen(transformedPerimeter[0].x, transformedPerimeter[0].y);
+        ctx.moveTo(p0.x, p0.y);
+        for (let i = 1; i < transformedPerimeter.length; i++) {
+          const p = worldToScreen(transformedPerimeter[i].x, transformedPerimeter[i].y);
+          ctx.lineTo(p.x, p.y);
+        }
+        ctx.closePath();
+
+        ctx.fillStyle = 'rgba(255, 165, 2, 0.35)';
+        ctx.fill();
+
+        // Crisp solid boundary
+        ctx.strokeStyle = '#ffa502';
+        ctx.lineWidth = 2.2;
+        ctx.stroke();
+
+        // 2. Interior Deformation Mesh
+        if (toggleMesh.checked) {
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
+          ctx.lineWidth = 0.9;
+          meshCurves.forEach(curve => {
+            ctx.beginPath();
+            let started = false;
+            curve.forEach(pt => {
+              const tPt = transformPoint(pt, mat);
+              const sPt = worldToScreen(tPt.x, tPt.y);
+              if (!started) { ctx.moveTo(sPt.x, sPt.y); started = true; }
+              else { ctx.lineTo(sPt.x, sPt.y); }
+            });
+            ctx.stroke();
+          });
+        }
+
+        const currentCenterWorld = transformPoint(circleCenter0, mat);
+        const currentCenterScreen = worldToScreen(currentCenterWorld.x, currentCenterWorld.y);
+
+        // 3. Principal Axes of Deformed Ellipse
+        if (toggleAxes.checked) {
+          const expT = Math.exp(t);
+          const expMinusT = Math.exp(-t);
+          const r = circleRadius0;
+
+          // Major axis direction (along (1,1)/sqrt(2))
+          const axisMajor = {
+            dx: (r * expT) / Math.SQRT2,
+            dy: (r * expT) / Math.SQRT2
+          };
+          // Minor axis direction (along (1,-1)/sqrt(2))
+          const axisMinor = {
+            dx: (r * expMinusT) / Math.SQRT2,
+            dy: -(r * expMinusT) / Math.SQRT2
+          };
+
+          // Draw Major Axis (Stretching / Instability)
+          ctx.strokeStyle = '#ff4757';
+          ctx.lineWidth = 1.5;
+          const maj1 = worldToScreen(currentCenterWorld.x - axisMajor.dx, currentCenterWorld.y - axisMajor.dy);
+          const maj2 = worldToScreen(currentCenterWorld.x + axisMajor.dx, currentCenterWorld.y + axisMajor.dy);
+          ctx.beginPath();
+          ctx.moveTo(maj1.x, maj1.y);
+          ctx.lineTo(maj2.x, maj2.y);
+          ctx.stroke();
+
+          // Draw Minor Axis (Compression / Stability)
+          ctx.strokeStyle = '#2ed573';
+          const min1 = worldToScreen(currentCenterWorld.x - axisMinor.dx, currentCenterWorld.y - axisMinor.dy);
+          const min2 = worldToScreen(currentCenterWorld.x + axisMinor.dx, currentCenterWorld.y + axisMinor.dy);
+          ctx.beginPath();
+          ctx.moveTo(min1.x, min1.y);
+          ctx.lineTo(min2.x, min2.y);
+          ctx.stroke();
+        }
+
+        // 4. Center of Mass Point (x(t), y(t))
+        ctx.fillStyle = '#ffd32a';
+        ctx.beginPath();
+        ctx.arc(currentCenterScreen.x, currentCenterScreen.y, 4.5, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Label current center
+        ctx.fillStyle = '#ffd32a';
+        ctx.font = 'bold 11px "JetBrains Mono", monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText(`Dₜ (t = ${t.toFixed(2)})`, currentCenterScreen.x + 8, currentCenterScreen.y - 8);
+
+        ctx.restore();
+      }
+
+      // --- Update Metrics & Math Dashboard ---
+      function updateAnalyticalDashboard() {
+        const mat = getEvolutionMatrix(t);
+        
+        // Matrix values
+        m00El.textContent = mat.m00.toFixed(3);
+        m01El.textContent = mat.m01.toFixed(3);
+        m10El.textContent = mat.m10.toFixed(3);
+        m11El.textContent = mat.m11.toFixed(3);
+
+        // Determinant: cosh^2(t) - sinh^2(t) = 1
+        const det = mat.m00 * mat.m11 - mat.m01 * mat.m10;
+        detValEl.textContent = det.toFixed(5);
+
+        // Stretching factors
+        const stretch = Math.exp(t);
+        const compress = Math.exp(-t);
+        stretchValEl.textContent = `${stretch.toFixed(3)}×`;
+        compressValEl.textContent = `${compress.toFixed(3)}×`;
+
+        // Center coordinates: x = sinh(t), y = cosh(t)
+        const cx = mat.sinh;
+        const cy = mat.cosh;
+        centerCoordsEl.textContent = `[ ${cx.toFixed(3)} , ${cy.toFixed(3)} ]`;
+
+        // Time displays
+        timeDisplay.textContent = (t >= 0 ? '+' : '') + t.toFixed(2);
+        timeSlider.value = t.toFixed(2);
+
+        // HUD scale readout
+        hudScaleReadout.textContent = `Escala: ${Math.round(scale)} px/un`;
+
+        // Update active chip
+        presetChips.forEach(chip => {
+          const chipT = parseFloat(chip.getAttribute('data-t'));
+          if (Math.abs(chipT - t) < 0.02) {
+            chip.classList.add('active');
+          } else {
+            chip.classList.remove('active');
+          }
+        });
+      }
+
+      // --- Animation Loop ---
+      function animate(timestamp) {
+        if (!lastTimestamp) lastTimestamp = timestamp;
+        const delta = (timestamp - lastTimestamp) / 1000;
+        lastTimestamp = timestamp;
+
+        if (isPlaying) {
+          t += playDirection * delta * 0.75; // animation speed
+
+          if (t > tMax) {
+            t = tMax;
+            isPlaying = false;
+            btnPlayPause.textContent = '▶';
+          } else if (t < tMin) {
+            t = tMin;
+            isPlaying = false;
+            btnPlayReverse.textContent = '◀';
+          }
+          draw();
+        }
+
+        requestAnimationFrame(animate);
+      }
+
+      // --- Event Handlers & User Interaction ---
+      
+      // Time Slider Input
+      timeSlider.addEventListener('input', (e) => {
+        t = parseFloat(e.target.value);
+        isPlaying = false;
+        btnPlayPause.textContent = '▶';
+        btnPlayReverse.textContent = '◀';
+        draw();
+      });
+
+      // Play / Pause Forward
+      btnPlayPause.addEventListener('click', () => {
+        if (isPlaying && playDirection === 1) {
+          isPlaying = false;
+          btnPlayPause.textContent = '▶';
+        } else {
+          if (t >= tMax) t = 0.0;
+          isPlaying = true;
+          playDirection = 1;
+          btnPlayPause.textContent = '❚❚';
+          btnPlayReverse.textContent = '◀';
+        }
+      });
+
+      // Play Reverse
+      btnPlayReverse.addEventListener('click', () => {
+        if (isPlaying && playDirection === -1) {
+          isPlaying = false;
+          btnPlayReverse.textContent = '◀';
+        } else {
+          if (t <= tMin) t = 0.0;
+          isPlaying = true;
+          playDirection = -1;
+          btnPlayReverse.textContent = '❚❚';
+          btnPlayPause.textContent = '▶';
+        }
+      });
+
+      // Step Buttons
+      btnStepBack.addEventListener('click', () => {
+        isPlaying = false;
+        btnPlayPause.textContent = '▶';
+        btnPlayReverse.textContent = '◀';
+        t = Math.max(tMin, t - 0.05);
+        draw();
+      });
+
+      btnStepFwd.addEventListener('click', () => {
+        isPlaying = false;
+        btnPlayPause.textContent = '▶';
+        btnPlayReverse.textContent = '◀';
+        t = Math.min(tMax, t + 0.05);
+        draw();
+      });
+
+      btnResetTime.addEventListener('click', () => {
+        isPlaying = false;
+        btnPlayPause.textContent = '▶';
+        btnPlayReverse.textContent = '◀';
+        t = 0.0;
+        draw();
+      });
+
+      // Preset Chips
+      presetChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+          isPlaying = false;
+          btnPlayPause.textContent = '▶';
+          btnPlayReverse.textContent = '◀';
+          t = parseFloat(chip.getAttribute('data-t'));
+          draw();
+        });
+      });
+
+      // Zoom Controls
+      btnZoomIn.addEventListener('click', () => {
+        scale = Math.min(600, scale * 1.25);
+        draw();
+      });
+
+      btnZoomOut.addEventListener('click', () => {
+        scale = Math.max(30, scale / 1.25);
+        draw();
+      });
+
+      btnZoomReset.addEventListener('click', () => {
+        scale = 130.0;
+        draw();
+      });
+
+      btnResetView.addEventListener('click', () => {
+        scale = 130.0;
+        offsetX = 0.0;
+        offsetY = -0.5;
+        t = 0.0;
+        isPlaying = false;
+        btnPlayPause.textContent = '▶';
+        draw();
+      });
+
+      // Mouse Drag / Pan on Canvas
+      container.addEventListener('mousedown', (e) => {
+        if (e.target !== canvas) return;
+        isDragging = true;
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        startOffsetX = offsetX;
+        startOffsetY = offsetY;
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const dx = e.clientX - dragStartX;
+        const dy = e.clientY - dragStartY;
+        offsetX = startOffsetX - dx / scale;
+        offsetY = startOffsetY + dy / scale; // inverted Y
+        draw();
+      });
+
+      window.addEventListener('mouseup', () => {
+        isDragging = false;
+      });
+
+      // Wheel Zoom
+      container.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const zoomFactor = e.deltaY < 0 ? 1.12 : 0.89;
+        
+        // Zoom centered on cursor
+        const mouseWorld = screenToWorld(e.clientX, e.clientY);
+        scale = Math.max(30, Math.min(800, scale * zoomFactor));
+        
+        // Adjust offset so mouseWorld stays under cursor
+        const newMouseWorld = screenToWorld(e.clientX, e.clientY);
+        offsetX += (mouseWorld.x - newMouseWorld.x);
+        offsetY += (mouseWorld.y - newMouseWorld.y);
+        
+        draw();
+      }, { passive: false });
+
+      // Layer Toggles
+      [toggleHyperbolas, toggleSeparatrices, toggleVectorField, toggleMesh, toggleTrajectory, toggleAxes].forEach(toggle => {
+        toggle.addEventListener('change', draw);
+      });
+
+      // Theory Modal
+      btnTheory.addEventListener('click', () => modal.classList.add('active'));
+      modalClose.addEventListener('click', () => modal.classList.remove('active'));
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.classList.remove('active');
+      });
+
+      // --- Initialization ---
+      resizeCanvas();
+      requestAnimationFrame(animate);
+
+    })();
+  </script>
+</body>
+</html>

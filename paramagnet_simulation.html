@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulação de Paramagneto Ideal - Mecânica Estatística</title>
+  <!-- Chart.js via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-main: #090d16;
+      --bg-card: #111827;
+      --bg-card-hover: #172033;
+      --border-color: #1f293d;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --text-dim: #6b7280;
+      --accent-spin-up: #ef4444;
+      --accent-spin-down: #3b82f6;
+      --accent-gold: #f59e0b;
+      --accent-emerald: #10b981;
+      --accent-purple: #8b5cf6;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 1.25rem;
+      gap: 1.25rem;
+      line-height: 1.5;
+    }
+
+    /* Header */
+    header {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .header-title h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .header-title p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+    }
+
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      color: var(--accent-gold);
+      padding: 0.35rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      font-weight: 600;
+    }
+
+    /* Main Grid Layout */
+    main {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      flex: 1;
+    }
+
+    @media (max-width: 1024px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.75rem;
+    }
+
+    .card-header h2 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card-header .tag {
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+    }
+
+    /* Microscopic Canvas Section */
+    .canvas-container {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      max-height: 380px;
+      margin: 0 auto;
+      background: #06090e;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #spinCanvas {
+      width: 100%;
+      height: 100%;
+      image-rendering: pixelated;
+      display: block;
+    }
+
+    .legend-bar {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      font-size: 0.8rem;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-weight: 500;
+    }
+
+    .legend-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+    }
+
+    .legend-color.up { background-color: var(--accent-spin-up); box-shadow: 0 0 8px rgba(239, 68, 68, 0.5); }
+    .legend-color.down { background-color: var(--accent-spin-down); box-shadow: 0 0 8px rgba(59, 130, 246, 0.5); }
+
+    /* Chart Section */
+    .chart-wrapper {
+      position: relative;
+      width: 100%;
+      height: 380px;
+    }
+
+    /* Stats Grid */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .stat-box {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.6rem 0.8rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+    }
+
+    .stat-value {
+      font-size: 1.1rem;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      margin-top: 0.2rem;
+      color: var(--text-main);
+    }
+
+    .stat-value.highlight-up { color: var(--accent-spin-up); }
+    .stat-value.highlight-down { color: var(--accent-spin-down); }
+    .stat-value.highlight-gold { color: var(--accent-gold); }
+
+    /* Controls Panel */
+    .controls-panel {
+      grid-column: 1 / -1;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .sliders-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .control-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .control-label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .control-value {
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--accent-gold);
+    }
+
+    .control-desc {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+
+    /* Range Slider Styling */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      background: #1f293d;
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #f3f4f6;
+      border: 2px solid var(--accent-gold);
+      box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+      cursor: pointer;
+      transition: transform 0.1s ease, background 0.1s ease;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+      background: #ffffff;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #f3f4f6;
+      border: 2px solid var(--accent-gold);
+      box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+      cursor: pointer;
+    }
+
+    /* Presets and Actions */
+    .actions-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      border-top: 1px solid var(--border-color);
+      padding-top: 1rem;
+    }
+
+    .presets-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .presets-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-right: 0.25rem;
+    }
+
+    .btn-preset {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 0.35rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: var(--font-sans);
+    }
+
+    .btn-preset:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--text-muted);
+    }
+
+    .sim-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-action {
+      background: var(--bg-card-hover);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 0.45rem 1rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: background 0.15s ease;
+    }
+
+    .btn-action:hover {
+      background: #25334d;
+    }
+
+    .btn-action.active {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: var(--accent-spin-up);
+      color: #fca5a5;
+    }
+
+    /* Math and Theory Notes */
+    .formula-tag {
+      font-family: var(--font-mono);
+      background: rgba(255, 255, 255, 0.06);
+      padding: 0.15rem 0.35rem;
+      border-radius: 4px;
+      font-size: 0.8em;
+      color: #e5e7eb;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="header-title">
+      <h1>Paramagneto Ideal <span style="font-weight:400; color:var(--text-muted); font-size: 1rem;">| Simulação de Mecânica Estatística</span></h1>
+      <p>Spins independentes $\sigma_i \in \{-1, +1\}$ em banho térmico sob campo magnético ($\mu = 1, k_B = 1$).</p>
+    </div>
+    <div class="header-badge">
+      <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent-emerald); display:inline-block;"></span>
+      60 FPS | Banho Térmico Ativo
+    </div>
+  </header>
+
+  <!-- Main Split Layout -->
+  <main>
+    <!-- Módulo 1: Rede de Spins (Visão Microscópica) -->
+    <section class="card">
+      <div class="card-header">
+        <h2>
+          <span>🔲</span> Módulo 1: Visão Microscópica
+        </h2>
+        <span class="tag" id="gridDimensionsTag">Grid: 30 × 30 (N = 900)</span>
+      </div>
+
+      <div class="canvas-container">
+        <canvas id="spinCanvas"></canvas>
+      </div>
+
+      <div class="legend-bar">
+        <div class="legend-item">
+          <span class="legend-color up"></span>
+          <span>Spin UP (+1): <strong id="countUpText" style="color:var(--accent-spin-up)">-</strong></span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color down"></span>
+          <span>Spin DOWN (-1): <strong id="countDownText" style="color:var(--accent-spin-down)">-</strong></span>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-box">
+          <span class="stat-label">Spins UP ($n_{\text{real}}$)</span>
+          <span class="stat-value highlight-up" id="statNReal">0</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">Fração Real ($n/N$)</span>
+          <span class="stat-value" id="statFracReal">0.000</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">Magnetização ($M/N$)</span>
+          <span class="stat-value" id="statMagReal">0.000</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Módulo 2: Histograma em Tempo Real (Visão Macroscópica) -->
+    <section class="card">
+      <div class="card-header">
+        <h2>
+          <span>📊</span> Módulo 2: Visão Macroscópica
+        </h2>
+        <span class="tag">Teorema Central do Limite</span>
+      </div>
+
+      <div class="chart-wrapper">
+        <canvas id="distributionChart"></canvas>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-box">
+          <span class="stat-label">Prob. Teórica ($p_{\text{up}}$)</span>
+          <span class="stat-value highlight-gold" id="statPup">0.5000</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">Média Teórica ($\langle n \rangle$)</span>
+          <span class="stat-value" id="statMeanN">450.0</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">Desvio Padrão ($\sigma$)</span>
+          <span class="stat-value" id="statSigma">15.00</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">Largura Relativa ($\sigma/N$)</span>
+          <span class="stat-value highlight-gold" id="statRelSigma">1.67%</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Módulo 3: Controles de Parâmetros -->
+    <section class="controls-panel">
+      <div class="card-header" style="border:none; padding:0;">
+        <h2>
+          <span>⚙️</span> Módulo 3: Controle Termodinâmico & Parâmetros
+        </h2>
+        <span class="tag">Atualização Contínua em Tempo Real</span>
+      </div>
+
+      <div class="sliders-grid">
+        <!-- Slider N -->
+        <div class="control-group">
+          <div class="control-header">
+            <label for="sliderN" class="control-label">
+              <span>Partículas ($N$)</span>
+            </label>
+            <span class="control-value" id="valN">900</span>
+          </div>
+          <input type="range" id="sliderN" min="16" max="5000" step="1" value="900">
+          <div class="control-desc">Escala de 16 a 5000. Ao aumentar $N$, observe o estreitamento relativo da Gaussiana (TCL).</div>
+        </div>
+
+        <!-- Slider B -->
+        <div class="control-group">
+          <div class="control-header">
+            <label for="sliderB" class="control-label">
+              <span>Campo Magnético ($\mathcal{B}$)</span>
+            </label>
+            <span class="control-value" id="valB">0.00</span>
+          </div>
+          <input type="range" id="sliderB" min="-5.0" max="5.0" step="0.05" value="0.00">
+          <div class="control-desc">Valores positivos forçam a rede para UP (vermelho); negativos para DOWN (azul).</div>
+        </div>
+
+        <!-- Slider T -->
+        <div class="control-group">
+          <div class="control-header">
+            <label for="sliderT" class="control-label">
+              <span>Temperatura ($T$)</span>
+            </label>
+            <span class="control-value" id="valT">2.00</span>
+          </div>
+          <input type="range" id="sliderT" min="0.01" max="20.0" step="0.01" value="2.00">
+          <div class="control-desc">Para $T \to \infty$, $p_{\text{up}} \to 0.5$ (desordem). Para $T \to 0.01$, o estado congela ordenado.</div>
+        </div>
+      </div>
+
+      <!-- Presets & Simulation State Buttons -->
+      <div class="actions-bar">
+        <div class="presets-group">
+          <span class="presets-label">Cenários:</span>
+          <button class="btn-preset" onclick="setPreset(900, 0.0, 2.0)">⚖️ Campo Nulo ($\mathcal{B}=0$)</button>
+          <button class="btn-preset" onclick="setPreset(900, 1.5, 0.2)">❄️ Baixa Temp. ($\mathcal{B}>0, T\ll 1$)</button>
+          <button class="btn-preset" onclick="setPreset(900, -1.5, 0.2)">❄️ Baixa Temp. ($\mathcal{B}<0, T\ll 1$)</button>
+          <button class="btn-preset" onclick="setPreset(900, 3.0, 15.0)">🔥 Alta Temp. ($T\gg 1$)</button>
+          <button class="btn-preset" onclick="setPreset(5000, 0.5, 1.5)">🎯 Limite Termodinâmico ($N=5000$)</button>
+        </div>
+
+        <div class="sim-controls">
+          <button class="btn-action" id="btnPause" onclick="togglePause()">
+            <span id="pauseIcon">⏸️</span> <span id="pauseText">Pausar</span>
+          </button>
+          <button class="btn-action" onclick="stepSimulation()">
+            ⏭️ Passo
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    /**
+     * SIMULAÇÃO DE PARAMAGNETO IDEAL (MECÂNICA ESTATÍSTICA)
+     * ---------------------------------------------------
+     * Constantes adimensionais: mu = 1, k_B = 1
+     * Probabilidade de Boltzmann para spin não interagente:
+     *   p_up = 1 / (1 + exp(-2 * B / T))
+     * Média: <n> = N * p_up
+     * Variância: sigma^2 = N * p_up * (1 - p_up)
+     * Aproximação Gaussiana:
+     *   P(n) = 1 / sqrt(2 * pi * sigma^2) * exp(-(n - <n>)^2 / (2 * sigma^2))
+     */
+
+    // --- ESTADO GLOBAL DA FÍSICA ---
+    const state = {
+      N: 900,
+      B: 0.0,
+      T: 2.0,
+      pUp: 0.5,
+      meanN: 450,
+      sigmaSq: 225,
+      sigma: 15,
+      isPaused: false,
+      spins: new Uint8Array(900), // 1 = UP, 0 = DOWN
+      nReal: 450,
+      gridCols: 30,
+      gridRows: 30,
+      chartNeedsFullRebuild: true
+    };
+
+    // --- ELEMENTOS DO DOM ---
+    const canvas = document.getElementById('spinCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const sliderN = document.getElementById('sliderN');
+    const sliderB = document.getElementById('sliderB');
+    const sliderT = document.getElementById('sliderT');
+
+    const valN = document.getElementById('valN');
+    const valB = document.getElementById('valB');
+    const valT = document.getElementById('valT');
+
+    const gridDimensionsTag = document.getElementById('gridDimensionsTag');
+    const countUpText = document.getElementById('countUpText');
+    const countDownText = document.getElementById('countDownText');
+
+    const statNReal = document.getElementById('statNReal');
+    const statFracReal = document.getElementById('statFracReal');
+    const statMagReal = document.getElementById('statMagReal');
+
+    const statPup = document.getElementById('statPup');
+    const statMeanN = document.getElementById('statMeanN');
+    const statSigma = document.getElementById('statSigma');
+    const statRelSigma = document.getElementById('statRelSigma');
+
+    const btnPause = document.getElementById('btnPause');
+    const pauseIcon = document.getElementById('pauseIcon');
+    const pauseText = document.getElementById('pauseText');
+
+    // --- CÁLCULO FÍSICO ROBUSTO ---
+    function calculatePup(B, T) {
+      if (T <= 0.001) {
+        return B >= 0 ? 1.0 : 0.0;
+      }
+      const x = (-2.0 * B) / T;
+      // Previne overflow/underflow em Math.exp
+      if (x > 50.0) return 0.0;
+      if (x < -50.0) return 1.0;
+      return 1.0 / (1.0 + Math.exp(x));
+    }
+
+    function updateTheoreticalParameters() {
+      state.pUp = calculatePup(state.B, state.T);
+      state.meanN = state.N * state.pUp;
+      state.sigmaSq = state.N * state.pUp * (1.0 - state.pUp);
+      state.sigma = Math.sqrt(state.sigmaSq);
+
+      // Atualiza dimensões do grid
+      state.gridCols = Math.ceil(Math.sqrt(state.N));
+      state.gridRows = Math.ceil(state.N / state.gridCols);
+
+      // Redimensiona buffer de spins se N mudou
+      if (state.spins.length !== state.N) {
+        const oldSpins = state.spins;
+        state.spins = new Uint8Array(state.N);
+        for (let i = 0; i < state.N; i++) {
+          if (i < oldSpins.length) {
+            state.spins[i] = oldSpins[i];
+          } else {
+            state.spins[i] = Math.random() < state.pUp ? 1 : 0;
+          }
+        }
+      }
+
+      updateDOMStats();
+    }
+
+    function gaussianPDF(n, mean, sigma) {
+      if (sigma < 1e-4) {
+        // Distribuição Dirac delta no limite sigma -> 0
+        return Math.abs(n - mean) < 0.5 ? 1.0 : 0.0;
+      }
+      const diff = n - mean;
+      const factor = 1.0 / (sigma * Math.sqrt(2.0 * Math.PI));
+      return factor * Math.exp(-(diff * diff) / (2.0 * sigma * sigma));
+    }
+
+    // --- INICIALIZAÇÃO DO CHART.JS ---
+    let chart;
+    function initChart() {
+      const chartCtx = document.getElementById('distributionChart').getContext('2d');
+
+      chart = new Chart(chartCtx, {
+        type: 'line',
+        data: {
+          datasets: [
+            {
+              label: 'Distribuição Teórica P(n)',
+              data: [],
+              borderColor: '#f59e0b',
+              backgroundColor: 'rgba(245, 158, 11, 0.12)',
+              borderWidth: 2.5,
+              fill: true,
+              pointRadius: 0,
+              tension: 0.15
+            },
+            {
+              label: 'Flutuação Instantânea (n_real)',
+              data: [],
+              borderColor: '#ef4444',
+              backgroundColor: '#ef4444',
+              borderWidth: 2,
+              borderDash: [5, 4],
+              pointRadius: (ctx) => (ctx.dataIndex === 1 ? 7 : 0),
+              pointHoverRadius: 8,
+              pointBackgroundColor: '#ffffff',
+              pointBorderColor: '#ef4444',
+              pointBorderWidth: 3,
+              fill: false,
+              showLine: true
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          interaction: {
+            intersect: false,
+            mode: 'nearest'
+          },
+          plugins: {
+            legend: {
+              labels: {
+                color: '#9ca3af',
+                font: { family: 'Inter', size: 11 }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(5)} em n = ${ctx.parsed.x.toFixed(1)}`
+              }
+            }
+          },
+          scales: {
+            x: {
+              type: 'linear',
+              min: 0,
+              max: state.N,
+              title: {
+                display: true,
+                text: 'Número de Spins UP (n)',
+                color: '#9ca3af',
+                font: { family: 'Inter', size: 12, weight: '600' }
+              },
+              ticks: { color: '#6b7280', font: { family: 'JetBrains Mono', size: 10 } },
+              grid: { color: 'rgba(255, 255, 255, 0.05)' }
+            },
+            y: {
+              type: 'linear',
+              min: 0,
+              title: {
+                display: true,
+                text: 'Densidade de Probabilidade P(n)',
+                color: '#9ca3af',
+                font: { family: 'Inter', size: 12, weight: '600' }
+              },
+              ticks: {
+                color: '#6b7280',
+                font: { family: 'JetBrains Mono', size: 10 },
+                callback: (val) => val.toFixed(3)
+              },
+              grid: { color: 'rgba(255, 255, 255, 0.05)' }
+            }
+          }
+        }
+      });
+    }
+
+    function updateChartCurve() {
+      if (!chart) return;
+
+      const N = state.N;
+      const mean = state.meanN;
+      const sigma = Math.max(state.sigma, 0.35);
+
+      chart.options.scales.x.max = N;
+
+      // Amostragem adaptativa focada na região relevante da Gaussiana
+      const curveData = [];
+      const span = Math.max(sigma * 4.5, 3.0);
+      const minX = Math.max(0, mean - span);
+      const maxX = Math.min(N, mean + span);
+
+      // Ponto inicial 0
+      if (minX > 0) {
+        curveData.push({ x: 0, y: 0 });
+        if (minX > 1) curveData.push({ x: minX - 0.5, y: 0 });
+      }
+
+      // Pontos densos na curva
+      const numPoints = 80;
+      for (let i = 0; i <= numPoints; i++) {
+        const x = minX + (i / numPoints) * (maxX - minX);
+        const y = gaussianPDF(x, mean, sigma);
+        curveData.push({ x: x, y: y });
+      }
+
+      // Ponto final N
+      if (maxX < N) {
+        if (maxX < N - 1) curveData.push({ x: maxX + 0.5, y: 0 });
+        curveData.push({ x: N, y: 0 });
+      }
+
+      chart.data.datasets[0].data = curveData;
+
+      // Ajusta o teto do eixo Y com folga elegante de 25%
+      const peakY = gaussianPDF(mean, mean, sigma);
+      chart.options.scales.y.suggestedMax = Math.max(peakY * 1.25, 0.05);
+
+      state.chartNeedsFullRebuild = false;
+    }
+
+    function updateChartMarker() {
+      if (!chart) return;
+
+      const nReal = state.nReal;
+      const sigma = Math.max(state.sigma, 0.35);
+      const yVal = gaussianPDF(nReal, state.meanN, sigma);
+
+      // Linha vertical do chão até a curva com marcador destacado
+      chart.data.datasets[1].data = [
+        { x: nReal, y: 0 },
+        { x: nReal, y: yVal }
+      ];
+
+      chart.update('none'); // Atualização sem animação para garantir 60 FPS fluídos
+    }
+
+    // --- ATUALIZAÇÃO DO GRID DE SPINS (CANVAS) ---
+    function resizeCanvas() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      const size = Math.min(rect.width, rect.height || rect.width);
+      
+      canvas.width = size * dpr;
+      canvas.height = size * dpr;
+      ctx.scale(dpr, dpr);
+    }
+
+    function drawSpins() {
+      const dpr = window.devicePixelRatio || 1;
+      const width = canvas.width / dpr;
+      const height = canvas.height / dpr;
+
+      ctx.clearRect(0, 0, width, height);
+
+      const cols = state.gridCols;
+      const rows = state.gridRows;
+      const cellW = width / cols;
+      const cellH = height / rows;
+
+      const N = state.N;
+      const spins = state.spins;
+
+      // Desenho otimizado em lote
+      const useGap = N <= 900 && cellW > 3;
+      const pad = useGap ? 1 : 0;
+
+      for (let i = 0; i < N; i++) {
+        const r = Math.floor(i / cols);
+        const c = i % cols;
+        const x = c * cellW;
+        const y = r * cellH;
+
+        ctx.fillStyle = spins[i] === 1 ? '#ef4444' : '#3b82f6';
+        ctx.fillRect(x, y, cellW - pad, cellH - pad);
+      }
+    }
+
+    // --- DINÂMICA MONTE CARLO / BANHO TÉRMICO ---
+    function stepThermodynamics() {
+      const N = state.N;
+      const pUp = state.pUp;
+      const spins = state.spins;
+      let countUp = 0;
+
+      // Iteração sobre cada spin individual independente (paramagneto)
+      for (let i = 0; i < N; i++) {
+        const isUp = Math.random() < pUp ? 1 : 0;
+        spins[i] = isUp;
+        if (isUp === 1) countUp++;
+      }
+
+      state.nReal = countUp;
+    }
+
+    // --- ATUALIZAÇÃO DA INTERFACE & ESTATÍSTICAS ---
+    function updateDOMStats() {
+      valN.textContent = state.N;
+      valB.textContent = (state.B >= 0 ? '+' : '') + state.B.toFixed(2);
+      valT.textContent = state.T.toFixed(2);
+
+      gridDimensionsTag.textContent = `Grid: ${state.gridCols} × ${state.gridRows} (N = ${state.N})`;
+
+      const nReal = state.nReal;
+      const nDown = state.N - nReal;
+      const fracReal = nReal / state.N;
+      const magReal = (nReal - nDown) / state.N;
+
+      countUpText.textContent = `${nReal} (${(fracReal * 100).toFixed(1)}%)`;
+      countDownText.textContent = `${nDown} (${((1 - fracReal) * 100).toFixed(1)}%)`;
+
+      statNReal.textContent = nReal;
+      statFracReal.textContent = fracReal.toFixed(3);
+      statMagReal.textContent = (magReal >= 0 ? '+' : '') + magReal.toFixed(3);
+
+      statPup.textContent = state.pUp.toFixed(4);
+      statMeanN.textContent = state.meanN.toFixed(1);
+      statSigma.textContent = state.sigma.toFixed(2);
+
+      const relSigmaPercent = (state.sigma / state.N) * 100;
+      statRelSigma.textContent = relSigmaPercent.toFixed(2) + '%';
+    }
+
+    // --- EVENT LISTENERS DE CONTROLE (SLIDERS) ---
+    sliderN.addEventListener('input', (e) => {
+      state.N = parseInt(e.target.value, 10);
+      updateTheoreticalParameters();
+      updateChartCurve();
+      if (state.isPaused) {
+        stepThermodynamics();
+        drawSpins();
+        updateChartMarker();
+        updateDOMStats();
+      }
+    });
+
+    sliderB.addEventListener('input', (e) => {
+      state.B = parseFloat(e.target.value);
+      updateTheoreticalParameters();
+      updateChartCurve();
+      if (state.isPaused) {
+        stepThermodynamics();
+        drawSpins();
+        updateChartMarker();
+        updateDOMStats();
+      }
+    });
+
+    sliderT.addEventListener('input', (e) => {
+      state.T = parseFloat(e.target.value);
+      updateTheoreticalParameters();
+      updateChartCurve();
+      if (state.isPaused) {
+        stepThermodynamics();
+        drawSpins();
+        updateChartMarker();
+        updateDOMStats();
+      }
+    });
+
+    function setPreset(N, B, T) {
+      sliderN.value = N;
+      sliderB.value = B;
+      sliderT.value = T;
+
+      state.N = N;
+      state.B = B;
+      state.T = T;
+
+      updateTheoreticalParameters();
+      updateChartCurve();
+      stepThermodynamics();
+      drawSpins();
+      updateChartMarker();
+      updateDOMStats();
+    }
+
+    function togglePause() {
+      state.isPaused = !state.isPaused;
+      if (state.isPaused) {
+        btnPause.classList.add('active');
+        pauseIcon.textContent = '▶️';
+        pauseText.textContent = 'Retomar';
+      } else {
+        btnPause.classList.remove('active');
+        pauseIcon.textContent = '⏸️';
+        pauseText.textContent = 'Pausar';
+      }
+    }
+
+    function stepSimulation() {
+      stepThermodynamics();
+      drawSpins();
+      updateChartMarker();
+      updateDOMStats();
+    }
+
+    // --- LOOP PRINCIPAL DE ANIMAÇÃO (60 FPS VIA requestAnimationFrame) ---
+    function animationLoop() {
+      if (!state.isPaused) {
+        stepThermodynamics();
+        drawSpins();
+        updateChartMarker();
+        updateDOMStats();
+      }
+      requestAnimationFrame(animationLoop);
+    }
+
+    // --- INICIALIZAÇÃO DO SISTEMA ---
+    window.addEventListener('load', () => {
+      resizeCanvas();
+      initChart();
+      updateTheoreticalParameters();
+      updateChartCurve();
+      stepThermodynamics();
+      drawSpins();
+      updateChartMarker();
+      updateDOMStats();
+      requestAnimationFrame(animationLoop);
+    });
+
+    window.addEventListener('resize', () => {
+      resizeCanvas();
+      drawSpins();
+      if (chart) chart.resize();
+    });
+  </script>
+</body>
+</html>
