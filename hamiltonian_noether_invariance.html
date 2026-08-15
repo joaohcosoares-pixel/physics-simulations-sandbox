@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invariância do Hamiltoniano e Teorema de Noether</title>
+    <style>
+        :root {
+            --bg-dark: #090b10;
+            --panel-bg: rgba(16, 21, 34, 0.88);
+            --panel-border: rgba(0, 240, 255, 0.18);
+            --neon-cyan: #00f0ff;
+            --neon-magenta: #ff007f;
+            --neon-gold: #ffb800;
+            --neon-emerald: #00ff9d;
+            --neon-purple: #b537f2;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #484f58;
+            --font-main: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            --font-math: 'Cambria Math', 'Latin Modern Math', 'Times New Roman', serif;
+            --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        header {
+            padding: 12px 24px;
+            background: linear-gradient(180deg, rgba(16, 21, 34, 0.95) 0%, rgba(9, 11, 16, 0.8) 100%);
+            border-bottom: 1px solid var(--panel-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .logo-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .quantum-badge {
+            background: rgba(0, 240, 255, 0.1);
+            color: var(--neon-cyan);
+            border: 1px solid var(--neon-cyan);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+        }
+
+        .subtitle {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - 65px);
+            position: relative;
+        }
+
+        /* SIMULATION CANVAS AREA */
+        .simulation-pane {
+            flex: 1.35;
+            position: relative;
+            background: radial-gradient(circle at center, #111528 0%, #080a0f 100%);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #simCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            cursor: crosshair;
+        }
+
+        .canvas-overlay {
+            position: absolute;
+            top: 14px;
+            left: 14px;
+            display: flex;
+            gap: 10px;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .hud-card {
+            background: rgba(10, 14, 24, 0.82);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 0.78rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            pointer-events: auto;
+        }
+
+        .hud-label {
+            color: var(--text-secondary);
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+
+        .hud-value {
+            font-family: var(--font-mono);
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--neon-cyan);
+        }
+
+        .canvas-controls-bottom {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(12, 17, 30, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--panel-border);
+            padding: 8px 16px;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            z-index: 5;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        /* CONTROL & PEDAGOGICAL PANEL */
+        .control-pane {
+            flex: 1;
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            border-left: 1px solid var(--panel-border);
+            overflow-y: auto;
+            padding: 20px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .control-pane::-webkit-scrollbar {
+            width: 6px;
+        }
+        .control-pane::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.2);
+        }
+        .control-pane::-webkit-scrollbar-thumb {
+            background: rgba(0, 240, 255, 0.25);
+            border-radius: 3px;
+        }
+
+        .card {
+            background: rgba(20, 26, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 12px;
+            padding: 16px;
+            transition: border-color 0.25s, box-shadow 0.25s;
+        }
+
+        .card:hover {
+            border-color: rgba(0, 240, 255, 0.3);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .card-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-title.cyan { color: var(--neon-cyan); }
+        .card-title.gold { color: var(--neon-gold); }
+        .card-title.magenta { color: var(--neon-magenta); }
+        .card-title.emerald { color: var(--neon-emerald); }
+
+        /* TOGGLE BUTTONS (Cartesian vs Polar) */
+        .transformation-toggle {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            background: rgba(9, 12, 20, 0.8);
+            border-radius: 8px;
+            padding: 4px;
+            gap: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            margin-bottom: 14px;
+        }
+
+        .toggle-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .toggle-btn .vars {
+            font-family: var(--font-math);
+            font-size: 0.76rem;
+            opacity: 0.7;
+        }
+
+        .toggle-btn.active {
+            background: rgba(0, 240, 255, 0.15);
+            color: var(--neon-cyan);
+            box-shadow: 0 0 14px rgba(0, 240, 255, 0.25);
+            border: 1px solid rgba(0, 240, 255, 0.4);
+        }
+
+        /* MATHEMATICAL EQUATION BOX */
+        .math-display-box {
+            background: #080a10;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 14px;
+            text-align: center;
+            font-family: var(--font-math);
+            font-size: 1.15rem;
+            line-height: 1.6;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .math-display-box::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+        }
+
+        .frac {
+            display: inline-flex;
+            flex-direction: column;
+            vertical-align: middle;
+            text-align: center;
+            padding: 0 4px;
+            font-size: 0.9em;
+        }
+        .frac-num { border-bottom: 1px solid currentColor; padding-bottom: 1px; }
+        .frac-den { padding-top: 1px; }
+        .sup { font-size: 0.72em; vertical-align: super; line-height: 0; }
+        .sub { font-size: 0.72em; vertical-align: sub; line-height: 0; }
+
+        /* PEDAGOGICAL HIGHLIGHT BADGE */
+        .cyclic-alert {
+            margin-top: 10px;
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            line-height: 1.45;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .cyclic-alert.alert-polar {
+            background: rgba(0, 255, 157, 0.08);
+            border: 1px solid var(--neon-emerald);
+            color: #d1ffea;
+            animation: pulse-border 2.5s infinite;
+        }
+
+        .cyclic-alert.alert-cartesian {
+            background: rgba(255, 184, 0, 0.08);
+            border: 1px solid rgba(255, 184, 0, 0.4);
+            color: #ffe6aa;
+        }
+
+        @keyframes pulse-border {
+            0%, 100% { box-shadow: 0 0 5px rgba(0, 255, 157, 0.2); }
+            50% { box-shadow: 0 0 15px rgba(0, 255, 157, 0.45); }
+        }
+
+        /* LIVE TELEMETRY GAUGES */
+        .telemetry-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 6px;
+        }
+
+        .gauge-item {
+            background: rgba(8, 12, 22, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 8px;
+            padding: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .gauge-item.highlight-constant {
+            border-color: rgba(0, 240, 255, 0.35);
+            background: rgba(0, 240, 255, 0.04);
+        }
+
+        .gauge-item.highlight-oscillating {
+            border-color: rgba(255, 0, 127, 0.35);
+            background: rgba(255, 0, 127, 0.04);
+        }
+
+        .gauge-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .status-tag {
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .status-tag.const {
+            background: rgba(0, 255, 157, 0.15);
+            color: var(--neon-emerald);
+            border: 1px solid rgba(0, 255, 157, 0.4);
+        }
+
+        .status-tag.var {
+            background: rgba(255, 0, 127, 0.15);
+            color: var(--neon-magenta);
+            border: 1px solid rgba(255, 0, 127, 0.4);
+            animation: blink-tag 1.2s ease-in-out infinite alternate;
+        }
+
+        @keyframes blink-tag {
+            from { opacity: 0.7; }
+            to { opacity: 1; }
+        }
+
+        .gauge-value {
+            font-family: var(--font-mono);
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* OSCILLOSCOPE MINI-CANVAS */
+        .chart-container {
+            margin-top: 10px;
+            background: #06080e;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 8px;
+            position: relative;
+        }
+
+        #chartCanvas {
+            width: 100%;
+            height: 90px;
+            display: block;
+        }
+
+        .chart-legend {
+            display: flex;
+            justify-content: space-around;
+            font-size: 0.68rem;
+            font-family: var(--font-mono);
+            margin-top: 6px;
+            color: var(--text-secondary);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-color {
+            width: 10px;
+            height: 3px;
+            border-radius: 2px;
+        }
+
+        /* ROTATION SLIDER & CONTROLS */
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .slider-val {
+            font-family: var(--font-mono);
+            color: var(--neon-gold);
+            font-weight: 600;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--neon-gold);
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--neon-gold);
+            border: 2px solid #fff;
+        }
+
+        .invariance-banner {
+            background: rgba(255, 184, 0, 0.08);
+            border-left: 3px solid var(--neon-gold);
+            padding: 8px 12px;
+            border-radius: 0 6px 6px 0;
+            font-size: 0.76rem;
+            line-height: 1.4;
+            color: #ffe6aa;
+            margin-top: 8px;
+        }
+
+        /* BUTTONS */
+        .btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: var(--text-primary);
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .btn.btn-primary {
+            background: rgba(0, 240, 255, 0.2);
+            border-color: var(--neon-cyan);
+            color: var(--neon-cyan);
+        }
+
+        .btn.btn-primary:hover {
+            background: rgba(0, 240, 255, 0.35);
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+        }
+
+        .preset-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .btn-preset {
+            padding: 6px 8px;
+            font-size: 0.72rem;
+            text-align: center;
+            border-radius: 4px;
+        }
+
+        @media (max-width: 950px) {
+            .main-container {
+                flex-direction: column;
+                height: auto;
+            }
+            .simulation-pane {
+                min-height: 480px;
+                flex: none;
+            }
+            .control-pane {
+                border-left: none;
+                border-top: 1px solid var(--panel-border);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-title">
+            <span class="quantum-badge">Noether & Hamilton</span>
+            <div>
+                <h1>Invariância do Hamiltoniano e Teorema de Noether</h1>
+                <div class="subtitle">Mecânica Clássica Teórica Aplicada ao Sistema de Força Central</div>
+            </div>
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <button class="btn btn-primary" id="btnPlayPause">⏸ Pausar</button>
+            <button class="btn" id="btnReset">🔄 Reiniciar</button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- SIMULATION CANVAS -->
+        <div class="simulation-pane">
+            <canvas id="simCanvas"></canvas>
+
+            <!-- CANVAS OVERLAYS -->
+            <div class="canvas-overlay">
+                <div class="hud-card">
+                    <div class="hud-label">Referencial Espacial</div>
+                    <div class="hud-value" id="hudFrameMode">Cartesiano (x, y)</div>
+                </div>
+                <div class="hud-card">
+                    <div class="hud-label">Rotação Ativa (δθ)</div>
+                    <div class="hud-value" id="hudRotation" style="color: var(--neon-gold);">0.0°</div>
+                </div>
+            </div>
+
+            <!-- SIMULATION FOOTER CONTROLS -->
+            <div class="canvas-controls-bottom">
+                <button class="btn btn-preset" id="btnTrailToggle">✨ Limpar Rastro</button>
+                <button class="btn btn-preset" id="btnVectorToggle">🧭 Vetores: Ligados</button>
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: var(--text-secondary);">
+                    <span>Velocidade Sim:</span>
+                    <input type="range" id="simSpeedSlider" min="0.2" max="2.5" step="0.1" value="1.0" style="width: 80px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- CONTROL & EXPLANATION PANEL -->
+        <div class="control-pane">
+
+            <!-- 1. TRANSFORMAÇÃO CANÔNICA (TOGGLE) -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title cyan">
+                        <span>🔄</span> 1. Transformação Canônica de Coordenadas
+                    </span>
+                </div>
+
+                <div class="transformation-toggle">
+                    <button class="toggle-btn active" id="btnCartesian">
+                        <span>Cartesianas</span>
+                        <span class="vars">(x, y, p<sub>x</sub>, p<sub>y</sub>)</span>
+                    </button>
+                    <button class="toggle-btn" id="btnPolar">
+                        <span>Polares</span>
+                        <span class="vars">(r, θ, p<sub>r</sub>, p<sub>θ</sub>)</span>
+                    </button>
+                </div>
+
+                <!-- EQUAÇÃO DO HAMILTONIANO -->
+                <div class="math-display-box" id="hamiltonianEquation">
+                    <!-- Dinamicamente atualizado via JS -->
+                </div>
+
+                <!-- AVISO PEDAGÓGICO DE COORDENADA CÍCLICA -->
+                <div class="cyclic-alert alert-cartesian" id="cyclicAlertBox">
+                    <!-- Dinamicamente atualizado via JS -->
+                </div>
+            </div>
+
+            <!-- 2. TELEMETRIA E GRANDEZAS CONSERVADAS -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title emerald">
+                        <span>⚖️</span> 2. Grandezas Físicas em Tempo Real
+                    </span>
+                    <span style="font-size: 0.72rem; color: var(--text-secondary);">Teorema de Noether</span>
+                </div>
+
+                <div class="telemetry-grid">
+                    <!-- ENERGIA TOTAL (H) -->
+                    <div class="gauge-item highlight-constant">
+                        <div class="gauge-header">
+                            <span>Energia Total (H)</span>
+                            <span class="status-tag const">Constante</span>
+                        </div>
+                        <div class="gauge-value" id="valEnergy" style="color: var(--neon-gold);">-25.00</div>
+                    </div>
+
+                    <!-- MOMENTO ANGULAR (p_theta) -->
+                    <div class="gauge-item highlight-constant">
+                        <div class="gauge-header">
+                            <span>Momento Angular (p<sub>θ</sub>)</span>
+                            <span class="status-tag const">Constante</span>
+                        </div>
+                        <div class="gauge-value" id="valPtheta" style="color: var(--neon-cyan);">+142.50</div>
+                    </div>
+
+                    <!-- MOMENTO RADIAL (p_r) -->
+                    <div class="gauge-item highlight-oscillating">
+                        <div class="gauge-header">
+                            <span>Momento Radial (p<sub>r</sub>)</span>
+                            <span class="status-tag var">Oscilando</span>
+                        </div>
+                        <div class="gauge-value" id="valPr" style="color: var(--neon-magenta);">+0.00</div>
+                    </div>
+
+                    <!-- RAIO (r) -->
+                    <div class="gauge-item">
+                        <div class="gauge-header">
+                            <span>Raio Orbital (r)</span>
+                            <span class="status-tag var">Dinâmico</span>
+                        </div>
+                        <div class="gauge-value" id="valRadius">180.0 px</div>
+                    </div>
+                </div>
+
+                <!-- OSCILOSCÓPIO TEMPORAL -->
+                <div class="chart-container">
+                    <canvas id="chartCanvas"></canvas>
+                    <div class="chart-legend">
+                        <div class="legend-item"><span class="legend-color" style="background: var(--neon-cyan);"></span> p<sub>θ</sub> (Constante)</div>
+                        <div class="legend-item"><span class="legend-color" style="background: var(--neon-magenta);"></span> p<sub>r</sub> (Oscila)</div>
+                        <div class="legend-item"><span class="legend-color" style="background: var(--neon-gold);"></span> H (Energia Total)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. INVARIÂNCIA SOB ROTAÇÃO DO UNIVERSO -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title gold">
+                        <span>🌌</span> 3. Ação: Girar o Universo (θ → θ + δθ)
+                    </span>
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <span>Ângulo de Rotação Espacial (δθ)</span>
+                        <span class="slider-val" id="rotAngleLabel">0°</span>
+                    </div>
+                    <input type="range" id="rotationSlider" min="0" max="360" step="1" value="0">
+                </div>
+
+                <div class="invariance-banner">
+                    💡 <strong>Invariância Notável:</strong> Ao girar o referencial do espaço, a órbita roda geometricamente, mas <strong>H e p<sub>θ</sub> permanecem rigorosamente idênticos</strong>. A simetria contínua de rotação é a fonte geradora da conservação do momento angular!
+                </div>
+            </div>
+
+            <!-- 4. CONTROLE ORBITAL E PRESETS -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title magenta">
+                        <span>🚀</span> 4. Configuração dos Parâmetros Físicos
+                    </span>
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <span>Massa do Planeta (m)</span>
+                        <span class="slider-val" id="massLabel">1.0</span>
+                    </div>
+                    <input type="range" id="massSlider" min="0.2" max="5.0" step="0.1" value="1.0">
+                </div>
+
+                <div class="slider-group" style="margin-top: 10px;">
+                    <div class="slider-header">
+                        <span>Velocidade Tangencial Inicial (v<sub>0</sub>)</span>
+                        <span class="slider-val" id="velLabel">1.10</span>
+                    </div>
+                    <input type="range" id="velSlider" min="0.4" max="2.0" step="0.05" value="1.05">
+                </div>
+
+                <div style="margin-top: 12px;">
+                    <div style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 4px; text-transform: uppercase;">Presets de Órbitas Clássicas:</div>
+                    <div class="preset-buttons">
+                        <button class="btn btn-preset" id="presetCircular">Circular</button>
+                        <button class="btn btn-preset" id="presetElliptic">Elíptica</button>
+                        <button class="btn btn-preset" id="presetEccentric">Excêntrica</button>
+                        <button class="btn btn-preset" id="presetEscape">Quase-Fuga</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        /* ==========================================================================
+           MOTOR DE FÍSICA E SIMULAÇÃO (HAMILTONIAN CENTRAL FORCE)
+           ========================================================================== */
+        
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        const chartCanvas = document.getElementById('chartCanvas');
+        const chartCtx = chartCanvas.getContext('2d');
+
+        // Constantes Físicas do Modelo
+        const G = 1.0;          // Constante gravitacional normalizada
+        const M = 22000.0;      // Massa da estrela central (na origem)
+        
+        // Estado do Planeta
+        let state = {
+            m: 1.0,             // Massa do planeta
+            x: 180.0,           // Posição x
+            y: 0.0,             // Posição y
+            vx: 0.0,            // Velocidade vx
+            vy: 1.10 * Math.sqrt((G * M) / 180.0), // vy inicial
+            running: true,
+            coordMode: 'cartesian', // 'cartesian' ou 'polar'
+            rotationAngle: 0,   // δθ em radianos
+            showVectors: true,
+            simSpeed: 1.0,
+            trail: []
+        };
+
+        // Histórico para Osciloscópio
+        const HISTORY_LENGTH = 160;
+        let historyData = {
+            H: [],
+            ptheta: [],
+            pr: []
+        };
+
+        // Ajuste de DPI dos Canvases
+        function resizeCanvases() {
+            const rect = canvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+
+            const cRect = chartCanvas.getBoundingClientRect();
+            chartCanvas.width = cRect.width * dpr;
+            chartCanvas.height = cRect.height * dpr;
+            chartCtx.scale(dpr, dpr);
+        }
+        window.addEventListener('resize', resizeCanvases);
+
+        // Inicializador de Órbita
+        function initOrbit(r0 = 180.0, vFactor = 1.05) {
+            state.x = r0;
+            state.y = 0.0;
+            state.vx = 0.0;
+            const vCirc = Math.sqrt((G * M) / r0);
+            state.vy = vCirc * vFactor;
+            state.trail = [];
+            historyData = { H: [], ptheta: [], pr: [] };
+            document.getElementById('velSlider').value = vFactor.toFixed(2);
+            document.getElementById('velLabel').innerText = vFactor.toFixed(2);
+        }
+
+        /* ==========================================================================
+           INTEGRADOR NUMÉRICO: VELOCITY VERLET (SIMPLÉTICO / CONSERVA ENERGIA)
+           ========================================================================== */
+        function computeAcceleration(x, y) {
+            const r2 = x * x + y * y;
+            const r = Math.sqrt(r2);
+            const r3 = r2 * r;
+            const factor = -(G * M) / (r3 + 1e-6);
+            return { ax: factor * x, ay: factor * y };
+        }
+
+        function physicsStep(dt) {
+            // Sub-stepping para máxima estabilidade e conservação simplética
+            const substeps = 12;
+            const subDt = (dt * state.simSpeed) / substeps;
+
+            for (let s = 0; s < substeps; s++) {
+                const currentAcc = computeAcceleration(state.x, state.y);
+                
+                // Atualização de Posição
+                state.x += state.vx * subDt + 0.5 * currentAcc.ax * subDt * subDt;
+                state.y += state.vy * subDt + 0.5 * currentAcc.ay * subDt * subDt;
+
+                // Nova Aceleração
+                const nextAcc = computeAcceleration(state.x, state.y);
+
+                // Atualização de Velocidade
+                state.vx += 0.5 * (currentAcc.ax + nextAcc.ax) * subDt;
+                state.vy += 0.5 * (currentAcc.ay + nextAcc.ay) * subDt;
+            }
+
+            // Registrar no rastro
+            state.trail.push({ x: state.x, y: state.y });
+            if (state.trail.length > 500) {
+                state.trail.shift();
+            }
+        }
+
+        /* ==========================================================================
+           CÁLCULO DAS GRANDEZAS CANÔNICAS
+           ========================================================================== */
+        function calculateHamiltonianQuantities() {
+            const x = state.x;
+            const y = state.y;
+            const px = state.m * state.vx;
+            const py = state.m * state.vy;
+
+            const r = Math.sqrt(x * x + y * y);
+            const theta = Math.atan2(y, x);
+
+            // Momento radial: pr = m * r_dot = (x*px + y*py)/r
+            const pr = (x * px + y * py) / (r + 1e-8);
+
+            // Momento angular canônico conjugado: p_theta = x*py - y*px
+            const ptheta = x * py - y * px;
+
+            // Energia Cinética T e Potencial V
+            const T = (px * px + py * py) / (2.0 * state.m);
+            const V = -(G * M * state.m) / r;
+            const H = T + V;
+
+            return { x, y, px, py, r, theta, pr, ptheta, H, T, V };
+        }
+
+        /* ==========================================================================
+           RENDERIZAÇÃO DO CANVAS PRINCIPAL
+           ========================================================================== */
+        function drawSimulation(quantities) {
+            const width = canvas.getBoundingClientRect().width;
+            const height = canvas.getBoundingClientRect().height;
+            const centerX = width / 2;
+            const centerY = height / 2;
+
+            ctx.clearRect(0, 0, width, height);
+
+            // 1. GRADE DE FUNDO BASEADA NA TRANSFORMAÇÃO SELECIONADA
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(state.rotationAngle); // Aplica rotação de todo o espaço δθ
+
+            if (state.coordMode === 'cartesian') {
+                // Grade Cartesiana Neon
+                ctx.strokeStyle = 'rgba(0, 240, 255, 0.05)';
+                ctx.lineWidth = 1;
+                const gridSize = 40;
+                const limit = Math.max(width, height);
+                for (let x = -limit; x <= limit; x += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, -limit);
+                    ctx.lineTo(x, limit);
+                    ctx.stroke();
+                }
+                for (let y = -limit; y <= limit; y += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(-limit, y);
+                    ctx.lineTo(limit, y);
+                    ctx.stroke();
+                }
+
+                // Eixos X e Y
+                ctx.strokeStyle = 'rgba(0, 240, 255, 0.25)';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(-limit, 0); ctx.lineTo(limit, 0);
+                ctx.moveTo(0, -limit); ctx.lineTo(0, limit);
+                ctx.stroke();
+
+                // Rótulos dos eixos
+                ctx.fillStyle = 'rgba(0, 240, 255, 0.4)';
+                ctx.font = '11px sans-serif';
+                ctx.fillText('+X', limit - 30, -8);
+                ctx.fillText('+Y', 8, -limit + 30);
+            } else {
+                // Grade Polar Neon (Anéis de r e Raios de θ)
+                ctx.strokeStyle = 'rgba(0, 255, 157, 0.07)';
+                ctx.lineWidth = 1;
+                for (let rRing = 50; rRing <= 450; rRing += 50) {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, rRing, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+
+                // Raios angulares
+                for (let a = 0; a < Math.PI * 2; a += Math.PI / 6) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(Math.cos(a) * 450, Math.sin(a) * 450);
+                    ctx.stroke();
+                }
+
+                // Arco do Ângulo θ Atual
+                ctx.strokeStyle = 'rgba(0, 255, 157, 0.5)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                const currentAngle = Math.atan2(state.y, state.x);
+                ctx.arc(0, 0, 45, 0, currentAngle, currentAngle < 0);
+                ctx.stroke();
+
+                // Rótulo θ
+                ctx.fillStyle = 'var(--neon-emerald)';
+                ctx.font = 'bold 12px serif';
+                const midA = currentAngle / 2;
+                ctx.fillText('θ', Math.cos(midA) * 56, Math.sin(midA) * 56);
+            }
+
+            // 2. RASTRO DA ÓRBITA COM GLOW
+            if (state.trail.length > 1) {
+                ctx.beginPath();
+                for (let i = 0; i < state.trail.length; i++) {
+                    const p = state.trail[i];
+                    if (i === 0) ctx.moveTo(p.x, p.y);
+                    else ctx.lineTo(p.x, p.y);
+                }
+                ctx.strokeStyle = state.coordMode === 'polar' ? 'rgba(0, 255, 157, 0.45)' : 'rgba(0, 240, 255, 0.45)';
+                ctx.lineWidth = 2;
+                ctx.shadowColor = state.coordMode === 'polar' ? '#00ff9d' : '#00f0ff';
+                ctx.shadowBlur = 10;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            }
+
+            // 3. ESTRELA CENTRAL (Origem de atração do Potencial V(r))
+            const starGlow = ctx.createRadialGradient(0, 0, 4, 0, 0, 32);
+            starGlow.addColorStop(0, '#ffffff');
+            starGlow.addColorStop(0.2, '#ffdd55');
+            starGlow.addColorStop(0.6, 'rgba(255, 140, 0, 0.4)');
+            starGlow.addColorStop(1, 'rgba(255, 100, 0, 0)');
+            ctx.fillStyle = starGlow;
+            ctx.beginPath();
+            ctx.arc(0, 0, 32, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#ffec99';
+            ctx.beginPath();
+            ctx.arc(0, 0, 10, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 4. PLANETA ORBITANTE
+            const px = state.x;
+            const py = state.y;
+
+            // Linha radial ligando a estrela ao planeta
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(px, py);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Planeta (Corpo de massa m)
+            const planetRadius = 6 + Math.sqrt(state.m) * 2;
+            const pGlow = ctx.createRadialGradient(px, py, 2, px, py, planetRadius * 2.5);
+            pGlow.addColorStop(0, '#ffffff');
+            pGlow.addColorStop(0.4, '#00f0ff');
+            pGlow.addColorStop(1, 'rgba(0, 240, 255, 0)');
+            ctx.fillStyle = pGlow;
+            ctx.beginPath();
+            ctx.arc(px, py, planetRadius * 2.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(px, py, planetRadius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 5. VETORES DE VELOCIDADE / MOMENTO (DECOMPOSIÇÃO CARTESIANA OU POLAR)
+            if (state.showVectors) {
+                const vScale = 24;
+                if (state.coordMode === 'cartesian') {
+                    // Vetor Vx (Vermelho/Rosa)
+                    drawArrow(ctx, px, py, px + state.vx * vScale, py, '#ff007f', 'p_x');
+                    // Vetor Vy (Azul)
+                    drawArrow(ctx, px, py, px, py + state.vy * vScale, '#00f0ff', 'p_y');
+                } else {
+                    // Vetor Radial vr (direção r)
+                    const urX = px / quantities.r;
+                    const urY = py / quantities.r;
+                    const vr = (state.vx * urX + state.vy * urY);
+                    drawArrow(ctx, px, py, px + urX * vr * vScale, py + urY * vr * vScale, '#ff007f', 'p_r');
+
+                    // Vetor Tangencial v_theta (perpendicular a r)
+                    const uthX = -urY;
+                    const uthY = urX;
+                    const vth = (state.vx * uthX + state.vy * uthY);
+                    drawArrow(ctx, px, py, px + uthX * vth * vScale, py + uthY * vth * vScale, '#00ff9d', 'p_θ');
+                }
+            }
+
+            ctx.restore();
+        }
+
+        // Helper para desenhar setas de vetores
+        function drawArrow(ctx, fromX, fromY, toX, toY, color, label) {
+            const headlen = 8;
+            const dx = toX - fromX;
+            const dy = toY - fromY;
+            const angle = Math.atan2(dy, dx);
+            if (Math.hypot(dx, dy) < 4) return;
+
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            ctx.lineWidth = 2;
+
+            ctx.beginPath();
+            ctx.moveTo(fromX, fromY);
+            ctx.lineTo(toX, toY);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(toX, toY);
+            ctx.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
+            ctx.fill();
+
+            ctx.font = '10px monospace';
+            ctx.fillText(label, toX + 6, toY + 4);
+        }
+
+        /* ==========================================================================
+           RENDERIZAÇÃO DO OSCILOSCÓPIO TEMPORAL
+           ========================================================================== */
+        function drawChart(quantities) {
+            historyData.H.push(quantities.H);
+            historyData.ptheta.push(quantities.ptheta);
+            historyData.pr.push(quantities.pr);
+
+            if (historyData.H.length > HISTORY_LENGTH) {
+                historyData.H.shift();
+                historyData.ptheta.shift();
+                historyData.pr.shift();
+            }
+
+            const w = chartCanvas.getBoundingClientRect().width;
+            const h = chartCanvas.getBoundingClientRect().height;
+
+            chartCtx.clearRect(0, 0, w, h);
+
+            // Linhas de Grade
+            chartCtx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            chartCtx.lineWidth = 1;
+            chartCtx.beginPath();
+            chartCtx.moveTo(0, h / 2); chartCtx.lineTo(w, h / 2);
+            chartCtx.stroke();
+
+            // Plot de Séries Temporais
+            function plotSeries(data, color, minVal, maxVal) {
+                if (data.length < 2) return;
+                chartCtx.strokeStyle = color;
+                chartCtx.lineWidth = 1.8;
+                chartCtx.beginPath();
+                for (let i = 0; i < data.length; i++) {
+                    const x = (i / (HISTORY_LENGTH - 1)) * w;
+                    const normalized = (data[i] - minVal) / (maxVal - minVal + 1e-6);
+                    const y = h - (normalized * (h - 16) + 8);
+                    if (i === 0) chartCtx.moveTo(x, y);
+                    else chartCtx.lineTo(x, y);
+                }
+                chartCtx.stroke();
+            }
+
+            // Escalas
+            plotSeries(historyData.ptheta, '#00f0ff', 0, 300);
+            plotSeries(historyData.H, '#ffb800', -150, 50);
+            plotSeries(historyData.pr, '#ff007f', -150, 150);
+        }
+
+        /* ==========================================================================
+           ATUALIZAÇÃO DE INTERFACE E EXPLICAÇÃO DIDÁTICA
+           ========================================================================== */
+        function updateUI(q) {
+            // Mostradores numéricos em tempo real
+            document.getElementById('valEnergy').innerText = q.H.toFixed(2);
+            document.getElementById('valPtheta').innerText = q.ptheta.toFixed(2);
+            document.getElementById('valPr').innerText = (q.pr >= 0 ? '+' : '') + q.pr.toFixed(2);
+            document.getElementById('valRadius').innerText = q.r.toFixed(1) + ' px';
+
+            // HUD
+            document.getElementById('hudFrameMode').innerText = 
+                state.coordMode === 'cartesian' ? 'Cartesiano (x, y)' : 'Polar (r, θ)';
+            document.getElementById('hudRotation').innerText = 
+                (state.rotationAngle * 180 / Math.PI).toFixed(1) + '°';
+
+            // Equações Matemáticas e Explicações Pedagógicas
+            const eqBox = document.getElementById('hamiltonianEquation');
+            const alertBox = document.getElementById('cyclicAlertBox');
+
+            if (state.coordMode === 'cartesian') {
+                eqBox.innerHTML = `
+                    <span>H(x, y, p<sub>x</sub>, p<sub>y</sub>) = </span>
+                    <span class="frac"><span class="frac-num">p<sub>x</sub><span class="sup">2</span> + p<sub>y</sub><span class="sup">2</span></span><span class="frac-den">2m</span></span>
+                    <span> - </span>
+                    <span class="frac"><span class="frac-num">G M m</span><span class="frac-den">√(x<span class="sup">2</span> + y<span class="sup">2</span>)</span></span>
+                `;
+                alertBox.className = 'cyclic-alert alert-cartesian';
+                alertBox.innerHTML = `
+                    <span>⚠️</span>
+                    <div>
+                        <strong>Ambas as coordenadas (x, y) estão presentes:</strong><br>
+                        ∂H/∂x ≠ 0 e ∂H/∂y ≠ 0 ⟹ p<sub>x</sub> e p<sub>y</sub> <strong>NÃO</strong> se conservam individualmente.
+                    </div>
+                `;
+            } else {
+                eqBox.innerHTML = `
+                    <span>H(r, p<sub>r</sub>, p<sub>θ</sub>) = </span>
+                    <span class="frac"><span class="frac-num">p<sub>r</sub><span class="sup">2</span></span><span class="frac-den">2m</span></span>
+                    <span> + </span>
+                    <span class="frac"><span class="frac-num">p<sub>θ</sub><span class="sup">2</span></span><span class="frac-den">2mr<span class="sup">2</span></span></span>
+                    <span> - </span>
+                    <span class="frac"><span class="frac-num">G M m</span><span class="frac-den">r</span></span>
+                `;
+                alertBox.className = 'cyclic-alert alert-polar';
+                alertBox.innerHTML = `
+                    <span>✨</span>
+                    <div>
+                        <strong style="color: var(--neon-emerald); font-size: 0.9rem;">θ É UMA COORDENADA CÍCLICA!</strong><br>
+                        O ângulo <strong>θ não aparece na equação de H</strong> (∂H/∂θ = 0).<br>
+                        Pela Equação Canônica de Hamilton: 
+                        <strong style="color: #fff;">ṗ<sub>θ</sub> = -∂H/∂θ = 0 ⟹ p<sub>θ</sub> = CONSTANTE</strong> (Teorema de Noether).
+                    </div>
+                `;
+            }
+        }
+
+        /* ==========================================================================
+           LOOP PRINCIPAL DA SIMULAÇÃO (requestAnimationFrame)
+           ========================================================================== */
+        let lastTime = performance.now();
+
+        function loop(currentTime) {
+            const dt = Math.min((currentTime - lastTime) / 1000, 0.05);
+            lastTime = currentTime;
+
+            if (state.running) {
+                physicsStep(dt);
+            }
+
+            const quantities = calculateHamiltonianQuantities();
+            drawSimulation(quantities);
+            drawChart(quantities);
+            updateUI(quantities);
+
+            requestAnimationFrame(loop);
+        }
+
+        /* ==========================================================================
+           CONTROLES DE EVENTOS E INTERATIVIDADE (UI LISTENERS)
+           ========================================================================== */
+        
+        // Botão Play / Pause
+        const btnPlayPause = document.getElementById('btnPlayPause');
+        btnPlayPause.addEventListener('click', () => {
+            state.running = !state.running;
+            btnPlayPause.innerText = state.running ? '⏸ Pausar' : '▶ Continuar';
+            btnPlayPause.className = state.running ? 'btn btn-primary' : 'btn';
+        });
+
+        // Botão Reset
+        document.getElementById('btnReset').addEventListener('click', () => {
+            initOrbit(180.0, parseFloat(document.getElementById('velSlider').value));
+        });
+
+        // Toggle Coordenadas Cartesianas / Polares
+        const btnCartesian = document.getElementById('btnCartesian');
+        const btnPolar = document.getElementById('btnPolar');
+
+        btnCartesian.addEventListener('click', () => {
+            state.coordMode = 'cartesian';
+            btnCartesian.classList.add('active');
+            btnPolar.classList.remove('active');
+        });
+
+        btnPolar.addEventListener('click', () => {
+            state.coordMode = 'polar';
+            btnPolar.classList.add('active');
+            btnCartesian.classList.remove('active');
+        });
+
+        // Slider de Rotação do Universo (Invariância Espacial)
+        const rotSlider = document.getElementById('rotationSlider');
+        const rotLabel = document.getElementById('rotAngleLabel');
+        rotSlider.addEventListener('input', (e) => {
+            const deg = parseFloat(e.target.value);
+            state.rotationAngle = (deg * Math.PI) / 180.0;
+            rotLabel.innerText = deg + '°';
+        });
+
+        // Sliders de Massa e Velocidade
+        const massSlider = document.getElementById('massSlider');
+        const massLabel = document.getElementById('massLabel');
+        massSlider.addEventListener('input', (e) => {
+            state.m = parseFloat(e.target.value);
+            massLabel.innerText = state.m.toFixed(1);
+        });
+
+        const velSlider = document.getElementById('velSlider');
+        const velLabel = document.getElementById('velLabel');
+        velSlider.addEventListener('input', (e) => {
+            const vFactor = parseFloat(e.target.value);
+            velLabel.innerText = vFactor.toFixed(2);
+            initOrbit(180.0, vFactor);
+        });
+
+        // Presets de Órbitas
+        document.getElementById('presetCircular').addEventListener('click', () => initOrbit(180.0, 1.00));
+        document.getElementById('presetElliptic').addEventListener('click', () => initOrbit(180.0, 1.15));
+        document.getElementById('presetEccentric').addEventListener('click', () => initOrbit(220.0, 0.65));
+        document.getElementById('presetEscape').addEventListener('click', () => initOrbit(160.0, 1.38));
+
+        // Controles de Visualização
+        document.getElementById('btnTrailToggle').addEventListener('click', () => {
+            state.trail = [];
+        });
+
+        const btnVec = document.getElementById('btnVectorToggle');
+        btnVec.addEventListener('click', () => {
+            state.showVectors = !state.showVectors;
+            btnVec.innerText = state.showVectors ? '🧭 Vetores: Ligados' : '🧭 Vetores: Ocultos';
+        });
+
+        document.getElementById('simSpeedSlider').addEventListener('input', (e) => {
+            state.simSpeed = parseFloat(e.target.value);
+        });
+
+        // Inicialização
+        resizeCanvases();
+        initOrbit(180.0, 1.05);
+        requestAnimationFrame(loop);
+
+    </script>
+</body>
+</html>

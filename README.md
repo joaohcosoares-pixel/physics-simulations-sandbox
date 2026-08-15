@@ -121,3 +121,32 @@ Where $\mathbf{x}$ is the state vector containing the unknown internal axial for
 
 ### Code Dynamics
 From a software engineering perspective, the simulation is driven by an event-based recalculation loop tied to user interface sliders and an autonomous animation frame iterator[cite: 6]. At each state change, the algorithm recalculates the nodal coordinates based on span and height parameters, performs the load interpolation, and populates the matrix $A$ and vector $\mathbf{B}$[cite: 6]. A custom Gaussian Elimination subroutine is invoked to solve the linear system[cite: 6]. The resulting scalar fields are passed to a dual-canvas rendering pipeline constructed with the vanilla HTML5 Canvas API[cite: 6]. The primary viewport draws the spatial truss topology, modulating stroke widths based on force magnitudes and applying a strict color topology (cyan/blue for tension, rose/red for compression, and gray for zero-force members)[cite: 6]. Concurrently, a secondary canvas iterates the solver across 100 discrete spatial steps to compute and plot the real-time influence line chart for a selected target member[cite: 6].
+
+---
+
+## Hamiltonian Invariance, Canonical Transformations, and Noether's Theorem
+
+**Reference File:** `hamiltonian_noether_invariance.html`
+
+### Logical Description
+This script provides an interactive educational simulation designed for advanced undergraduate physics students to explore the fundamental connections between continuous symmetries, canonical transformations, cyclic coordinates, and conserved dynamical quantities as formalized by Hamilton's mechanics and Noether's Theorem. The simulation models a classical two-dimensional central-force gravitational system (a point mass $m$ orbiting a massive central attractor $M$). It demonstrates how switching from Cartesian coordinates $(x, y, p_x, p_y)$ to canonical Polar coordinates $(r, \theta, p_r, p_\theta)$ exposes the rotational symmetry of the potential, causing the angular coordinate $\theta$ to vanish from the Hamiltonian (forming a cyclic coordinate) and directly guaranteeing the exact temporal conservation of the conjugate angular momentum $p_\theta$.
+
+### Physico-Mathematical Modeling
+In Cartesian coordinates, the system Hamiltonian $H$ explicitly depends on both spatial degrees of freedom through the central potential $V(x, y) = - \frac{GMm}{\sqrt{x^2 + y^2}}$:
+
+$$H(x, y, p_x, p_y) = \frac{p_x^2 + p_y^2}{2m} - \frac{GMm}{\sqrt{x^2 + y^2}}$$
+
+Because $\frac{\partial H}{\partial x} \neq 0$ and $\frac{\partial H}{\partial y} \neq 0$, Hamilton's canonical equations ($\dot{p}_i = -\frac{\partial H}{\partial q_i}$) yield non-zero momentum time-derivatives ($\dot{p}_x \neq 0, \dot{p}_y \neq 0$), meaning neither Cartesian momentum is conserved independently.
+
+Applying a point transformation to canonical polar coordinates $(r, \theta)$ with conjugate momenta $p_r = m\dot{r} = \frac{x p_x + y p_y}{r}$ and $p_\theta = x p_y - y p_x = m r^2 \dot{\theta}$ yields the transformed Hamiltonian:
+
+$$H(r, p_r, p_\theta) = \frac{p_r^2}{2m} + \frac{p_\theta^2}{2m r^2} - \frac{GMm}{r}$$
+
+Here, the angular coordinate $\theta$ is explicitly absent from $H$ ($\frac{\partial H}{\partial \theta} = 0$), establishing $\theta$ as a **cyclic coordinate**. Hamilton's canonical equation of motion directly dictates:
+
+$$\dot{p}_\theta = -\frac{\partial H}{\partial \theta} = 0 \implies p_\theta = \text{constant}$$
+
+Furthermore, under an active continuous rotational transformation of the spatial frame ($\theta \to \theta + \delta\theta$), the value of the Hamiltonian $H$ and the angular momentum $p_\theta$ remain strictly invariant, demonstrating the Noether correspondence between spatial rotational symmetry and angular momentum conservation.
+
+### Code Dynamics
+From a software engineering and numerical standpoint, the application executes a standalone, dependency-free physics engine driven by the browser's `requestAnimationFrame` API. The equations of motion are resolved using a symplectic **Velocity Verlet** numerical integration scheme paired with temporal sub-stepping (12 sub-steps per frame), ensuring negligible long-term energy drift and machine-precision angular momentum preservation across arbitrary orbital eccentricities. The graphics pipeline renders a dynamic dual-coordinate canvas showing real-time orbital trajectories, fading phosphorescent trails, and decomposed momentum vector fields ($p_x, p_y$ vs $p_r, p_\theta$). Synchronously, a secondary canvas oscilloscope plots live time series of total energy $H(t)$, conjugate angular momentum $p_\theta(t)$, and oscillating radial momentum $p_r(t)$, giving immediate visual and pedagogical confirmation of Noether's theorem.
