@@ -150,3 +150,34 @@ Furthermore, under an active continuous rotational transformation of the spatial
 
 ### Code Dynamics
 From a software engineering and numerical standpoint, the application executes a standalone, dependency-free physics engine driven by the browser's `requestAnimationFrame` API. The equations of motion are resolved using a symplectic **Velocity Verlet** numerical integration scheme paired with temporal sub-stepping (12 sub-steps per frame), ensuring negligible long-term energy drift and machine-precision angular momentum preservation across arbitrary orbital eccentricities. The graphics pipeline renders a dynamic dual-coordinate canvas showing real-time orbital trajectories, fading phosphorescent trails, and decomposed momentum vector fields ($p_x, p_y$ vs $p_r, p_\theta$). Synchronously, a secondary canvas oscilloscope plots live time series of total energy $H(t)$, conjugate angular momentum $p_\theta(t)$, and oscillating radial momentum $p_r(t)$, giving immediate visual and pedagogical confirmation of Noether's theorem.
+
+---
+
+## Einstein Solid, Microstates, Multiplicity, and Boltzmann Entropy
+
+**Reference File:** `einstein_solid_simulation.html`
+
+### Logical Description
+This script implements a self-contained interactive simulation designed to teach the statistical mechanics of the Einstein Solid. The platform provides an intuitive visual and mathematical bridge between microscopic quantum states and macroscopic thermodynamic properties. Users can manipulate the number of independent quantum harmonic oscillators ($N$) and thermal energy quanta ($q$), visualize individual microstates using quantum orbs and harmonic energy ladders, inspect the combinatorial "Stars and Bars" representation $\{xx|xxx||x|xx|x\}$, track exact multiplicity $\Omega(N, q)$ calculated using arbitrary-precision `BigInt` arithmetic, and observe dimensionless Boltzmann entropy $S/k_B = \ln \Omega$ alongside dynamic thermodynamic curves. An additional thermal contact module demonstrates the statistical origin of the Second Law of Thermodynamics and spontaneous heat flow toward the macrostate of maximum multiplicity.
+
+### Physico-Mathematical Modeling
+The Einstein Solid models a crystalline lattice as a collection of $N$ independent quantum harmonic oscillators of identical angular frequency $\omega$. The quantized energy eigenvalues of each oscillator are:
+
+$$\epsilon_n = \left(n + \frac{1}{2}\right)\hbar\omega, \quad n \in \{0, 1, 2, \dots\}$$
+
+Due to the Heisenberg Uncertainty Principle ($\Delta x \Delta p \ge \hbar/2$), the solid retains an irreducible zero-point ground state energy $E_0 = \frac{1}{2}N\hbar\omega$ even at absolute zero ($q=0$). The total vibrational energy is:
+
+$$E_{\text{total}} = \left(q + \frac{N}{2}\right)\hbar\omega, \quad \text{where } q = \sum_{i=1}^N n_i$$
+
+The number of distinct microstates $\Omega(N, q)$ for a given macrostate $(N, q)$ is evaluated using the "Stars and Bars" combinatorial bijection: distributing $q$ indistinguishable quanta among $N$ distinguishable oscillators separated by $N-1$ partition lines:
+
+$$\Omega(N, q) = \binom{N+q-1}{q} = \frac{(N+q-1)!}{q!\,(N-1)!}$$
+
+The dimensionless thermodynamic entropy is determined by Boltzmann's relation:
+
+$$\frac{S}{k_B} = \ln \Omega(N, q)$$
+
+For composite systems in thermal contact ($A$ and $B$) with total energy $q_{\text{total}} = q_A + q_B$, the total multiplicity is the product $\Omega_{\text{total}}(q_A) = \Omega_A(q_A) \times \Omega_B(q_{\text{total}} - q_A)$, which exhibits an extremely sharp Gaussian peak at thermal equilibrium where temperatures match ($T_A = T_B$).
+
+### Code Dynamics
+The application is structured as a single self-contained HTML/CSS/JavaScript file with no build step required. Factorial computations for values up to $79!$ are executed with exact integer precision using native JavaScript `BigInt` to prevent numerical overflow and precision loss. Microstate sampling in the microcanonical ensemble is implemented through uniform Fisher-Yates permutations of stars-and-bars arrays. A real-time stochastic thermal fluctuation engine models continuous quanta exchanges between oscillators. Multiplicity and entropy scaling curves are rendered using Chart.js with linear and logarithmic toggleable axes, while mathematical expressions are dynamically typeset using KaTeX.

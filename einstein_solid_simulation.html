@@ -1,0 +1,2557 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sólido de Einstein: Mecânica Estatística e Microestados</title>
+  
+  <!-- CDNs: Chart.js, KaTeX, Font Awesome e Google Fonts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-main: #070a12;
+      --bg-card: #0f172a;
+      --bg-card-alt: #131d35;
+      --bg-card-hover: #172340;
+      --border-color: #1e293b;
+      --border-focus: #38bdf8;
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --accent-quantum: #f59e0b;
+      --accent-quantum-glow: rgba(245, 158, 11, 0.45);
+      --accent-quantum-bright: #fbbf24;
+      
+      --accent-blue: #38bdf8;
+      --accent-blue-glow: rgba(56, 189, 248, 0.35);
+      
+      --accent-emerald: #10b981;
+      --accent-emerald-glow: rgba(16, 185, 129, 0.35);
+      
+      --accent-purple: #a855f7;
+      --accent-rose: #f43f5e;
+      --accent-divider: #ec4899;
+      
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --radius-full: 9999px;
+      
+      --shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.4), 0 2px 6px -1px rgba(0, 0, 0, 0.2);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 1rem 1.25rem;
+      gap: 1.25rem;
+      line-height: 1.55;
+    }
+
+    /* Scrollbars elegantes */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-main);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #27354f;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #374b6e;
+    }
+
+    /* Cabeçalho Principal */
+    header {
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(19, 29, 53, 0.9));
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.2rem 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      box-shadow: var(--shadow-card);
+    }
+
+    .header-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .header-title {
+      font-size: 1.45rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      color: var(--text-main);
+    }
+
+    .header-title i {
+      color: var(--accent-quantum-bright);
+      filter: drop-shadow(0 0 8px var(--accent-quantum-glow));
+    }
+
+    .header-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .header-badges {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: var(--radius-full);
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      border: 1px solid transparent;
+      transition: all 0.2s ease;
+    }
+
+    .badge-amber {
+      background: rgba(245, 158, 11, 0.12);
+      border-color: rgba(245, 158, 11, 0.3);
+      color: var(--accent-quantum-bright);
+    }
+
+    .badge-cyan {
+      background: rgba(56, 189, 248, 0.12);
+      border-color: rgba(56, 189, 248, 0.3);
+      color: var(--accent-blue);
+    }
+
+    .badge-emerald {
+      background: rgba(16, 185, 129, 0.12);
+      border-color: rgba(16, 185, 129, 0.3);
+      color: var(--accent-emerald);
+    }
+
+    /* Barra de Navegação / Abas de Modo */
+    .tab-navigation {
+      display: flex;
+      gap: 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.25rem;
+    }
+
+    .tab-button {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-family: var(--font-sans);
+      font-size: 0.88rem;
+      font-weight: 600;
+      padding: 0.55rem 1rem;
+      border-radius: var(--radius-md) var(--radius-md) 0 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .tab-button:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .tab-button.active {
+      color: var(--accent-blue);
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--bg-card);
+      margin-bottom: -1px;
+    }
+
+    .tab-button.active::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--accent-blue);
+      border-radius: 2px 2px 0 0;
+      box-shadow: 0 0 8px var(--accent-blue-glow);
+    }
+
+    /* Layout do Conteúdo Principal */
+    .tab-content {
+      display: none;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .tab-content.active {
+      display: flex;
+    }
+
+    .grid-container {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 1.25rem;
+      align-items: start;
+    }
+
+    @media (max-width: 1100px) {
+      .grid-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .column {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* Estilo dos Cartões */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      box-shadow: var(--shadow-card);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      position: relative;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.75rem;
+      gap: 0.5rem;
+    }
+
+    .card-title {
+      font-size: 1.02rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-main);
+      letter-spacing: -0.01em;
+    }
+
+    .card-title i {
+      color: var(--accent-blue);
+    }
+
+    .card-tag {
+      font-size: 0.72rem;
+      font-family: var(--font-mono);
+      padding: 0.2rem 0.5rem;
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* Painel de Controles */
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .control-item {
+      background: var(--bg-card-alt);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .control-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .control-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .control-value-badge {
+      font-family: var(--font-mono);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--accent-quantum-bright);
+      background: rgba(245, 158, 11, 0.1);
+      padding: 0.15rem 0.55rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+    }
+
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .btn-step {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: var(--text-main);
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .btn-step:hover {
+      background: #334155;
+      border-color: #475569;
+      color: var(--accent-blue);
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      background: #1e293b;
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent-quantum-bright);
+      border: 2px solid #0f172a;
+      box-shadow: 0 0 8px var(--accent-quantum-glow);
+      cursor: pointer;
+      transition: transform 0.1s ease;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    .presets-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      align-items: center;
+      font-size: 0.72rem;
+      color: var(--text-dim);
+    }
+
+    .btn-chip {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+      padding: 0.2rem 0.5rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 0.72rem;
+      font-family: var(--font-mono);
+      transition: all 0.15s ease;
+    }
+
+    .btn-chip:hover {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: rgba(56, 189, 248, 0.4);
+      color: var(--accent-blue);
+    }
+
+    /* Barra de Botões de Ação Rápida */
+    .actions-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+    }
+
+    .btn-action {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: var(--text-main);
+      padding: 0.55rem 1rem;
+      border-radius: var(--radius-md);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+    }
+
+    .btn-action:hover {
+      background: #283750;
+      border-color: #475569;
+      transform: translateY(-1px);
+    }
+
+    .btn-action.btn-primary {
+      background: linear-gradient(135deg, #d97706, #f59e0b);
+      border-color: #fbbf24;
+      color: #0f172a;
+      box-shadow: 0 2px 10px rgba(245, 158, 11, 0.3);
+    }
+
+    .btn-action.btn-primary:hover {
+      background: linear-gradient(135deg, #f59e0b, #fbbf24);
+      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.5);
+    }
+
+    .btn-action.active-pulse {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: var(--accent-emerald);
+      color: var(--accent-emerald);
+      animation: pulse-border 1.5s infinite;
+    }
+
+    @keyframes pulse-border {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+      50% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+    }
+
+    /* Visualização Microscópica dos Osciladores */
+    .solid-view-options {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+    }
+
+    .view-mode-toggles {
+      display: inline-flex;
+      background: #090d16;
+      padding: 0.2rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+    }
+
+    .view-mode-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.3rem 0.7rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.75rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .view-mode-btn.active {
+      background: #1e293b;
+      color: var(--accent-blue);
+      font-weight: 600;
+    }
+
+    /* Grid dos Osciladores */
+    .oscillators-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+      gap: 0.75rem;
+      max-height: 480px;
+      overflow-y: auto;
+      padding: 0.5rem 0.25rem;
+      border-radius: var(--radius-md);
+      background: #080c16;
+      border: 1px solid var(--border-color);
+    }
+
+    .oscillator-cell {
+      background: var(--bg-card-alt);
+      border: 1px solid #1e293d;
+      border-radius: var(--radius-md);
+      padding: 0.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
+      position: relative;
+      transition: all 0.2s ease;
+      min-height: 125px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .oscillator-cell:hover {
+      border-color: var(--accent-blue);
+      background: var(--bg-card-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(56, 189, 248, 0.15);
+    }
+
+    .oscillator-cell.highlighted {
+      border-color: var(--accent-quantum-bright);
+      box-shadow: 0 0 12px var(--accent-quantum-glow);
+    }
+
+    .osc-header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.68rem;
+      font-family: var(--font-mono);
+      color: var(--text-dim);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: 0.2rem;
+    }
+
+    .osc-id {
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .osc-quanta-badge {
+      font-weight: 700;
+      color: var(--accent-quantum-bright);
+      background: rgba(245, 158, 11, 0.15);
+      padding: 0.05rem 0.35rem;
+      border-radius: 4px;
+    }
+
+    /* Poço de Potencial e Quanta */
+    .osc-well-container {
+      flex: 1;
+      width: 100%;
+      display: flex;
+      flex-direction: column-reverse;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 3px;
+      padding: 4px 2px;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 4px;
+      border-bottom: 2px solid #334155;
+      min-height: 70px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Base da Energia de Ponto Zero */
+    .zero-point-base {
+      width: 100%;
+      height: 5px;
+      background: linear-gradient(90deg, #38bdf8, #818cf8);
+      border-radius: 2px;
+      box-shadow: 0 0 6px var(--accent-blue-glow);
+      position: relative;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+
+    .zero-point-label {
+      font-size: 0.58rem;
+      font-family: var(--font-mono);
+      color: #7dd3fc;
+      position: absolute;
+      bottom: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .oscillator-cell:hover .zero-point-label {
+      opacity: 1;
+    }
+
+    /* Esfera de Quantum de Energia */
+    .quantum-orb {
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #fffbeb, #fbbf24 45%, #d97706 90%);
+      box-shadow: 0 0 8px var(--accent-quantum-glow), inset 0 0 2px rgba(255, 255, 255, 0.8);
+      flex-shrink: 0;
+      animation: pop-in 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .quantum-orb.cluster {
+      width: 100%;
+      height: 16px;
+      border-radius: 3px;
+      font-size: 0.65rem;
+      font-family: var(--font-mono);
+      font-weight: bold;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(90deg, #f59e0b, #fbbf24);
+      box-shadow: 0 0 6px var(--accent-quantum-glow);
+    }
+
+    /* Modo Degraus de Energia Harmônica */
+    .harmonic-ladder-rung {
+      width: 85%;
+      height: 3px;
+      background: #2a3a58;
+      border-radius: 1px;
+      transition: all 0.2s;
+    }
+
+    .harmonic-ladder-rung.occupied {
+      background: var(--accent-quantum-bright);
+      box-shadow: 0 0 6px var(--accent-quantum-glow);
+      height: 5px;
+    }
+
+    .osc-energy-display {
+      font-size: 0.62rem;
+      font-family: var(--font-mono);
+      color: var(--text-dim);
+      text-align: center;
+    }
+
+    .osc-hover-controls {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.85);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+    }
+
+    .oscillator-cell:hover .osc-hover-controls {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .btn-osc-adj {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 1px solid #475569;
+      background: #1e293b;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 0.75rem;
+      transition: all 0.15s;
+    }
+
+    .btn-osc-adj:hover {
+      background: var(--accent-blue);
+      color: #0f172a;
+      border-color: var(--accent-blue);
+    }
+
+    @keyframes pop-in {
+      0% { transform: scale(0); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Visualização Estrelas e Barras */
+    .stars-bars-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .stars-bars-notation-box {
+      background: #080c16;
+      border: 1px solid #1e293b;
+      border-radius: var(--radius-md);
+      padding: 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .notation-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .notation-display-scroll {
+      max-height: 140px;
+      overflow-x: auto;
+      overflow-y: auto;
+      padding: 0.4rem;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-mono);
+      font-size: 0.88rem;
+      letter-spacing: 1px;
+      word-break: break-all;
+      line-height: 1.8;
+    }
+
+    .sb-token-star {
+      color: var(--accent-quantum-bright);
+      font-weight: bold;
+      display: inline-block;
+      padding: 0 1px;
+      text-shadow: 0 0 8px var(--accent-quantum-glow);
+    }
+
+    .sb-token-bar {
+      color: var(--accent-divider);
+      font-weight: 800;
+      display: inline-block;
+      padding: 0 3px;
+      text-shadow: 0 0 8px rgba(236, 72, 153, 0.5);
+    }
+
+    .sb-group {
+      display: inline-flex;
+      align-items: center;
+      margin: 2px 2px;
+      padding: 1px 4px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: all 0.2s;
+    }
+
+    .sb-group:hover {
+      background: rgba(56, 189, 248, 0.1);
+      border-color: rgba(56, 189, 248, 0.3);
+    }
+
+    .sb-group-id {
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      margin-right: 3px;
+      font-weight: 600;
+    }
+
+    .sb-stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.5rem;
+      text-align: center;
+    }
+
+    .sb-stat-pill {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 0.4rem 0.5rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sb-stat-title {
+      font-size: 0.68rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .sb-stat-num {
+      font-size: 0.95rem;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .copy-notation-btn {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: var(--text-muted);
+      padding: 0.25rem 0.6rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.72rem;
+      font-family: var(--font-mono);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      transition: all 0.15s;
+    }
+
+    .copy-notation-btn:hover {
+      background: #334155;
+      color: var(--text-main);
+    }
+
+    /* Painel Matemático em Tempo Real */
+    .math-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .math-box {
+      background: var(--bg-card-alt);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .math-label {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .math-value {
+      font-family: var(--font-mono);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-main);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .math-value.large-num {
+      font-size: 1rem;
+    }
+
+    .math-value.accent-gold { color: var(--accent-quantum-bright); }
+    .math-value.accent-cyan { color: var(--accent-blue); }
+    .math-value.accent-emerald { color: var(--accent-emerald); }
+    .math-value.accent-purple { color: var(--accent-purple); }
+
+    .formula-display-container {
+      background: #080c16;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 0.9rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .formula-rendered {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.15rem;
+      padding: 0.5rem 0;
+      color: var(--text-main);
+      overflow-x: auto;
+    }
+
+    .factorial-breakdown {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      background: rgba(0, 0, 0, 0.35);
+      border-radius: var(--radius-sm);
+      padding: 0.6rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      word-break: break-all;
+      max-height: 130px;
+      overflow-y: auto;
+      border: 1px dashed #1e293b;
+    }
+
+    .factorial-line {
+      display: flex;
+      gap: 0.4rem;
+    }
+
+    .fact-tag {
+      color: var(--accent-blue);
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    /* Gráficos */
+    .chart-wrapper {
+      position: relative;
+      width: 100%;
+      height: 290px;
+    }
+
+    .chart-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      font-size: 0.75rem;
+    }
+
+    .chart-toggle-group {
+      display: inline-flex;
+      background: #090d16;
+      padding: 0.2rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+    }
+
+    .chart-toggle-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.25rem 0.6rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.72rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .chart-toggle-btn.active {
+      background: #1e293b;
+      color: var(--accent-blue);
+      font-weight: 600;
+    }
+
+    /* Painel de Dois Sólidos em Contato Térmico */
+    .two-solids-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+
+    @media (max-width: 900px) {
+      .two-solids-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .solid-subcard {
+      background: var(--bg-card-alt);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .solid-subcard.solid-a {
+      border-top: 3px solid var(--accent-blue);
+    }
+
+    .solid-subcard.solid-b {
+      border-top: 3px solid var(--accent-purple);
+    }
+
+    /* Guia Didático e Teoria */
+    .theory-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .theory-block {
+      background: var(--bg-card-alt);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.15rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .theory-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--accent-blue);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .theory-text {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .theory-highlight-box {
+      background: rgba(56, 189, 248, 0.06);
+      border-left: 3px solid var(--accent-blue);
+      padding: 0.75rem 1rem;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      font-size: 0.84rem;
+      color: #e2e8f0;
+      margin: 0.4rem 0;
+    }
+
+    .theory-highlight-gold {
+      background: rgba(245, 158, 11, 0.07);
+      border-left: 3px solid var(--accent-quantum-bright);
+      padding: 0.75rem 1rem;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      font-size: 0.84rem;
+      color: #fef08a;
+      margin: 0.4rem 0;
+    }
+
+    /* Rodapé */
+    footer {
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      padding: 1rem 0;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- CABEÇALHO DA SIMULAÇÃO -->
+  <header>
+    <div class="header-info">
+      <h1 class="header-title">
+        <i class="fa-solid fa-atom"></i>
+        Sólido de Einstein Interativo
+      </h1>
+      <p class="header-subtitle">
+        Mecânica Estatística Quântica: Quantização da Energia, Multiplicidade $\Omega$ e Entropia de Boltzmann
+      </p>
+    </div>
+    <div class="header-badges">
+      <div class="badge badge-amber" title="Fórmula Combinatória Exata de Microestados">
+        <i class="fa-solid fa-calculator"></i>
+        <span>\Omega(N,q) = \binom{N+q-1}{q}</span>
+      </div>
+      <div class="badge badge-cyan" title="Entropia de Boltzmann Adimensional">
+        <i class="fa-solid fa-fire"></i>
+        <span>S/k_B = \ln \Omega</span>
+      </div>
+      <div class="badge badge-emerald" title="Aritmética Exata Arbitrária via BigInt">
+        <i class="fa-solid fa-microchip"></i>
+        <span>BigInt Precision</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ABAS DE NAVEGAÇÃO -->
+  <nav class="tab-navigation">
+    <button class="tab-button active" onclick="switchTab('single-solid')">
+      <i class="fa-solid fa-cubes-stacked"></i>
+      Sólido Individual & Combinatória
+    </button>
+    <button class="tab-button" onclick="switchTab('thermal-contact')">
+      <i class="fa-solid fa-temperature-half"></i>
+      Dois Sólidos em Contato Térmico (2ª Lei)
+    </button>
+    <button class="tab-button" onclick="switchTab('theory-guide')">
+      <i class="fa-solid fa-book-open-reader"></i>
+      Fundamentos Teóricos & Deduções
+    </button>
+  </nav>
+
+  <!-- ========================================== -->
+  <!-- ABA 1: SÓLIDO INDIVIDUAL (VISÃO PRINCIPAL) -->
+  <!-- ========================================== -->
+  <main id="tab-single-solid" class="tab-content active">
+    
+    <!-- PAINEL SUPERIOR: CONTROLES INTERATIVOS E AÇÕES -->
+    <section class="card">
+      <div class="card-header">
+        <h2 class="card-title">
+          <i class="fa-solid fa-sliders"></i>
+          1. Parâmetros do Macroestado $(N, q)$
+        </h2>
+        <span class="card-tag">Controles Dinâmicos</span>
+      </div>
+
+      <!-- Sliders de N e q -->
+      <div class="controls-grid">
+        <!-- Controle N: Número de Osciladores -->
+        <div class="control-item">
+          <div class="control-label-row">
+            <span class="control-label">
+              <i class="fa-solid fa-cube" style="color: var(--accent-blue);"></i>
+              Osciladores Harmônicos ($N$)
+            </span>
+            <span id="display-N" class="control-value-badge">6</span>
+          </div>
+          <div class="slider-container">
+            <button class="btn-step" onclick="adjustN(-1)">-</button>
+            <input type="range" id="slider-N" min="1" max="30" value="6" step="1" oninput="onNChange(this.value)">
+            <button class="btn-step" onclick="adjustN(1)">+</button>
+          </div>
+          <div class="presets-row">
+            <span>Predefinições:</span>
+            <button class="btn-chip" onclick="setN(3)">N = 3</button>
+            <button class="btn-chip" onclick="setN(6)">N = 6</button>
+            <button class="btn-chip" onclick="setN(12)">N = 12</button>
+            <button class="btn-chip" onclick="setN(20)">N = 20</button>
+            <button class="btn-chip" onclick="setN(30)">N = 30</button>
+          </div>
+        </div>
+
+        <!-- Controle q: Quanta de Energia Térmica -->
+        <div class="control-item">
+          <div class="control-label-row">
+            <span class="control-label">
+              <i class="fa-solid fa-bolt" style="color: var(--accent-quantum-bright);"></i>
+              Quanta de Energia ($q$)
+            </span>
+            <span id="display-q" class="control-value-badge">9</span>
+          </div>
+          <div class="slider-container">
+            <button class="btn-step" onclick="adjustQ(-1)">-</button>
+            <input type="range" id="slider-q" min="0" max="50" value="9" step="1" oninput="onQChange(this.value)">
+            <button class="btn-step" onclick="adjustQ(1)">+</button>
+          </div>
+          <div class="presets-row">
+            <span>Predefinições:</span>
+            <button class="btn-chip" onclick="setQ(0)">q = 0 (T=0K)</button>
+            <button class="btn-chip" onclick="setQ(Math.floor(state.N / 2))">q = N/2</button>
+            <button class="btn-chip" onclick="setQ(state.N)">q = N</button>
+            <button class="btn-chip" onclick="setQ(state.N * 2)">q = 2N</button>
+            <button class="btn-chip" onclick="setQ(50)">q = 50 (Máx)</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Barra de Ações de Microestado -->
+      <div class="actions-bar">
+        <button class="btn-action btn-primary" onclick="randomizeMicrostate()" title="Sorteia um microestado aleatório com probabilidade uniforme">
+          <i class="fa-solid fa-dice"></i>
+          Distribuir Aleatoriamente
+        </button>
+        <button id="btn-thermal-fluct" class="btn-action" onclick="toggleThermalFluctuations()" title="Simula trocas térmicas estocásticas contínuas de quanta entre osciladores">
+          <i class="fa-solid fa-play"></i>
+          <span id="lbl-thermal-fluct">Flutuações Térmicas (Auto)</span>
+        </button>
+        <button class="btn-action" onclick="distributeUniformly()" title="Distribui os quanta de forma quase homogênea entre todos os osciladores">
+          <i class="fa-solid fa-scale-balanced"></i>
+          Distribuição Uniforme
+        </button>
+        <button class="btn-action" onclick="concentrateInOne()" title="Coloca toda a energia térmica em um único oscilador">
+          <i class="fa-solid fa-bullseye"></i>
+          Concentrar em 1 Oscilador
+        </button>
+        <button class="btn-action" onclick="setQ(0)" title="Remove todos os quanta térmicos, deixando apenas a energia de ponto zero">
+          <i class="fa-solid fa-snowflake"></i>
+          Estado Fundamental ($q=0$)
+        </button>
+      </div>
+    </section>
+
+    <!-- GRID DE DUAS COLUNAS: VISUALIZAÇÃO MICROSCÓPICA + MATEMÁTICA / GRÁFICOS -->
+    <div class="grid-container">
+      
+      <!-- COLUNA DA ESQUERDA: O SÓLIDO (OSCILADORES) & ESTRELAS E BARRAS -->
+      <div class="column">
+        
+        <!-- 2. Visualização Microscópica do Sólido -->
+        <section class="card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <i class="fa-solid fa-network-wired"></i>
+              2. Visualização Microscópica (O Sólido)
+            </h2>
+            <div class="solid-view-options">
+              <div class="view-mode-toggles">
+                <button id="view-mode-orbs" class="view-mode-btn active" onclick="setOscViewMode('orbs')">
+                  <i class="fa-solid fa-circle-dot"></i> Esferas
+                </button>
+                <button id="view-mode-ladder" class="view-mode-btn" onclick="setOscViewMode('ladder')">
+                  <i class="fa-solid fa-bars-staggered"></i> Níveis
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <p style="font-size: 0.8rem; color: var(--text-muted);">
+            Cada caixa representa <strong>1 oscilador harmônico quântico</strong>. As esferas douradas são os <strong>quanta de energia ($\hbar\omega$)</strong>. A linha azul na base representa a <strong>Energia de Ponto Zero ($E_0 = \frac{1}{2}\hbar\omega$)</strong>.
+          </p>
+
+          <!-- Grade Dinâmica de Osciladores -->
+          <div id="oscillators-container" class="oscillators-grid">
+            <!-- Gerado dinamicamente via JS -->
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: var(--text-dim); padding-top: 0.25rem;">
+            <span><i class="fa-solid fa-hand-pointer"></i> Passe o mouse ou clique em um oscilador para adicionar/remover quanta manualmente.</span>
+            <span id="lbl-total-quanta-check" style="font-family: var(--font-mono); color: var(--accent-quantum-bright);">Quanta Alocados: 9 / 9</span>
+          </div>
+        </section>
+
+        <!-- 3. Visualização Estatística: Método de Estrelas e Barras -->
+        <section class="stars-bars-card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <i class="fa-solid fa-asterisk"></i>
+              3. Visualização Estatística (Estrelas e Barras)
+            </h2>
+            <button class="copy-notation-btn" onclick="copyStarsAndBarsNotation()">
+              <i class="fa-regular fa-copy"></i>
+              Copiar Notação
+            </button>
+          </div>
+
+          <p style="font-size: 0.8rem; color: var(--text-muted);">
+            Qualquer microestado corresponde a uma sequência de <strong>$q$ estrelas</strong> ($\star$) e <strong>$N-1$ divisórias</strong> ($|$). A permutação destes elementos define biunivocamente o microestado.
+          </p>
+
+          <div class="stars-bars-notation-box">
+            <div class="notation-header">
+              <span>Representação do Microestado Atual:</span>
+              <span id="sb-summary-label" style="font-family: var(--font-mono); color: var(--accent-blue);">q = 9 ★ | N-1 = 5 |</span>
+            </div>
+            
+            <div id="stars-bars-visual" class="notation-display-scroll">
+              <!-- Renderizado via JS -->
+            </div>
+          </div>
+
+          <!-- Pílulas de Estatísticas Rápidas de Estrelas e Barras -->
+          <div class="sb-stats-row">
+            <div class="sb-stat-pill">
+              <span class="sb-stat-title">Quanta (Estrelas)</span>
+              <span id="sb-count-stars" class="sb-stat-num" style="color: var(--accent-quantum-bright);">9</span>
+            </div>
+            <div class="sb-stat-pill">
+              <span class="sb-stat-title">Divisores (Barras)</span>
+              <span id="sb-count-bars" class="sb-stat-num" style="color: var(--accent-divider);">5</span>
+            </div>
+            <div class="sb-stat-pill">
+              <span class="sb-stat-title">Total de Posições</span>
+              <span id="sb-count-total" class="sb-stat-num" style="color: var(--accent-blue);">14</span>
+            </div>
+          </div>
+
+          <div class="theory-highlight-box" style="margin-top: 0.25rem;">
+            <strong>Princípio Combinatório:</strong> Existem $N-1$ barras e $q$ estrelas, somando $N+q-1$ posições totais. O número de maneiras de escolher as posições das $q$ estrelas é exatamente $\binom{N+q-1}{q}$.
+          </div>
+        </section>
+
+      </div>
+
+      <!-- COLUNA DA DIREITA: PAINEL MATEMÁTICO & GRÁFICOS DINÂMICOS -->
+      <div class="column">
+        
+        <!-- 4. Painel Matemático em Tempo Real (Exact BigInt) -->
+        <section class="card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <i class="fa-solid fa-square-root-variable"></i>
+              4. Painel Matemático (Tempo Real)
+            </h2>
+            <span class="card-tag">Aritmética Exata BigInt</span>
+          </div>
+
+          <!-- Fórmula de Multiplicidade Renderizada -->
+          <div class="formula-display-container">
+            <div id="katex-multiplicity-formula" class="formula-rendered">
+              <!-- Renderizado via KaTeX -->
+            </div>
+
+            <!-- Decomposição Fatorial com BigInt -->
+            <div class="factorial-breakdown">
+              <div class="factorial-line">
+                <span class="fact-tag">(N + q - 1)!:</span>
+                <span id="fact-num-val">...</span>
+              </div>
+              <div class="factorial-line">
+                <span class="fact-tag">q!:</span>
+                <span id="fact-q-val">...</span>
+              </div>
+              <div class="factorial-line">
+                <span class="fact-tag">(N - 1)!:</span>
+                <span id="fact-n1-val">...</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Métricas Numéricas Principais -->
+          <div class="math-grid">
+            <div class="math-box">
+              <span class="math-label">
+                Multiplicidade $\Omega$
+                <i class="fa-solid fa-shapes" style="color: var(--accent-quantum-bright);"></i>
+              </span>
+              <span id="math-omega-val" class="math-value accent-gold">2,002</span>
+              <span id="math-omega-sci" style="font-size: 0.68rem; color: var(--text-dim); font-family: var(--font-mono);">2.002 × 10³</span>
+            </div>
+
+            <div class="math-box">
+              <span class="math-label">
+                Entropia $S / k_B$
+                <i class="fa-solid fa-fire-flame-curved" style="color: var(--accent-cyan);"></i>
+              </span>
+              <span id="math-entropy-val" class="math-value accent-cyan">7.602</span>
+              <span style="font-size: 0.68rem; color: var(--text-dim); font-family: var(--font-mono);">Adimensional ($\ln \Omega$)</span>
+            </div>
+
+            <div class="math-box">
+              <span class="math-label">
+                Energia Total $E$
+                <i class="fa-solid fa-bolt" style="color: var(--accent-purple);"></i>
+              </span>
+              <span id="math-energy-total" class="math-value accent-purple">12.0 \hbar\omega</span>
+              <span id="math-energy-breakdown" style="font-size: 0.68rem; color: var(--text-dim); font-family: var(--font-mono);">(9 tép + 3 zp)</span>
+            </div>
+
+            <div class="math-box">
+              <span class="math-label">
+                Prob. Microestado $P$
+                <i class="fa-solid fa-percent" style="color: var(--accent-emerald);"></i>
+              </span>
+              <span id="math-prob-val" class="math-value accent-emerald">4.99 × 10⁻⁴</span>
+              <span style="font-size: 0.68rem; color: var(--text-dim); font-family: var(--font-mono);">$1 / \Omega$ (Equiprobabilidade)</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- 5. Gráficos Interativos (Chart.js) -->
+        <section class="card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <i class="fa-solid fa-chart-line"></i>
+              5. Gráficos Termodinâmicos
+            </h2>
+            <div class="chart-controls">
+              <div class="chart-toggle-group">
+                <button id="chart-tab-entropy" class="chart-toggle-btn active" onclick="setChartType('entropy')">
+                  Entropia $S(q)$
+                </button>
+                <button id="chart-tab-omega" class="chart-toggle-btn" onclick="setChartType('omega')">
+                  Multiplicidade $\Omega(q)$
+                </button>
+              </div>
+              <div class="chart-toggle-group" id="scale-toggle-group" style="display: none;">
+                <button id="scale-btn-linear" class="chart-toggle-btn active" onclick="setOmegaScale('linear')">Lin</button>
+                <button id="scale-btn-log" class="chart-toggle-btn" onclick="setOmegaScale('logarithmic')">Log₁₀</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="chart-wrapper">
+            <canvas id="thermoChart"></canvas>
+          </div>
+
+          <div style="font-size: 0.75rem; color: var(--text-dim); text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 0.4rem;">
+            O ponto <strong style="color: var(--accent-quantum-bright);">dourado</strong> destaca o estado atual no gráfico para $N = <span id="chart-current-n">6</span>$.
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- ========================================================== -->
+  <!-- ABA 2: DOIS SÓLIDOS EM CONTATO TÉRMICO (SEGUNDA LEI)       -->
+  <!-- ========================================================== -->
+  <section id="tab-thermal-contact" class="tab-content">
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">
+          <i class="fa-solid fa-arrows-left-right-to-line"></i>
+          Contato Térmico entre Dois Sólidos de Einstein ($A$ e $B$)
+        </h2>
+        <span class="card-tag">Equilíbrio Térmico & 2ª Lei</span>
+      </div>
+
+      <p style="font-size: 0.85rem; color: var(--text-muted);">
+        Considere dois sólidos de Einstein acoplados termicamente em um sistema isolado com energia total conservada $q_{\text{total}} = q_A + q_B$. A multiplicidade total do sistema composto é o produto das multiplicidades individuais: $\Omega_{\text{total}}(q_A) = \Omega_A(q_A) \times \Omega_B(q_{\text{total}} - q_A)$.
+      </p>
+
+      <!-- Sliders do Sistema Composto -->
+      <div class="controls-grid">
+        <div class="control-item">
+          <div class="control-label-row">
+            <span class="control-label">Osciladores Sólido A ($N_A$)</span>
+            <span id="display-NA" class="control-value-badge" style="color: var(--accent-blue);">10</span>
+          </div>
+          <input type="range" id="slider-NA" min="2" max="25" value="10" step="1" oninput="onTwoSolidsChange()">
+        </div>
+
+        <div class="control-item">
+          <div class="control-label-row">
+            <span class="control-label">Osciladores Sólido B ($N_B$)</span>
+            <span id="display-NB" class="control-value-badge" style="color: var(--accent-purple);">10</span>
+          </div>
+          <input type="range" id="slider-NB" min="2" max="25" value="10" step="1" oninput="onTwoSolidsChange()">
+        </div>
+
+        <div class="control-item">
+          <div class="control-label-row">
+            <span class="control-label">Quanta Totais ($q_{\text{total}}$)</span>
+            <span id="display-qtot" class="control-value-badge" style="color: var(--accent-emerald);">30</span>
+          </div>
+          <input type="range" id="slider-qtot" min="2" max="60" value="30" step="1" oninput="onTwoSolidsChange()">
+        </div>
+
+        <div class="control-item">
+          <div class="control-label-row">
+            <span class="control-label">Quanta no Sólido A ($q_A$)</span>
+            <span id="display-qA" class="control-value-badge" style="color: var(--accent-quantum-bright);">15</span>
+          </div>
+          <input type="range" id="slider-qA" min="0" max="30" value="15" step="1" oninput="onTwoSolidsQAChange(this.value)">
+        </div>
+      </div>
+
+      <!-- Controles de Ação de Transferência Térmica -->
+      <div class="actions-bar">
+        <button id="btn-thermal-relax" class="btn-action btn-primary" onclick="toggleThermalRelaxation()">
+          <i class="fa-solid fa-arrow-trend-up"></i>
+          <span id="lbl-thermal-relax">Simular Relaxação para o Equilíbrio</span>
+        </button>
+        <button class="btn-action" onclick="setTwoSolidsQA(0)">
+          Todo $q$ no Sólido B ($q_A = 0$)
+        </button>
+        <button class="btn-action" onclick="setTwoSolidsQA(stateTwoSolids.qTot)">
+          Todo $q$ no Sólido A ($q_A = q_{\text{total}}$)
+        </button>
+      </div>
+
+      <!-- Métricas dos Dois Sólidos -->
+      <div class="two-solids-container">
+        <div class="solid-subcard solid-a">
+          <h3 style="font-size: 0.95rem; color: var(--accent-blue); display: flex; justify-content: space-between;">
+            <span>Sólido A</span>
+            <span id="two-solids-temp-A" style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted);">T_A ∝ q_A / N_A</span>
+          </h3>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-family: var(--font-mono); font-size: 0.82rem;">
+            <div>Quanta: <strong id="val-qA-disp" style="color: var(--accent-quantum-bright);">15</strong></div>
+            <div>Multiplicidade $\Omega_A$: <strong id="val-omegaA-disp">...</strong></div>
+            <div>Entropia $S_A/k_B$: <strong id="val-entropyA-disp">...</strong></div>
+            <div>Energia Térmica: <strong id="val-energyA-disp">15 ℏω</strong></div>
+          </div>
+        </div>
+
+        <div class="solid-subcard solid-b">
+          <h3 style="font-size: 0.95rem; color: var(--accent-purple); display: flex; justify-content: space-between;">
+            <span>Sólido B</span>
+            <span id="two-solids-temp-B" style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted);">T_B ∝ q_B / N_B</span>
+          </h3>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-family: var(--font-mono); font-size: 0.82rem;">
+            <div>Quanta: <strong id="val-qB-disp" style="color: var(--accent-quantum-bright);">15</strong></div>
+            <div>Multiplicidade $\Omega_B$: <strong id="val-omegaB-disp">...</strong></div>
+            <div>Entropia $S_B/k_B$: <strong id="val-entropyB-disp">...</strong></div>
+            <div>Energia Térmica: <strong id="val-energyB-disp">15 ℏω</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gráfico da Multiplicidade Combinada Omega_total vs q_A -->
+      <div class="card" style="background: #080c16;">
+        <div class="card-header">
+          <h3 class="card-title" style="font-size: 0.95rem;">
+            <i class="fa-solid fa-chart-area"></i>
+            Multiplicidade Total do Sistema Isolado $\Omega_{\text{total}}(q_A) = \Omega_A(q_A) \times \Omega_B(q_{\text{total}} - q_A)$
+          </h3>
+          <span id="two-solids-peak-info" style="font-size: 0.75rem; font-family: var(--font-mono); color: var(--accent-emerald);">Pico no Equilíbrio: q_A = 15</span>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="twoSolidsChart"></canvas>
+        </div>
+        <div class="theory-highlight-gold">
+          <strong>A Origem Estatística da Segunda Lei da Termodinâmica:</strong> Observe o pico extremamente acentuado da curva! A probabilidade de encontrar o sistema no macroestado de equilíbrio térmico é ordens de grandeza superior a qualquer outro macroestado. O calor flui espontaneamente do corpo mais quente para o mais frio simplesmente porque esse caminho maximiza astronomicamente o número de microestados acessíveis.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================== -->
+  <!-- ABA 3: GUIA TEÓRICO COMPLETO & DEDUÇÕES FÍSICAS            -->
+  <!-- ========================================================== -->
+  <section id="tab-theory-guide" class="tab-content">
+    <div class="theory-section">
+      <div class="card-header">
+        <h2 class="card-title">
+          <i class="fa-solid fa-graduation-cap"></i>
+          Fundamentos Físicos do Sólido de Einstein
+        </h2>
+        <span class="card-tag">Rigor Físico-Matemático</span>
+      </div>
+
+      <!-- Bloco 1: O Modelo de Einstein -->
+      <article class="theory-block">
+        <h3 class="theory-title">
+          <i class="fa-solid fa-atom"></i>
+          1. O Modelo do Sólido de Einstein (1907)
+        </h3>
+        <p class="theory-text">
+          Proposto por Albert Einstein em 1907, este foi o primeiro modelo quântico a explicar satisfatoriamente a queda da capacidade térmica dos sólidos a baixas temperaturas, superando a falha clássica da Lei de Dulong-Petit.
+        </p>
+        <p class="theory-text">
+          O modelo trata um cristal como uma coleção de $N$ osciladores harmônicos quânticos unidimensionais independentes (para um sólido 3D com $N_{\text{átomos}}$, temos $N = 3N_{\text{átomos}}$ modos normais), todos vibrando na mesma frequência angular característica $\omega_E$ (frequência de Einstein).
+        </p>
+        <div class="theory-highlight-box">
+          A energia de cada oscilador é quantizada conforme a mecânica quântica:
+          $$\epsilon_n = \left(n + \frac{1}{2}\right)\hbar\omega, \quad n \in \{0, 1, 2, \dots\}$$
+        </div>
+      </article>
+
+      <!-- Bloco 2: Energia de Ponto Zero e Heisenberg -->
+      <article class="theory-block">
+        <h3 class="theory-title">
+          <i class="fa-solid fa-wave-square"></i>
+          2. Energia de Ponto Zero e o Princípio da Incerteza de Heisenberg
+        </h3>
+        <p class="theory-text">
+          Mesmo no zero absoluto ($T = 0\text{ K}$ e $q = 0$), os átomos do sólido <strong>nunca estão completamente em repouso</strong>. Cada oscilador retém uma energia fundamental intrínseca $E_0 = \frac{1}{2}\hbar\omega$.
+        </p>
+        <p class="theory-text">
+          Essa energia de ponto zero é uma consequência direta do <strong>Princípio da Incerteza de Heisenberg</strong> ($\Delta x \Delta p \ge \frac{\hbar}{2}$). Se um oscilador estivesse parado no fundo do poço de potencial ($x=0$ com $p=0$), teríamos $\Delta x = 0$ e $\Delta p = 0$, violando a mecânica quântica. A flutuação quântica do vácuo impõe uma energia mínima não nula ao sistema.
+        </p>
+        <div class="theory-highlight-box">
+          Energia Total do Sólido:
+          $$E_{\text{total}} = E_{\text{ponto zero}} + U = \frac{1}{2}N\hbar\omega + q\hbar\omega = \left(q + \frac{N}{2}\right)\hbar\omega$$
+        </div>
+      </article>
+
+      <!-- Bloco 3: Método de Estrelas e Barras -->
+      <article class="theory-block">
+        <h3 class="theory-title">
+          <i class="fa-solid fa-asterisk"></i>
+          3. Dedução Combinatória: O Método das Estrelas e Barras
+        </h3>
+        <p class="theory-text">
+          O problema de encontrar o número de microestados $\Omega(N, q)$ equivale a distribuir $q$ quanta de energia indistinguíveis (as estrelas $\star$) entre $N$ osciladores distinguíveis (separados por $N-1$ divisórias verticais $|$).
+        </p>
+        <p class="theory-text">
+          A sequência completa contém um total de $q + (N - 1) = N + q - 1$ símbolos. Qualquer escolha de quais posições conterão as estrelas define perfeitamente a quantidade de energia em cada oscilador.
+        </p>
+        <div class="theory-highlight-gold">
+          $$\Omega(N, q) = \binom{N+q-1}{q} = \frac{(N+q-1)!}{q!\,(N-1)!}$$
+        </div>
+      </article>
+
+      <!-- Bloco 4: Entropia de Boltzmann e a Segunda Lei -->
+      <article class="theory-block">
+        <h3 class="theory-title">
+          <i class="fa-solid fa-fire"></i>
+          4. A Entropia de Boltzmann e a Segunda Lei
+        </h3>
+        <p class="theory-text">
+          Ludwig Boltzmann estabeleceu a ponte definitiva entre o mundo microscópico e a termodinâmica macroscópica através de sua célebre equação:
+          $$S = k_B \ln \Omega$$
+        </p>
+        <p class="theory-text">
+          Em um sistema termodinâmico isolado, o estado que observamos na prática é o <strong>macroestado de máxima multiplicidade</strong> ($\Omega_{\text{máx}}$). Quando dois sólidos entram em contato térmico, a energia flui espontaneamente até que a derivada da multiplicidade (temperatura) se iguale em ambos os subsistemas, atingindo o pico esmagador de multiplicidade total.
+        </p>
+      </article>
+
+      <!-- Bloco 5: Limites Clássico e Quântico -->
+      <article class="theory-block">
+        <h3 class="theory-title">
+          <i class="fa-solid fa-chart-line"></i>
+          5. Limite Clássico de Alta Temperatura ($q \gg N$) vs Limite Quântico ($q \ll N$)
+        </h3>
+        <p class="theory-text">
+          Quando a energia térmica é muito alta em relação à quantização ($q \gg N$), usando a aproximação de Stirling obtemos:
+          $$\Omega \approx \left(\frac{e\,q}{N}\right)^N \implies \frac{S}{k_B} \approx N \ln\left(\frac{q}{N}\right) + N$$
+          Diferenciando para obter a temperatura termodinâmica:
+          $$\frac{1}{T} = \frac{\partial S}{\partial U} = \frac{k_B}{\hbar\omega} \frac{\partial (S/k_B)}{\partial q} = \frac{k_B}{\hbar\omega} \frac{N}{q} \implies U = q\hbar\omega = N k_B T$$
+          Resultando na capacidade térmica clássica constante $C_V = \frac{\partial U}{\partial T} = N k_B = 3 R$ (Lei de Dulong-Petit).
+        </p>
+        <p class="theory-text">
+          Por outro lado, a baixas temperaturas ($q \ll N$), os modos de vibração sofrem "congelamento quântico", e a capacidade térmica decai exponencialmente para zero conforme $T \to 0$, em perfeita concordância com a 3ª Lei da Termodinâmica.
+        </p>
+      </article>
+    </div>
+  </section>
+
+  <!-- RODAPÉ DIDÁTICO -->
+  <footer>
+    <div>Simulação Didática do Sólido de Einstein &bull; Mecânica Estatística e Termodinâmica Quântica</div>
+    <div style="color: #475569;">Desenvolvido com precisão matemática exata (BigInt), HTML5 Canvas, Chart.js e KaTeX.</div>
+  </footer>
+
+  <!-- ========================================================== -->
+  <!-- SCRIPT JAVASCRIPT: LÓGICA FÍSICA, MATEMÁTICA E RENDERIZAÇÃO-->
+  <!-- ========================================================== -->
+  <script>
+    /**
+     * SÓLIDO DE EINSTEIN - MOTOR DE MECÂNICA ESTATÍSTICA
+     * Aritmética Exata BigInt e Amostragem Uniforme do Ensemble Microcanônico
+     */
+
+    // ESTADO GLOBAL DA SIMULAÇÃO
+    const state = {
+      N: 6,                     // Número de osciladores (1 a 30)
+      q: 9,                     // Quanta totais de energia (0 a 50)
+      oscillators: [2, 1, 0, 3, 2, 1], // Distribuição atual de quanta (soma = q)
+      starsBarsItems: [],       // Array de tokens (0 = estrela, 1 = barra)
+      viewMode: 'orbs',         // 'orbs' ou 'ladder'
+      chartType: 'entropy',     // 'entropy' ou 'omega'
+      omegaScale: 'linear',     // 'linear' ou 'logarithmic'
+      isFluctuating: false,     // Flag do loop de flutuação térmica
+      fluctuationTimer: null    // Interval do loop
+    };
+
+    // ESTADO GLOBAL DO SISTEMA DE DOIS SÓLIDOS (CONTATO TÉRMICO)
+    const stateTwoSolids = {
+      NA: 10,
+      NB: 10,
+      qTot: 30,
+      qA: 15,
+      isRelaxing: false,
+      relaxationTimer: null
+    };
+
+    // Cache de Fatoriais BigInt para alta performance
+    const factorialCache = [1n];
+    function getBigFactorial(n) {
+      if (n < 0) return 0n;
+      while (factorialCache.length <= n) {
+        const nextIndex = BigInt(factorialCache.length);
+        factorialCache.push(nextIndex * factorialCache[factorialCache.length - 1]);
+      }
+      return factorialCache[n];
+    }
+
+    /**
+     * Calcula a Multiplicidade Exata BigInt: Omega(N, q) = (N+q-1)! / [ q! * (N-1)! ]
+     */
+    function calculateExactMultiplicity(N, q) {
+      if (N <= 0 || q < 0) return 1n;
+      if (N === 1) return 1n;
+      const num = getBigFactorial(N + q - 1);
+      const den1 = getBigFactorial(q);
+      const den2 = getBigFactorial(N - 1);
+      return num / (den1 * den2);
+    }
+
+    /**
+     * Calcula a Entropia Adimensional S / kB = ln(Omega) com alta precisão
+     * ln(Omega) = sum_{k=1}^{N+q-1} ln(k) - sum_{k=1}^q ln(k) - sum_{k=1}^{N-1} ln(k)
+     */
+    function calculateExactEntropy(N, q) {
+      if (N <= 0 || q <= 0) return 0.0;
+      if (N === 1) return 0.0;
+      
+      let sum = 0.0;
+      const total = N + q - 1;
+      for (let i = 2; i <= total; i++) sum += Math.log(i);
+      for (let i = 2; i <= q; i++) sum -= Math.log(i);
+      for (let i = 2; i <= N - 1; i++) sum -= Math.log(i);
+      
+      return Math.max(0.0, sum);
+    }
+
+    /**
+     * Gera um microestado uniformemente distribuído no ensemble microcanônico
+     * usando o método de amostragem de permutação de estrelas e barras (Fisher-Yates)
+     */
+    function sampleUniformMicrostate(N, q) {
+      if (N <= 0) return { oscillators: [], items: [] };
+      if (N === 1) return { oscillators: [q], items: new Array(q).fill(0) };
+      if (q === 0) return { oscillators: new Array(N).fill(0), items: new Array(N - 1).fill(1) };
+
+      const totalItems = q + N - 1;
+      const items = new Array(totalItems);
+      for (let i = 0; i < q; i++) items[i] = 0;         // 0 = Estrela (Quantum)
+      for (let i = q; i < totalItems; i++) items[i] = 1; // 1 = Barra (Divisória)
+
+      // Embaralhamento Fisher-Yates exato
+      for (let i = totalItems - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const temp = items[i];
+        items[i] = items[j];
+        items[j] = temp;
+      }
+
+      // Extrai a contagem de quanta por oscilador a partir das barras
+      const oscillators = [];
+      let currentQuanta = 0;
+      for (let i = 0; i < totalItems; i++) {
+        if (items[i] === 0) {
+          currentQuanta++;
+        } else {
+          oscillators.push(currentQuanta);
+          currentQuanta = 0;
+        }
+      }
+      oscillators.push(currentQuanta);
+
+      return { oscillators, items };
+    }
+
+    /**
+     * Reconstrói o array de estrelas e barras a partir do array de osciladores atual
+     */
+    function syncStarsBarsFromOscillators() {
+      const items = [];
+      for (let i = 0; i < state.oscillators.length; i++) {
+        const quanta = state.oscillators[i];
+        for (let q = 0; q < quanta; q++) {
+          items.push(0); // estrela
+        }
+        if (i < state.oscillators.length - 1) {
+          items.push(1); // barra
+        }
+      }
+      state.starsBarsItems = items;
+    }
+
+    // ==========================================
+    // MANIPULAÇÃO DE CONTROLES E EVENTOS
+    // ==========================================
+
+    function onNChange(newN) {
+      state.N = parseInt(newN, 10);
+      document.getElementById('display-N').innerText = state.N;
+      document.getElementById('slider-N').value = state.N;
+      
+      // Redistribui aleatoriamente mantendo o q atual
+      const sampled = sampleUniformMicrostate(state.N, state.q);
+      state.oscillators = sampled.oscillators;
+      state.starsBarsItems = sampled.items;
+      
+      updateAll();
+    }
+
+    function onQChange(newQ) {
+      state.q = parseInt(newQ, 10);
+      document.getElementById('display-q').innerText = state.q;
+      document.getElementById('slider-q').value = state.q;
+      
+      // Redistribui aleatoriamente com o novo q
+      const sampled = sampleUniformMicrostate(state.N, state.q);
+      state.oscillators = sampled.oscillators;
+      state.starsBarsItems = sampled.items;
+      
+      updateAll();
+    }
+
+    function setN(val) {
+      val = Math.max(1, Math.min(30, val));
+      onNChange(val);
+    }
+
+    function adjustN(delta) {
+      setN(state.N + delta);
+    }
+
+    function setQ(val) {
+      val = Math.max(0, Math.min(50, val));
+      onQChange(val);
+    }
+
+    function adjustQ(delta) {
+      setQ(state.q + delta);
+    }
+
+    function randomizeMicrostate() {
+      const sampled = sampleUniformMicrostate(state.N, state.q);
+      state.oscillators = sampled.oscillators;
+      state.starsBarsItems = sampled.items;
+      updateVisualsOnly();
+    }
+
+    function distributeUniformly() {
+      const base = Math.floor(state.q / state.N);
+      const rem = state.q % state.N;
+      state.oscillators = new Array(state.N).fill(base);
+      for (let i = 0; i < rem; i++) {
+        state.oscillators[i]++;
+      }
+      syncStarsBarsFromOscillators();
+      updateVisualsOnly();
+    }
+
+    function concentrateInOne() {
+      state.oscillators = new Array(state.N).fill(0);
+      if (state.N > 0) state.oscillators[0] = state.q;
+      syncStarsBarsFromOscillators();
+      updateVisualsOnly();
+    }
+
+    function modifyOscillatorQuanta(index, delta) {
+      if (index < 0 || index >= state.oscillators.length) return;
+      if (delta < 0 && state.oscillators[index] <= 0) return;
+      
+      const newTotalQ = state.q + delta;
+      if (newTotalQ < 0 || newTotalQ > 50) return;
+      
+      state.oscillators[index] += delta;
+      state.q = newTotalQ;
+      document.getElementById('display-q').innerText = state.q;
+      document.getElementById('slider-q').value = state.q;
+      
+      syncStarsBarsFromOscillators();
+      updateAll();
+    }
+
+    function toggleThermalFluctuations() {
+      state.isFluctuating = !state.isFluctuating;
+      const btn = document.getElementById('btn-thermal-fluct');
+      const lbl = document.getElementById('lbl-thermal-fluct');
+      
+      if (state.isFluctuating) {
+        btn.classList.add('active-pulse');
+        lbl.innerText = 'Pausar Flutuações';
+        btn.querySelector('i').className = 'fa-solid fa-pause';
+        
+        state.fluctuationTimer = setInterval(() => {
+          if (state.N <= 1 || state.q === 0) return;
+          // Escolhe um oscilador doador que tenha q > 0
+          const donors = [];
+          for (let i = 0; i < state.oscillators.length; i++) {
+            if (state.oscillators[i] > 0) donors.push(i);
+          }
+          if (donors.length === 0) return;
+          
+          const donorIdx = donors[Math.floor(Math.random() * donors.length)];
+          let receiverIdx = Math.floor(Math.random() * state.N);
+          while (receiverIdx === donorIdx && state.N > 1) {
+            receiverIdx = Math.floor(Math.random() * state.N);
+          }
+          
+          // Transfere 1 quantum estocasticamente
+          state.oscillators[donorIdx]--;
+          state.oscillators[receiverIdx]++;
+          syncStarsBarsFromOscillators();
+          updateVisualsOnly();
+        }, 160);
+      } else {
+        btn.classList.remove('active-pulse');
+        lbl.innerText = 'Flutuações Térmicas (Auto)';
+        btn.querySelector('i').className = 'fa-solid fa-play';
+        if (state.fluctuationTimer) clearInterval(state.fluctuationTimer);
+      }
+    }
+
+    function setOscViewMode(mode) {
+      state.viewMode = mode;
+      document.getElementById('view-mode-orbs').classList.toggle('active', mode === 'orbs');
+      document.getElementById('view-mode-ladder').classList.toggle('active', mode === 'ladder');
+      renderOscillators();
+    }
+
+    // ==========================================
+    // RENDERIZAÇÃO DA INTERFACE DO SÓLIDO
+    // ==========================================
+
+    function renderOscillators() {
+      const container = document.getElementById('oscillators-container');
+      container.innerHTML = '';
+
+      const totalAllocated = state.oscillators.reduce((a, b) => a + b, 0);
+      document.getElementById('lbl-total-quanta-check').innerText = `Quanta Alocados: ${totalAllocated} / ${state.q}`;
+
+      state.oscillators.forEach((quanta, idx) => {
+        const cell = document.createElement('div');
+        cell.className = 'oscillator-cell';
+        cell.id = `osc-cell-${idx}`;
+
+        // Header do oscilador
+        const oscHeader = document.createElement('div');
+        oscHeader.className = 'osc-header';
+        oscHeader.innerHTML = `
+          <span class="osc-id">#${idx + 1}</span>
+          <span class="osc-quanta-badge">${quanta} q</span>
+        `;
+        cell.appendChild(oscHeader);
+
+        // Poço de potencial com quanta
+        const wellContainer = document.createElement('div');
+        wellContainer.className = 'osc-well-container';
+
+        // Linha de energia de ponto zero
+        const zeroPoint = document.createElement('div');
+        zeroPoint.className = 'zero-point-base';
+        zeroPoint.innerHTML = `<span class="zero-point-label">E₀ = ½ℏω</span>`;
+        wellContainer.appendChild(zeroPoint);
+
+        // Renderiza quanta conforme o modo de visualização
+        if (state.viewMode === 'orbs') {
+          if (quanta <= 8) {
+            for (let q = 0; q < quanta; q++) {
+              const orb = document.createElement('div');
+              orb.className = 'quantum-orb';
+              wellContainer.appendChild(orb);
+            }
+          } else {
+            // Se houver muitos quanta no mesmo oscilador, exibe pílula agrupada
+            const cluster = document.createElement('div');
+            cluster.className = 'quantum-orb cluster';
+            cluster.innerText = `+${quanta} q`;
+            wellContainer.appendChild(cluster);
+          }
+        } else {
+          // Modo escada harmônica
+          const maxRungs = Math.max(5, quanta + 1);
+          for (let r = 0; r < maxRungs; r++) {
+            const rung = document.createElement('div');
+            rung.className = 'harmonic-ladder-rung' + (r < quanta ? ' occupied' : '');
+            wellContainer.appendChild(rung);
+          }
+        }
+
+        cell.appendChild(wellContainer);
+
+        // Display de energia total do oscilador: (n + 1/2) hbar omega
+        const energyDisplay = document.createElement('div');
+        energyDisplay.className = 'osc-energy-display';
+        energyDisplay.innerText = `${(quanta + 0.5).toFixed(1)} ℏω`;
+        cell.appendChild(energyDisplay);
+
+        // Controles de ajuste manual no hover
+        const hoverControls = document.createElement('div');
+        hoverControls.className = 'osc-hover-controls';
+        hoverControls.innerHTML = `
+          <button class="btn-osc-adj" onclick="event.stopPropagation(); modifyOscillatorQuanta(${idx}, -1)" title="Remover 1 quantum">-</button>
+          <button class="btn-osc-adj" onclick="event.stopPropagation(); modifyOscillatorQuanta(${idx}, 1)" title="Adicionar 1 quantum">+</button>
+        `;
+        cell.appendChild(hoverControls);
+
+        // Efeito de destaque mútuo com as estrelas e barras
+        cell.addEventListener('mouseenter', () => highlightOscillator(idx, true));
+        cell.addEventListener('mouseleave', () => highlightOscillator(idx, false));
+        cell.addEventListener('click', () => modifyOscillatorQuanta(idx, 1));
+
+        container.appendChild(cell);
+      });
+    }
+
+    function highlightOscillator(index, isHover) {
+      const cell = document.getElementById(`osc-cell-${index}`);
+      if (cell) cell.classList.toggle('highlighted', isHover);
+      
+      const sbGroup = document.getElementById(`sb-group-${index}`);
+      if (sbGroup) {
+        sbGroup.style.background = isHover ? 'rgba(56, 189, 248, 0.25)' : '';
+        sbGroup.style.borderColor = isHover ? 'var(--accent-blue)' : '';
+      }
+    }
+
+    // ==========================================
+    // RENDERIZAÇÃO DE ESTRELAS E BARRAS
+    // ==========================================
+
+    function renderStarsAndBars() {
+      const visualContainer = document.getElementById('stars-bars-visual');
+      visualContainer.innerHTML = '';
+
+      document.getElementById('sb-count-stars').innerText = state.q;
+      document.getElementById('sb-count-bars').innerText = Math.max(0, state.N - 1);
+      document.getElementById('sb-count-total').innerText = state.q + Math.max(0, state.N - 1);
+      document.getElementById('sb-summary-label').innerText = `q = ${state.q} ★ | N-1 = ${Math.max(0, state.N - 1)} |`;
+
+      // Renderiza grupos de osciladores com suas estrelas e barras divisórias
+      state.oscillators.forEach((quanta, oscIdx) => {
+        const groupSpan = document.createElement('span');
+        groupSpan.className = 'sb-group';
+        groupSpan.id = `sb-group-${oscIdx}`;
+        groupSpan.title = `Oscilador #${oscIdx + 1}: ${quanta} quanta`;
+
+        const idSpan = document.createElement('span');
+        idSpan.className = 'sb-group-id';
+        idSpan.innerText = `#${oscIdx + 1}:`;
+        groupSpan.appendChild(idSpan);
+
+        if (quanta === 0) {
+          const emptySpan = document.createElement('span');
+          emptySpan.style.color = 'var(--text-dim)';
+          emptySpan.style.fontSize = '0.75rem';
+          emptySpan.innerText = '∅';
+          groupSpan.appendChild(emptySpan);
+        } else {
+          for (let s = 0; s < quanta; s++) {
+            const star = document.createElement('span');
+            star.className = 'sb-token-star';
+            star.innerText = '★';
+            groupSpan.appendChild(star);
+          }
+        }
+
+        visualContainer.appendChild(groupSpan);
+
+        // Adiciona a barra divisória entre osciladores
+        if (oscIdx < state.oscillators.length - 1) {
+          const bar = document.createElement('span');
+          bar.className = 'sb-token-bar';
+          bar.innerText = '|';
+          visualContainer.appendChild(bar);
+        }
+      });
+    }
+
+    function getStarsAndBarsString() {
+      let str = '{';
+      state.oscillators.forEach((quanta, idx) => {
+        str += 'x'.repeat(quanta);
+        if (idx < state.oscillators.length - 1) {
+          str += '|';
+        }
+      });
+      str += '}';
+      return str;
+    }
+
+    function copyStarsAndBarsNotation() {
+      const str = getStarsAndBarsString();
+      navigator.clipboard.writeText(str).then(() => {
+        alert(`Notação copiada para a área de transferência:\n${str}`);
+      });
+    }
+
+    // ==========================================
+    // PAINEL MATEMÁTICO & KA-TEX
+    // ==========================================
+
+    function formatBigIntWithCommas(big) {
+      const str = big.toString();
+      return str.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+
+    function formatBigIntToScientific(big) {
+      const str = big.toString();
+      if (str.length <= 4) return str;
+      const exp = str.length - 1;
+      const mantissa = (parseFloat(str.substring(0, 5)) / 10000).toFixed(3);
+      return `${mantissa} × 10^{${exp}}`;
+    }
+
+    function updateMathPanel() {
+      const N = state.N;
+      const q = state.q;
+      const totalCombinations = calculateExactMultiplicity(N, q);
+      const entropy = calculateExactEntropy(N, q);
+
+      // Atualiza a fórmula KaTeX
+      const formulaEl = document.getElementById('katex-multiplicity-formula');
+      if (window.katex) {
+        const latexStr = `\\Omega(${N}, ${q}) = \\frac{(${N} + ${q} - 1)!}{${q}! \\, (${N} - 1)!} = \\frac{${N + q - 1}!}{${q}! \\times ${N - 1}!}`;
+        katex.render(latexStr, formulaEl, { throwOnError: false, displayMode: true });
+      }
+
+      // Breakdown Fatorial BigInt
+      const numFact = getBigFactorial(N + q - 1);
+      const den1Fact = getBigFactorial(q);
+      const den2Fact = getBigFactorial(N - 1);
+
+      document.getElementById('fact-num-val').innerText = numFact.toString();
+      document.getElementById('fact-q-val').innerText = den1Fact.toString();
+      document.getElementById('fact-n1-val').innerText = den2Fact.toString();
+
+      // Multiplicidade Omega
+      const omegaDisp = document.getElementById('math-omega-val');
+      const omegaSci = document.getElementById('math-omega-sci');
+      
+      const formattedOmega = formatBigIntWithCommas(totalCombinations);
+      omegaDisp.innerText = formattedOmega.length > 18 ? formattedOmega.substring(0, 18) + '...' : formattedOmega;
+      omegaDisp.title = totalCombinations.toString();
+
+      if (window.katex) {
+        katex.render(formatBigIntToScientific(totalCombinations), omegaSci, { throwOnError: false });
+      } else {
+        omegaSci.innerText = totalCombinations.toString();
+      }
+
+      // Entropia
+      document.getElementById('math-entropy-val').innerText = entropy.toFixed(4);
+
+      // Energia Total
+      const totalEnergy = q + N * 0.5;
+      document.getElementById('math-energy-total').innerText = `${totalEnergy.toFixed(1)} ℏω`;
+      document.getElementById('math-energy-breakdown').innerText = `(${q} tép + ${(N * 0.5).toFixed(1)} zp)`;
+
+      // Probabilidade do Microestado P = 1 / Omega
+      const probEl = document.getElementById('math-prob-val');
+      if (totalCombinations === 1n) {
+        probEl.innerText = "1.00 (100%)";
+      } else {
+        const numDig = totalCombinations.toString().length;
+        if (numDig < 7) {
+          probEl.innerText = (1.0 / Number(totalCombinations)).toExponential(3);
+        } else {
+          const firstDigits = parseFloat(totalCombinations.toString().substring(0, 6)) / 100000;
+          const exp = totalCombinations.toString().length - 1;
+          const invMantissa = (1.0 / firstDigits).toFixed(3);
+          probEl.innerText = `${invMantissa} × 10⁻${exp}`;
+        }
+      }
+    }
+
+    // ==========================================
+    // GRÁFICOS CHART.JS
+    // ==========================================
+
+    let thermoChart = null;
+
+    function initChart() {
+      const ctx = document.getElementById('thermoChart').getContext('2d');
+      thermoChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [
+            {
+              label: 'Entropia S / kB',
+              data: [],
+              borderColor: '#38bdf8',
+              backgroundColor: 'rgba(56, 189, 248, 0.1)',
+              borderWidth: 2.5,
+              tension: 0.25,
+              fill: true,
+              pointRadius: 0
+            },
+            {
+              label: 'Estado Atual',
+              data: [],
+              borderColor: '#f59e0b',
+              backgroundColor: '#fbbf24',
+              pointRadius: 6,
+              pointHoverRadius: 8,
+              showLine: false,
+              pointBorderColor: '#fff',
+              pointBorderWidth: 2
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 300 },
+          plugins: {
+            legend: {
+              labels: {
+                color: '#94a3b8',
+                font: { family: 'Inter', size: 11 }
+              }
+            },
+            tooltip: {
+              backgroundColor: '#0f172a',
+              titleColor: '#f8fafc',
+              bodyColor: '#38bdf8',
+              borderColor: '#334155',
+              borderWidth: 1,
+              callbacks: {
+                title: function(items) {
+                  return `Quanta q = ${items[0].label}`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Quanta de Energia (q)',
+                color: '#64748b',
+                font: { family: 'Inter', size: 11, weight: 'bold' }
+              },
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono', size: 10 } }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Entropia S / kB = ln(Ω)',
+                color: '#64748b',
+                font: { family: 'Inter', size: 11, weight: 'bold' }
+              },
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono', size: 10 } }
+            }
+          }
+        }
+      });
+    }
+
+    function updateChartData() {
+      if (!thermoChart) return;
+
+      document.getElementById('chart-current-n').innerText = state.N;
+      const maxQ = 50;
+      const labels = [];
+      const curveData = [];
+      const currentPointData = [];
+
+      for (let qVal = 0; qVal <= maxQ; qVal++) {
+        labels.push(qVal);
+        let val;
+        if (state.chartType === 'entropy') {
+          val = calculateExactEntropy(state.N, qVal);
+        } else {
+          const exactBig = calculateExactMultiplicity(state.N, qVal);
+          if (state.omegaScale === 'logarithmic') {
+            val = exactBig <= 1n ? 0 : Math.log10(Number(exactBig));
+          } else {
+            val = Number(exactBig);
+          }
+        }
+        curveData.push(val);
+        currentPointData.push(qVal === state.q ? val : null);
+      }
+
+      thermoChart.data.labels = labels;
+      thermoChart.data.datasets[0].data = curveData;
+      thermoChart.data.datasets[1].data = currentPointData;
+
+      if (state.chartType === 'entropy') {
+        thermoChart.data.datasets[0].label = 'Entropia S / kB = ln(Ω)';
+        thermoChart.data.datasets[0].borderColor = '#38bdf8';
+        thermoChart.data.datasets[0].backgroundColor = 'rgba(56, 189, 248, 0.1)';
+        thermoChart.options.scales.y.title.text = 'Entropia S / kB';
+        thermoChart.options.scales.y.type = 'linear';
+      } else {
+        const isLog = state.omegaScale === 'logarithmic';
+        thermoChart.data.datasets[0].label = isLog ? 'Log₁₀ Multiplicidade (log₁₀ Ω)' : 'Multiplicidade Ω(N, q)';
+        thermoChart.data.datasets[0].borderColor = '#f59e0b';
+        thermoChart.data.datasets[0].backgroundColor = 'rgba(245, 158, 11, 0.1)';
+        thermoChart.options.scales.y.title.text = isLog ? 'log₁₀(Ω)' : 'Multiplicidade Ω';
+        thermoChart.options.scales.y.type = 'linear';
+      }
+
+      thermoChart.update();
+    }
+
+    function setChartType(type) {
+      state.chartType = type;
+      document.getElementById('chart-tab-entropy').classList.toggle('active', type === 'entropy');
+      document.getElementById('chart-tab-omega').classList.toggle('active', type === 'omega');
+      document.getElementById('scale-toggle-group').style.display = type === 'omega' ? 'inline-flex' : 'none';
+      updateChartData();
+    }
+
+    function setOmegaScale(scale) {
+      state.omegaScale = scale;
+      document.getElementById('scale-btn-linear').classList.toggle('active', scale === 'linear');
+      document.getElementById('scale-btn-log').classList.toggle('active', scale === 'logarithmic');
+      updateChartData();
+    }
+
+    // ==========================================
+    // SISTEMA DE DOIS SÓLIDOS (CONTATO TÉRMICO)
+    // ==========================================
+
+    let twoSolidsChart = null;
+
+    function initTwoSolidsChart() {
+      const ctx = document.getElementById('twoSolidsChart').getContext('2d');
+      twoSolidsChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [
+            {
+              label: 'Multiplicidade Total Ω_total(q_A)',
+              data: [],
+              borderColor: '#10b981',
+              backgroundColor: 'rgba(16, 185, 129, 0.15)',
+              borderWidth: 2.5,
+              fill: true,
+              pointRadius: 0,
+              tension: 0.25
+            },
+            {
+              label: 'Estado Atual (q_A)',
+              data: [],
+              borderColor: '#f59e0b',
+              backgroundColor: '#fbbf24',
+              pointRadius: 7,
+              showLine: false,
+              pointBorderColor: '#fff',
+              pointBorderWidth: 2
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              title: { display: true, text: 'Quanta no Sólido A (q_A)', color: '#64748b', font: { family: 'Inter', size: 11, weight: 'bold' } },
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono', size: 10 } }
+            },
+            y: {
+              title: { display: true, text: 'log₁₀(Ω_total)', color: '#64748b', font: { family: 'Inter', size: 11, weight: 'bold' } },
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono', size: 10 } }
+            }
+          },
+          plugins: {
+            legend: { labels: { color: '#94a3b8', font: { family: 'Inter', size: 11 } } }
+          }
+        }
+      });
+    }
+
+    function onTwoSolidsChange() {
+      stateTwoSolids.NA = parseInt(document.getElementById('slider-NA').value, 10);
+      stateTwoSolids.NB = parseInt(document.getElementById('slider-NB').value, 10);
+      stateTwoSolids.qTot = parseInt(document.getElementById('slider-qtot').value, 10);
+
+      document.getElementById('display-NA').innerText = stateTwoSolids.NA;
+      document.getElementById('display-NB').innerText = stateTwoSolids.NB;
+      document.getElementById('display-qtot').innerText = stateTwoSolids.qTot;
+
+      const sliderQA = document.getElementById('slider-qA');
+      sliderQA.max = stateTwoSolids.qTot;
+      if (stateTwoSolids.qA > stateTwoSolids.qTot) {
+        stateTwoSolids.qA = Math.floor(stateTwoSolids.qTot / 2);
+      }
+      sliderQA.value = stateTwoSolids.qA;
+      document.getElementById('display-qA').innerText = stateTwoSolids.qA;
+
+      updateTwoSolidsView();
+    }
+
+    function onTwoSolidsQAChange(val) {
+      stateTwoSolids.qA = parseInt(val, 10);
+      document.getElementById('display-qA').innerText = stateTwoSolids.qA;
+      updateTwoSolidsView();
+    }
+
+    function setTwoSolidsQA(val) {
+      val = Math.max(0, Math.min(stateTwoSolids.qTot, val));
+      document.getElementById('slider-qA').value = val;
+      onTwoSolidsQAChange(val);
+    }
+
+    function updateTwoSolidsView() {
+      const NA = stateTwoSolids.NA;
+      const NB = stateTwoSolids.NB;
+      const qTot = stateTwoSolids.qTot;
+      const qA = stateTwoSolids.qA;
+      const qB = qTot - qA;
+
+      const omegaA = calculateExactMultiplicity(NA, qA);
+      const omegaB = calculateExactMultiplicity(NB, qB);
+      const entropyA = calculateExactEntropy(NA, qA);
+      const entropyB = calculateExactEntropy(NB, qB);
+
+      document.getElementById('val-qA-disp').innerText = qA;
+      document.getElementById('val-qB-disp').innerText = qB;
+      document.getElementById('val-omegaA-disp').innerText = formatBigIntToScientific(omegaA).replace(/[{}]/g, '');
+      document.getElementById('val-omegaB-disp').innerText = formatBigIntToScientific(omegaB).replace(/[{}]/g, '');
+      document.getElementById('val-entropyA-disp').innerText = entropyA.toFixed(2);
+      document.getElementById('val-entropyB-disp').innerText = entropyB.toFixed(2);
+      document.getElementById('val-energyA-disp').innerText = `${qA} ℏω`;
+      document.getElementById('val-energyB-disp').innerText = `${qB} ℏω`;
+
+      const tempA = (qA / NA).toFixed(2);
+      const tempB = (qB / NB).toFixed(2);
+      document.getElementById('two-solids-temp-A').innerText = `T_A ∝ ${tempA} ℏω/kB`;
+      document.getElementById('two-solids-temp-B').innerText = `T_B ∝ ${tempB} ℏω/kB`;
+
+      // Atualiza o gráfico de multiplicidade total combinada
+      if (twoSolidsChart) {
+        const labels = [];
+        const logOmegaTotData = [];
+        const currentPtData = [];
+
+        let maxLogOmega = -1;
+        let peakQA = 0;
+
+        for (let qa = 0; qa <= qTot; qa++) {
+          labels.push(qa);
+          const qb = qTot - qa;
+          const sTot = calculateExactEntropy(NA, qa) + calculateExactEntropy(NB, qb);
+          const log10Omega = sTot / Math.LN10; // log10(Omega) = ln(Omega) / ln(10)
+          
+          logOmegaTotData.push(log10Omega);
+          currentPtData.push(qa === qA ? log10Omega : null);
+
+          if (log10Omega > maxLogOmega) {
+            maxLogOmega = log10Omega;
+            peakQA = qa;
+          }
+        }
+
+        document.getElementById('two-solids-peak-info').innerText = `Pico no Equilíbrio Térmico: q_A = ${peakQA} (T_A ≈ T_B)`;
+
+        twoSolidsChart.data.labels = labels;
+        twoSolidsChart.data.datasets[0].data = logOmegaTotData;
+        twoSolidsChart.data.datasets[1].data = currentPtData;
+        twoSolidsChart.update();
+      }
+    }
+
+    function toggleThermalRelaxation() {
+      stateTwoSolids.isRelaxing = !stateTwoSolids.isRelaxing;
+      const btn = document.getElementById('btn-thermal-relax');
+      const lbl = document.getElementById('lbl-thermal-relax');
+
+      if (stateTwoSolids.isRelaxing) {
+        btn.classList.add('active-pulse');
+        lbl.innerText = 'Pausar Relaxação';
+        
+        stateTwoSolids.relaxationTimer = setInterval(() => {
+          const NA = stateTwoSolids.NA;
+          const NB = stateTwoSolids.NB;
+          const qTot = stateTwoSolids.qTot;
+          const qA = stateTwoSolids.qA;
+          const qB = qTot - qA;
+
+          // Taxa de temperatura T_A e T_B
+          const tA = qA / NA;
+          const tB = qB / NB;
+
+          if (Math.abs(tA - tB) < 0.05) {
+            // Praticamente no equilíbrio, apenas pequenas flutuações estocásticas
+            const step = Math.random() < 0.5 ? 1 : -1;
+            const nextQA = qA + step;
+            if (nextQA >= 0 && nextQA <= qTot) setTwoSolidsQA(nextQA);
+          } else if (tA > tB && qA > 0) {
+            // Calor flui de A para B
+            setTwoSolidsQA(qA - 1);
+          } else if (tB > tA && qA < qTot) {
+            // Calor flui de B para A
+            setTwoSolidsQA(qA + 1);
+          }
+        }, 120);
+      } else {
+        btn.classList.remove('active-pulse');
+        lbl.innerText = 'Simular Relaxação para o Equilíbrio';
+        if (stateTwoSolids.relaxationTimer) clearInterval(stateTwoSolids.relaxationTimer);
+      }
+    }
+
+    // ==========================================
+    // CONTROLE DE ABAS E ATUALIZAÇÕES GERAIS
+    // ==========================================
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+      if (tabId === 'single-solid') {
+        document.querySelector('.tab-button:nth-child(1)').classList.add('active');
+        document.getElementById('tab-single-solid').classList.add('active');
+        updateAll();
+      } else if (tabId === 'thermal-contact') {
+        document.querySelector('.tab-button:nth-child(2)').classList.add('active');
+        document.getElementById('tab-thermal-contact').classList.add('active');
+        if (!twoSolidsChart) initTwoSolidsChart();
+        updateTwoSolidsView();
+      } else if (tabId === 'theory-guide') {
+        document.querySelector('.tab-button:nth-child(3)').classList.add('active');
+        document.getElementById('tab-theory-guide').classList.add('active');
+        if (window.renderMathInElement) {
+          renderMathInElement(document.getElementById('tab-theory-guide'), {
+            delimiters: [
+              { left: '$$', right: '$$', display: true },
+              { left: '$', right: '$', display: false }
+            ]
+          });
+        }
+      }
+    }
+
+    function updateVisualsOnly() {
+      renderOscillators();
+      renderStarsAndBars();
+    }
+
+    function updateAll() {
+      updateVisualsOnly();
+      updateMathPanel();
+      updateChartData();
+    }
+
+    // ==========================================
+    // INICIALIZAÇÃO NO CARREGAMENTO DA PÁGINA
+    // ==========================================
+    window.addEventListener('DOMContentLoaded', () => {
+      // Sorteia distribuição inicial uniforme
+      const sampled = sampleUniformMicrostate(state.N, state.q);
+      state.oscillators = sampled.oscillators;
+      state.starsBarsItems = sampled.items;
+
+      initChart();
+      updateAll();
+
+      // Renderiza fórmulas matemáticas estáticas na página
+      if (window.renderMathInElement) {
+        renderMathInElement(document.body, {
+          delimiters: [
+            { left: '$$', right: '$$', display: true },
+            { left: '$', right: '$', display: false }
+          ]
+        });
+      }
+    });
+  </script>
+</body>
+</html>
