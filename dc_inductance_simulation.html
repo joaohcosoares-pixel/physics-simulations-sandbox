@@ -1,0 +1,2516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DC Inductance & Electrical Inertia Interactive Physics Lab</title>
+    <style>
+        :root {
+            --bg-deep: #070a13;
+            --bg-card: rgba(15, 23, 42, 0.82);
+            --bg-card-hover: rgba(30, 41, 59, 0.9);
+            --bg-subtle: rgba(255, 255, 255, 0.04);
+            --border-glow: rgba(56, 189, 248, 0.25);
+            --border-subtle: rgba(255, 255, 255, 0.1);
+            
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            
+            --cyan-glow: #00f2fe;
+            --cyan-dim: #0284c7;
+            --amber-glow: #f59e0b;
+            --amber-bright: #fbbf24;
+            --emerald-glow: #10b981;
+            --emerald-bright: #34d399;
+            --violet-glow: #a855f7;
+            --rose-glow: #f43f5e;
+            --electric-blue: #3b82f6;
+
+            --font-main: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', 'Roboto Mono', Menlo, Consolas, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-deep);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 20% 15%, rgba(14, 165, 233, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 80% 85%, rgba(168, 85, 247, 0.08) 0%, transparent 45%);
+            background-attachment: fixed;
+        }
+
+        /* Top Navigation Header */
+        header {
+            background: rgba(11, 17, 33, 0.9);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .brand-container {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-icon {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, #0284c7, #9333ea);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 20px;
+            color: #fff;
+            box-shadow: 0 0 20px rgba(2, 132, 199, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .brand-text h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            background: linear-gradient(90deg, #ffffff 30%, #38bdf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-text p {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .formula-pill {
+            background: rgba(56, 189, 248, 0.08);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 24px;
+            padding: 6px 14px;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--cyan-glow);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-icon-toggle {
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-icon-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            border-color: var(--border-glow);
+        }
+
+        .btn-icon-toggle.active {
+            background: rgba(14, 165, 233, 0.18);
+            border-color: var(--cyan-dim);
+            color: var(--cyan-glow);
+        }
+
+        /* Main Workspace Layout */
+        .workspace {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 18px;
+            padding: 20px 24px;
+            max-width: 1680px;
+            margin: 0 auto;
+            width: 100%;
+            flex: 1;
+        }
+
+        @media (max-width: 1180px) {
+            .workspace {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stage-column {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        /* Glassmorphic Panel Base */
+        .panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+            position: relative;
+        }
+
+        .panel-header {
+            padding: 12px 18px;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #e2e8f0;
+        }
+
+        .panel-title-icon {
+            color: var(--cyan-glow);
+        }
+
+        /* Circuit Canvas Container */
+        .circuit-card {
+            position: relative;
+            background: radial-gradient(circle at center, #0f172a 0%, #070a13 100%);
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+            height: 380px;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Interactive Canvas Overlay Badges & Overlays */
+        .circuit-legend {
+            position: absolute;
+            bottom: 12px;
+            left: 14px;
+            display: flex;
+            gap: 10px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            backdrop-filter: blur(6px);
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .legend-dot.electrons { background: var(--cyan-glow); box-shadow: 0 0 6px var(--cyan-glow); }
+        .legend-dot.flux { background: var(--violet-glow); box-shadow: 0 0 6px var(--violet-glow); }
+        .legend-dot.back-emf { background: var(--amber-glow); box-shadow: 0 0 6px var(--amber-glow); }
+
+        /* Didactic Live State Coach Box */
+        .didactic-coach {
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.85));
+            border: 1px solid var(--border-glow);
+            border-radius: 12px;
+            padding: 16px 20px;
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+            position: relative;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .coach-indicator {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--cyan-glow);
+            box-shadow: 0 0 12px var(--cyan-glow);
+            margin-top: 4px;
+            flex-shrink: 0;
+            animation: pulseGlow 2s infinite ease-in-out;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.25); opacity: 1; filter: drop-shadow(0 0 8px currentColor); }
+        }
+
+        .coach-content {
+            flex: 1;
+        }
+
+        .coach-state-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-weight: 700;
+            color: var(--cyan-glow);
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .coach-state-text {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: #f1f5f9;
+        }
+
+        .coach-state-subtext {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            margin-top: 6px;
+            font-family: var(--font-mono);
+        }
+
+        /* Real-Time Graph Section */
+        .graph-card {
+            background: #090d16;
+        }
+
+        .graph-canvas-wrapper {
+            position: relative;
+            width: 100%;
+            height: 270px;
+        }
+
+        .graph-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .graph-btn-mini {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .graph-btn-mini:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+        }
+
+        .graph-btn-mini.active {
+            background: rgba(56, 189, 248, 0.2);
+            color: var(--cyan-glow);
+            border-color: var(--cyan-dim);
+        }
+
+        /* Sidebar Control & Telemetry Column */
+        .sidebar-column {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* Big Tactile Switch Toggle Card */
+        .switch-panel {
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+            background: linear-gradient(180deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%);
+        }
+
+        .switch-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .main-power-switch {
+            position: relative;
+            width: 100%;
+            height: 56px;
+            background: #0f172a;
+            border-radius: 28px;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.7), 0 4px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        .main-power-switch:hover {
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .switch-thumb {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: calc(50% - 4px);
+            height: 44px;
+            border-radius: 22px;
+            background: linear-gradient(180deg, #475569, #334155);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #fff;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 2;
+        }
+
+        .main-power-switch.on .switch-thumb {
+            left: calc(50%);
+            background: linear-gradient(180deg, #0284c7, #0369a1);
+            box-shadow: 0 0 20px rgba(14, 165, 233, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+            color: #ffffff;
+        }
+
+        .switch-labels {
+            position: absolute;
+            width: 100%;
+            left: 0;
+            top: 0;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            pointer-events: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 0 10px;
+            z-index: 1;
+        }
+
+        .label-off { color: #94a3b8; }
+        .label-on { color: #38bdf8; }
+
+        /* Secondary Switch Modes / Bypass Controls */
+        .switch-auxiliary {
+            display: flex;
+            width: 100%;
+            gap: 8px;
+        }
+
+        .aux-btn {
+            flex: 1;
+            padding: 8px;
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 0.78rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .aux-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+
+        .aux-btn.active {
+            background: rgba(168, 85, 247, 0.18);
+            border-color: var(--violet-glow);
+            color: #e9d5ff;
+        }
+
+        /* Telemetry Live Meters Grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 14px;
+        }
+
+        .metric-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            transition: border-color 0.2s;
+        }
+
+        .metric-card:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .metric-label {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .metric-symbol {
+            font-family: var(--font-mono);
+            color: var(--text-muted);
+        }
+
+        .metric-value {
+            font-family: var(--font-mono);
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #ffffff;
+            display: flex;
+            align-items: baseline;
+            gap: 3px;
+        }
+
+        .metric-unit {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: normal;
+        }
+
+        .metric-value.cyan { color: var(--cyan-glow); }
+        .metric-value.amber { color: var(--amber-glow); }
+        .metric-value.emerald { color: var(--emerald-bright); }
+        .metric-value.violet { color: var(--violet-glow); }
+
+        /* Interactive Sliders Section */
+        .controls-list {
+            padding: 14px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .control-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .control-badge {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            font-weight: 700;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 2px 8px;
+            color: var(--cyan-glow);
+        }
+
+        .slider-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.12);
+            outline: none;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        input[type="range"]:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 242, 254, 0.8), 0 2px 4px rgba(0, 0, 0, 0.5);
+            border: 2px solid var(--cyan-dim);
+            transition: transform 0.1s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .slider-ticks {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+            padding-top: 2px;
+        }
+
+        /* Preset Scenarios */
+        .preset-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            padding: 0 18px 16px;
+        }
+
+        .preset-btn {
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .preset-btn strong {
+            color: var(--text-primary);
+            font-size: 0.82rem;
+        }
+
+        .preset-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--border-glow);
+            color: #fff;
+        }
+
+        /* Simulation Time Controls (Play/Pause/Speed) */
+        .sim-time-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 18px;
+            background: rgba(0, 0, 0, 0.3);
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .time-btn-group {
+            display: flex;
+            gap: 6px;
+        }
+
+        .time-btn {
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-primary);
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .time-btn:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: var(--cyan-dim);
+        }
+
+        .speed-selector {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+        }
+
+        select.speed-select {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-primary);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            outline: none;
+        }
+
+        /* Educational Section - Mechanical Flywheel Analogy */
+        .educational-section {
+            max-width: 1680px;
+            margin: 0 auto 30px;
+            padding: 0 24px;
+            width: 100%;
+        }
+
+        .analogy-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 16px;
+            margin-top: 14px;
+        }
+
+        .analogy-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .analogy-card h3 {
+            font-size: 0.95rem;
+            color: var(--cyan-glow);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .analogy-card p {
+            font-size: 0.85rem;
+            line-height: 1.5;
+            color: var(--text-secondary);
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            margin-top: 6px;
+        }
+
+        .comparison-table th, .comparison-table td {
+            padding: 6px 8px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .comparison-table th {
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .comparison-table td:first-child {
+            color: var(--cyan-glow);
+            font-weight: 500;
+        }
+
+        .comparison-table td:last-child {
+            color: var(--amber-bright);
+        }
+
+        /* Footer */
+        footer {
+            margin-top: auto;
+            border-top: 1px solid var(--border-subtle);
+            padding: 14px 24px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            background: rgba(7, 10, 19, 0.9);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header>
+        <div class="brand-container">
+            <div class="brand-icon">L</div>
+            <div class="brand-text">
+                <h1>DC Inductance & Electrical Inertia</h1>
+                <p>Interactive Physics Laboratory &middot; Lenz's Law &middot; RL Circuit Dynamics</p>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <div class="formula-pill" title="Differential equation for RL Circuit">
+                <span>V = L (dI/dt) + I&middot;R</span>
+            </div>
+            <button id="btnSoundToggle" class="btn-icon-toggle" title="Toggle audio hum and switch effects">
+                <span id="soundIcon">🔊</span> Audio
+            </button>
+            <button id="btnFlowToggle" class="btn-icon-toggle active" title="Toggle between physical electron flow and conventional current">
+                <span id="flowIcon">⚡</span> Electron Flow
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Application Grid -->
+    <main class="workspace">
+        
+        <!-- Left Column: Visual Stage, Didactic Coach, Real-Time Graph -->
+        <section class="stage-column">
+            
+            <!-- Circuit Diagram Canvas Card -->
+            <div class="panel circuit-card">
+                <div class="panel-header">
+                    <span class="panel-title">
+                        <span class="panel-title-icon">⟳</span> Circuit Interactive Schematic
+                    </span>
+                    <span style="font-size: 0.78rem; color: var(--text-muted);">
+                        Click on Switch or use Power Button to toggle
+                    </span>
+                </div>
+
+                <div class="canvas-wrapper">
+                    <canvas id="circuitCanvas"></canvas>
+
+                    <div class="circuit-legend">
+                        <div class="legend-item">
+                            <div class="legend-dot electrons"></div>
+                            <span>Electrons (Speed &prop; I)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot flux"></div>
+                            <span>Magnetic Flux &Phi;</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot back-emf"></div>
+                            <span>Back-EMF &Epsilon;<sub>L</sub></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dynamic Didactic Explanations Coach -->
+            <div id="didacticCoach" class="didactic-coach">
+                <div id="coachIndicator" class="coach-indicator"></div>
+                <div class="coach-content">
+                    <div id="coachTitle" class="coach-state-title">
+                        ⚡ State 1 &middot; Circuit Just Closed (Energizing)
+                    </div>
+                    <div id="coachText" class="coach-state-text">
+                        The magnetic field is expanding! This creates a counter-voltage (Back-EMF) opposing the battery. The electrons are struggling to speed up—the inductor acts like a heavy flywheel resisting motion.
+                    </div>
+                    <div id="coachSubtext" class="coach-state-subtext">
+                        dI/dt > 0 &middot; V_L = -L(dI/dt) fights V_battery &middot; Bulb brightness gradually rises
+                    </div>
+                </div>
+            </div>
+
+            <!-- Real-Time Graph Canvas Card -->
+            <div class="panel graph-card">
+                <div class="panel-header">
+                    <span class="panel-title">
+                        <span class="panel-title-icon">📈</span> Live Oscilloscope (Current & Voltage vs. Time)
+                    </span>
+
+                    <div class="graph-controls">
+                        <button id="btnGraphCurrent" class="graph-btn-mini active" title="Plot Current I(t)">Current I(t)</button>
+                        <button id="btnGraphVoltage" class="graph-btn-mini" title="Plot Voltages V_L(t) and V_R(t)">Voltages V(t)</button>
+                        <button id="btnGraphBoth" class="graph-btn-mini" title="Plot Both Current and Voltages">Both</button>
+                        <button id="btnClearGraph" class="graph-btn-mini" title="Clear oscilloscope history">Clear</button>
+                    </div>
+                </div>
+
+                <div class="graph-canvas-wrapper">
+                    <canvas id="graphCanvas"></canvas>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Right Column: Switch, Meters, Interactive Sliders, Presets -->
+        <aside class="sidebar-column">
+            
+            <!-- Master Switch Controller Panel -->
+            <div class="panel switch-panel">
+                <span class="switch-title">Circuit Master Switch</span>
+                
+                <div id="mainPowerSwitch" class="main-power-switch" role="button" tabindex="0" title="Click to connect / disconnect battery">
+                    <div class="switch-labels">
+                        <span class="label-off">DISCHARGE / OFF</span>
+                        <span class="label-on">POWER ON</span>
+                    </div>
+                    <div class="switch-thumb">OFF</div>
+                </div>
+
+                <div class="switch-auxiliary">
+                    <button id="btnModeFlyback" class="aux-btn active" title="Discharge loop allows magnetic field collapse current to circulate">
+                        <span>🔄</span> Closed Flyback Loop
+                    </button>
+                    <button id="btnModeOpenAir" class="aux-btn" title="Complete air gap produces sharp spark / high voltage spike">
+                        <span>⚡</span> Spark Gap Break
+                    </button>
+                </div>
+            </div>
+
+            <!-- Live Telemetry Telemetry Gauges -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">
+                        <span class="panel-title-icon">⚡</span> Real-Time Telemetry
+                    </span>
+                    <span id="steadyStateBadge" style="font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; background: rgba(16, 185, 129, 0.15); color: var(--emerald-bright); border: 1px solid rgba(16, 185, 129, 0.3);">
+                        Active
+                    </span>
+                </div>
+
+                <div class="metrics-grid">
+                    <!-- Current I -->
+                    <div class="metric-card">
+                        <div class="metric-label">
+                            <span>Current I(t)</span>
+                            <span class="metric-symbol">I</span>
+                        </div>
+                        <div class="metric-value cyan">
+                            <span id="valCurrent">0.00</span>
+                            <span class="metric-unit">A</span>
+                        </div>
+                    </div>
+
+                    <!-- Target / Max Current -->
+                    <div class="metric-card">
+                        <div class="metric-label">
+                            <span>Max Limit (V/R)</span>
+                            <span class="metric-symbol">I<sub>max</sub></span>
+                        </div>
+                        <div class="metric-value">
+                            <span id="valMaxCurrent">3.00</span>
+                            <span class="metric-unit">A</span>
+                        </div>
+                    </div>
+
+                    <!-- Inductor Voltage V_L -->
+                    <div class="metric-card">
+                        <div class="metric-label">
+                            <span>Inductor Back-EMF</span>
+                            <span class="metric-symbol">V<sub>L</sub></span>
+                        </div>
+                        <div class="metric-value amber">
+                            <span id="valInductorV">0.00</span>
+                            <span class="metric-unit">V</span>
+                        </div>
+                    </div>
+
+                    <!-- Current Rate of Change dI/dt -->
+                    <div class="metric-card">
+                        <div class="metric-label">
+                            <span>Rate of Change</span>
+                            <span class="metric-symbol">dI/dt</span>
+                        </div>
+                        <div class="metric-value">
+                            <span id="valRateChange">0.00</span>
+                            <span class="metric-unit">A/s</span>
+                        </div>
+                    </div>
+
+                    <!-- Time Constant Tau -->
+                    <div class="metric-card">
+                        <div class="metric-label">
+                            <span>Time Constant &tau;</span>
+                            <span class="metric-symbol">L/R</span>
+                        </div>
+                        <div class="metric-value emerald">
+                            <span id="valTau">1.00</span>
+                            <span class="metric-unit">s</span>
+                        </div>
+                    </div>
+
+                    <!-- Stored Magnetic Energy -->
+                    <div class="metric-card">
+                        <div class="metric-label">
+                            <span>Magnetic Energy</span>
+                            <span class="metric-symbol">&frac12;LI&sup2;</span>
+                        </div>
+                        <div class="metric-value violet">
+                            <span id="valEnergy">0.00</span>
+                            <span class="metric-unit">J</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Parameter Sliders -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">
+                        <span class="panel-title-icon">🎛️</span> Circuit Parameters
+                    </span>
+                </div>
+
+                <div class="controls-list">
+                    <!-- Voltage Slider -->
+                    <div class="control-group">
+                        <div class="control-header">
+                            <span class="control-title">Battery Voltage (V)</span>
+                            <span id="badgeVoltage" class="control-badge">12.0 V</span>
+                        </div>
+                        <div class="slider-wrapper">
+                            <input id="sliderVoltage" type="range" min="1" max="24" step="0.5" value="12">
+                        </div>
+                        <div class="slider-ticks">
+                            <span>1 V</span>
+                            <span>12 V</span>
+                            <span>24 V</span>
+                        </div>
+                    </div>
+
+                    <!-- Resistance Slider -->
+                    <div class="control-group">
+                        <div class="control-header">
+                            <span class="control-title">Bulb Resistance (R)</span>
+                            <span id="badgeResistance" class="control-badge">4.0 &Omega;</span>
+                        </div>
+                        <div class="slider-wrapper">
+                            <input id="sliderResistance" type="range" min="1" max="20" step="0.5" value="4">
+                        </div>
+                        <div class="slider-ticks">
+                            <span>1 &Omega;</span>
+                            <span>10 &Omega;</span>
+                            <span>20 &Omega;</span>
+                        </div>
+                    </div>
+
+                    <!-- Inductance Slider -->
+                    <div class="control-group">
+                        <div class="control-header">
+                            <span class="control-title">Inductance Coil (L)</span>
+                            <span id="badgeInductance" class="control-badge">4.0 H</span>
+                        </div>
+                        <div class="slider-wrapper">
+                            <input id="sliderInductance" type="range" min="0.2" max="10" step="0.2" value="4">
+                        </div>
+                        <div class="slider-ticks">
+                            <span>0.2 H (Fast)</span>
+                            <span>5 H</span>
+                            <span>10 H (Heavy)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-header" style="border-top: 1px solid var(--border-subtle); border-bottom: none;">
+                    <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary);">
+                        Interactive Scenarios & Presets
+                    </span>
+                </div>
+
+                <div class="preset-grid">
+                    <button class="preset-btn" data-v="12" data-r="4" data-l="4">
+                        <strong>Standard Lab</strong>
+                        <span>&tau; = 1.0s &middot; Balanced</span>
+                    </button>
+                    <button class="preset-btn" data-v="12" data-r="2" data-l="10">
+                        <strong>Heavy Inertia</strong>
+                        <span>&tau; = 5.0s &middot; Huge delay</span>
+                    </button>
+                    <button class="preset-btn" data-v="12" data-r="8" data-l="0.4">
+                        <strong>Fast Response</strong>
+                        <span>&tau; = 0.05s &middot; Low L</span>
+                    </button>
+                    <button class="preset-btn" data-v="24" data-r="12" data-l="6">
+                        <strong>High Voltage</strong>
+                        <span>24V &middot; Slow ramp</span>
+                    </button>
+                </div>
+
+                <!-- Simulation Time Controls -->
+                <div class="sim-time-bar">
+                    <div class="time-btn-group">
+                        <button id="btnPlayPause" class="time-btn" title="Play / Pause simulation">⏸</button>
+                        <button id="btnStep" class="time-btn" title="Single step forward (&Delta;t = 0.05s)">⏭</button>
+                        <button id="btnReset" class="time-btn" title="Reset current and time to 0">↺</button>
+                    </div>
+
+                    <div class="speed-selector">
+                        <span>Speed:</span>
+                        <select id="selectSpeed" class="speed-select">
+                            <option value="0.25">0.25&times; (Slow-Mo)</option>
+                            <option value="0.5">0.5&times;</option>
+                            <option value="1.0" selected>1.0&times; (Realtime)</option>
+                            <option value="2.0">2.0&times; (Fast)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+        </aside>
+    </main>
+
+    <!-- Educational Deep Dive & Mechanical Analogy Section -->
+    <section class="educational-section">
+        <div class="analogy-grid">
+            
+            <!-- Electrical Inertia Concept Card -->
+            <div class="analogy-card">
+                <h3><span>💡</span> Why Does Inductance Act Like Inertia?</h3>
+                <p>
+                    In mechanics, Newton's first law states that an object with mass resists any change in its velocity ($F = m \cdot a$). An inductor does the <strong>exact same thing</strong> for electric current!
+                </p>
+                <p>
+                    When current changes ($\frac{dI}{dt} \ne 0$), the changing magnetic flux induces a counter-voltage (Back-EMF $\mathcal{E}_L = -L \frac{dI}{dt}$). This voltage directly opposes the change, forcing current to change gradually rather than instantly.
+                </p>
+            </div>
+
+            <!-- Side by Side Analogy Table -->
+            <div class="analogy-card">
+                <h3><span>⚖️</span> Mechanical &harr; Electrical Analogy</h3>
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Electrical Quantity</th>
+                            <th>Mechanical Equivalent</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Current $I(t)$</td>
+                            <td>Velocity $v(t)$</td>
+                        </tr>
+                        <tr>
+                            <td>Inductance $L$</td>
+                            <td>Mass / Inertia $m$</td>
+                        </tr>
+                        <tr>
+                            <td>Battery Voltage $V$</td>
+                            <td>Applied Force $F$</td>
+                        </tr>
+                        <tr>
+                            <td>Resistance $R$</td>
+                            <td>Friction / Drag $b$</td>
+                        </tr>
+                        <tr>
+                            <td>Back-EMF $-L \frac{dI}{dt}$</td>
+                            <td>Inertial Force $-m \frac{dv}{dt}$</td>
+                        </tr>
+                        <tr>
+                            <td>Magnetic Energy $\frac{1}{2} L I^2$</td>
+                            <td>Kinetic Energy $\frac{1}{2} m v^2$</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Time Constant Tau Card -->
+            <div class="analogy-card">
+                <h3><span>⏱️</span> The Time Constant (&tau; = L / R)</h3>
+                <p>
+                    The time constant $\tau = \frac{L}{R}$ dictates how fast the circuit responds:
+                </p>
+                <ul style="font-size: 0.82rem; color: var(--text-secondary); padding-left: 18px; margin-top: 4px; display: flex; flex-direction: column; gap: 4px;">
+                    <li>At $t = 1\tau$: Current reaches <strong>63.2%</strong> of its maximum value ($I_{max} = \frac{V}{R}$).</li>
+                    <li>At $t = 3\tau$: Current reaches <strong>95.0%</strong>.</li>
+                    <li>At $t = 5\tau$: Current reaches <strong>99.3%</strong> (considered steady state).</li>
+                </ul>
+                <p style="margin-top: 4px;">
+                    Increasing $L$ adds more "inertia", stretching $\tau$. Increasing $R$ causes energy to dissipate faster, shrinking $\tau$.
+                </p>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>DC Inductance & Electrical Inertia Simulation &middot; Built with HTML5 Canvas & Vanilla JavaScript Physics Engine</p>
+    </footer>
+
+    <!-- Interactive Simulation Engine Script -->
+    <script>
+        /**
+         * DC INDUCTANCE & ELECTRICAL INERTIA INTERACTIVE PHYSICS SIMULATION
+         * Self-contained Vanilla JS Physics & Graphics Engine
+         */
+
+        // --- Physics State ---
+        const state = {
+            // Circuit parameters
+            V: 12.0,        // Battery Voltage (Volts)
+            R: 4.0,         // Resistance (Ohms)
+            L: 4.0,         // Inductance (Henries)
+            
+            // Real-time dynamic variables
+            I: 0.0,         // Current (Amperes)
+            dIdt: 0.0,      // Rate of change of current (A/s)
+            VL: 0.0,        // Inductor voltage drop / back EMF (Volts)
+            VR: 0.0,        // Resistor voltage drop (Volts)
+            energy: 0.0,    // Stored magnetic energy (Joules)
+            time: 0.0,      // Simulation time (seconds)
+            
+            // Switch & operational modes
+            switchClosed: false,       // false = OFF / Discharge, true = POWER ON
+            dischargeMode: 'flyback',  // 'flyback' (closed discharge loop) or 'spark' (air break)
+            
+            // Simulation controls
+            paused: false,
+            timeScale: 1.0,
+            soundEnabled: false,
+            electronFlow: true,        // true = physical electrons (- to +), false = conventional (+ to -)
+            graphMode: 'current',      // 'current', 'voltage', 'both'
+
+            // Physical transients & visuals
+            sparkIntensity: 0.0,
+            bulbBrightness: 0.0,
+            fieldFluxPulse: 0.0,
+            fieldPhase: 0.0,
+            electronPhase: 0.0
+        };
+
+        // --- Oscilloscope Data Buffer ---
+        const graphHistory = {
+            maxPoints: 800,
+            timeWindow: 8.0, // seconds visible in window
+            data: [] // { t, I, VL, VR, Vsrc }
+        };
+
+        // --- Sound Engine (Web Audio API Synthesizer) ---
+        class AudioEngine {
+            constructor() {
+                this.ctx = null;
+                this.humOsc = null;
+                this.humGain = null;
+                this.initialized = false;
+            }
+
+            init() {
+                if (this.initialized) return;
+                try {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioContext();
+
+                    // Continuous electromagnetic coil hum (60Hz / variable hum)
+                    this.humOsc = this.ctx.createOscillator();
+                    this.humOsc.type = 'sawtooth';
+                    this.humOsc.frequency.setValueAtTime(60, this.ctx.currentTime);
+
+                    // Low-pass filter for soft warm hum
+                    this.humFilter = this.ctx.createBiquadFilter();
+                    this.humFilter.type = 'lowpass';
+                    this.humFilter.frequency.setValueAtTime(180, this.ctx.currentTime);
+
+                    this.humGain = this.ctx.createGain();
+                    this.humGain.gain.setValueAtTime(0, this.ctx.currentTime);
+
+                    this.humOsc.connect(this.humFilter);
+                    this.humFilter.connect(this.humGain);
+                    this.humGain.connect(this.ctx.destination);
+
+                    this.humOsc.start();
+                    this.initialized = true;
+                } catch (e) {
+                    console.warn("Web Audio not supported or blocked", e);
+                }
+            }
+
+            playSwitchClick(isOn) {
+                if (!state.soundEnabled) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const t = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = isOn ? 'triangle' : 'sine';
+                osc.frequency.setValueAtTime(isOn ? 880 : 440, t);
+                osc.frequency.exponentialRampToValueAtTime(120, t + 0.04);
+
+                gain.gain.setValueAtTime(0.3, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start(t);
+                osc.stop(t + 0.05);
+            }
+
+            playSparkSound() {
+                if (!state.soundEnabled) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const bufferSize = this.ctx.sampleRate * 0.08;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.3));
+                }
+
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.value = 1800;
+
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                noise.start();
+            }
+
+            updateHum(current, dIdt) {
+                if (!this.ctx || !this.humGain || !state.soundEnabled) {
+                    if (this.humGain && this.ctx) {
+                        this.humGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.05);
+                    }
+                    return;
+                }
+
+                const t = this.ctx.currentTime;
+                // Hum volume scales with current and field activity
+                const targetGain = Math.min(0.08, Math.abs(current) * 0.015 + Math.abs(dIdt) * 0.01);
+                const targetFreq = 50 + Math.min(120, Math.abs(current) * 15 + Math.abs(dIdt) * 20);
+
+                this.humGain.gain.setTargetAtTime(targetGain, t, 0.05);
+                this.humOsc.frequency.setTargetAtTime(targetFreq, t, 0.05);
+            }
+        }
+
+        const audio = new AudioEngine();
+
+        // --- DOM Elements ---
+        const circuitCanvas = document.getElementById('circuitCanvas');
+        const circuitCtx = circuitCanvas.getContext('2d');
+        const graphCanvas = document.getElementById('graphCanvas');
+        const graphCtx = graphCanvas.getContext('2d');
+
+        const mainPowerSwitch = document.getElementById('mainPowerSwitch');
+        const btnModeFlyback = document.getElementById('btnModeFlyback');
+        const btnModeOpenAir = document.getElementById('btnModeOpenAir');
+
+        const sliderVoltage = document.getElementById('sliderVoltage');
+        const sliderResistance = document.getElementById('sliderResistance');
+        const sliderInductance = document.getElementById('sliderInductance');
+
+        const badgeVoltage = document.getElementById('badgeVoltage');
+        const badgeResistance = document.getElementById('badgeResistance');
+        const badgeInductance = document.getElementById('badgeInductance');
+
+        const valCurrent = document.getElementById('valCurrent');
+        const valMaxCurrent = document.getElementById('valMaxCurrent');
+        const valInductorV = document.getElementById('valInductorV');
+        const valRateChange = document.getElementById('valRateChange');
+        const valTau = document.getElementById('valTau');
+        const valEnergy = document.getElementById('valEnergy');
+        const steadyStateBadge = document.getElementById('steadyStateBadge');
+
+        const didacticCoach = document.getElementById('didacticCoach');
+        const coachIndicator = document.getElementById('coachIndicator');
+        const coachTitle = document.getElementById('coachTitle');
+        const coachText = document.getElementById('coachText');
+        const coachSubtext = document.getElementById('coachSubtext');
+
+        const btnPlayPause = document.getElementById('btnPlayPause');
+        const btnStep = document.getElementById('btnStep');
+        const btnReset = document.getElementById('btnReset');
+        const selectSpeed = document.getElementById('selectSpeed');
+        const btnSoundToggle = document.getElementById('btnSoundToggle');
+        const btnFlowToggle = document.getElementById('btnFlowToggle');
+
+        const btnGraphCurrent = document.getElementById('btnGraphCurrent');
+        const btnGraphVoltage = document.getElementById('btnGraphVoltage');
+        const btnGraphBoth = document.getElementById('btnGraphBoth');
+        const btnClearGraph = document.getElementById('btnClearGraph');
+
+        // --- Canvas Resolution Resizing ---
+        function resizeCanvases() {
+            const dpr = window.devicePixelRatio || 1;
+
+            // Circuit Canvas
+            const cRect = circuitCanvas.parentElement.getBoundingClientRect();
+            circuitCanvas.width = cRect.width * dpr;
+            circuitCanvas.height = cRect.height * dpr;
+            circuitCtx.resetTransform();
+            circuitCtx.scale(dpr, dpr);
+
+            // Graph Canvas
+            const gRect = graphCanvas.parentElement.getBoundingClientRect();
+            graphCanvas.width = gRect.width * dpr;
+            graphCanvas.height = gRect.height * dpr;
+            graphCtx.resetTransform();
+            graphCtx.scale(dpr, dpr);
+        }
+
+        window.addEventListener('resize', resizeCanvases);
+
+        // --- Circuit Geometry Definition ---
+        // Normalized layout coordinates (mapped to canvas dimensions)
+        function getCircuitLayout(w, h) {
+            const padX = Math.max(50, w * 0.08);
+            const padY = Math.max(45, h * 0.12);
+
+            const left = padX;
+            const right = w - padX;
+            const top = padY;
+            const bottom = h - padY;
+
+            return {
+                left, right, top, bottom,
+                width: right - left,
+                height: bottom - top,
+                // Component positions
+                battery: { x: left, y: top + (bottom - top) * 0.5 },
+                switchPos: { x: left + (right - left) * 0.5, y: top },
+                bulb: { x: right, y: top + (bottom - top) * 0.5 },
+                inductor: { x: left + (right - left) * 0.5, y: bottom }
+            };
+        }
+
+        // --- Particle System for Flowing Electrons ---
+        const numParticles = 80;
+        const electrons = Array.from({ length: numParticles }, (_, i) => ({
+            progress: i / numParticles, // 0 to 1 along circuit loop
+            offset: (Math.random() - 0.5) * 4
+        }));
+
+        // Convert path progress (0 to 1) to (x, y) along circuit loop
+        // Loop runs: Top-Left -> Top-Right -> Bottom-Right -> Bottom-Left -> Top-Left
+        function getPointOnCircuit(progress, layout) {
+            const p = ((progress % 1) + 1) % 1;
+            const { left, right, top, bottom, width, height } = layout;
+            const perimeter = 2 * (width + height);
+
+            const dTop = width;
+            const dRight = height;
+            const dBottom = width;
+            const dLeft = height;
+
+            const dist = p * perimeter;
+
+            if (dist < dTop) {
+                // Moving right on top wire
+                return { x: left + dist, y: top, dir: { x: 1, y: 0 } };
+            } else if (dist < dTop + dRight) {
+                // Moving down on right wire
+                const local = dist - dTop;
+                return { x: right, y: top + local, dir: { x: 0, y: 1 } };
+            } else if (dist < dTop + dRight + dBottom) {
+                // Moving left on bottom wire
+                const local = dist - (dTop + dRight);
+                return { x: right - local, y: bottom, dir: { x: -1, y: 0 } };
+            } else {
+                // Moving up on left wire
+                const local = dist - (dTop + dRight + dBottom);
+                return { x: left, y: bottom - local, dir: { x: 0, y: -1 } };
+            }
+        }
+
+        // --- Physics Engine Integration ---
+        function updatePhysics(dt) {
+            if (state.paused) return;
+
+            const effectiveDt = dt * state.timeScale;
+            const subSteps = 10;
+            const subDt = effectiveDt / subSteps;
+
+            const R = state.R;
+            const L = state.L;
+
+            for (let step = 0; step < subSteps; step++) {
+                let V_applied = 0.0;
+
+                if (state.switchClosed) {
+                    // Power ON: Battery is in the loop
+                    V_applied = state.V;
+                    state.sparkIntensity = Math.max(0, state.sparkIntensity - subDt * 5);
+                } else {
+                    // Switch OFF
+                    if (state.dischargeMode === 'flyback') {
+                        // Closed bypass loop: V_applied = 0, current discharges through R and L
+                        V_applied = 0.0;
+                        state.sparkIntensity = Math.max(0, state.sparkIntensity - subDt * 5);
+                    } else {
+                        // Spark gap break: High air resistance causing rapid collapse & spark
+                        const R_spark = 150.0;
+                        V_applied = 0.0;
+                        if (Math.abs(state.I) > 0.05) {
+                            state.sparkIntensity = Math.min(1.0, state.sparkIntensity + 0.2);
+                        } else {
+                            state.sparkIntensity = Math.max(0, state.sparkIntensity - subDt * 8);
+                        }
+                        
+                        // Rapid exponential decay in air
+                        const tauAir = L / (R + R_spark);
+                        state.I = state.I * Math.exp(-subDt / tauAir);
+                        state.dIdt = - (state.I * (R + R_spark)) / L;
+                        state.VL = -L * state.dIdt;
+                        state.VR = state.I * R;
+                        state.energy = 0.5 * L * state.I * state.I;
+                        continue;
+                    }
+                }
+
+                // Analytical sub-step integration for complete numerical stability
+                // dI/dt = (V_applied - I * R) / L
+                const I_target = V_applied / R;
+                const tau = L / R;
+                
+                // Exact exponential propagator
+                const decayFactor = Math.exp(-subDt / tau);
+                state.I = I_target + (state.I - I_target) * decayFactor;
+
+                // Exact instantaneous derivative
+                state.dIdt = (V_applied - state.I * R) / L;
+                
+                // Back EMF across inductor: VL = L * (dI/dt)
+                state.VL = state.L * state.dIdt;
+                // Voltage drop across resistor: VR = I * R
+                state.VR = state.I * R;
+                // Stored magnetic energy: E = 1/2 * L * I^2
+                state.energy = 0.5 * state.L * state.I * state.I;
+            }
+
+            state.time += effectiveDt;
+
+            // Update visual dynamic phases
+            // Bulb filament brightness (smooth thermal lag)
+            const targetPower = (state.I * state.I * state.R) / ( (state.V * state.V / state.R) || 1 );
+            state.bulbBrightness += (Math.min(1.5, targetPower) - state.bulbBrightness) * Math.min(1, effectiveDt * 8);
+
+            // Electron flow phase
+            const flowSpeed = (state.electronFlow ? -1 : 1) * state.I * 0.15;
+            state.electronPhase += flowSpeed * effectiveDt;
+
+            // Magnetic field pulsing phase
+            state.fieldPhase += (Math.abs(state.I) * 3 + Math.abs(state.dIdt) * 2) * effectiveDt;
+
+            // Push to graph history
+            if (graphHistory.data.length === 0 || state.time - graphHistory.data[graphHistory.data.length - 1].t >= 0.02) {
+                graphHistory.data.push({
+                    t: state.time,
+                    I: state.I,
+                    VL: state.VL,
+                    VR: state.VR,
+                    Vsrc: state.switchClosed ? state.V : 0
+                });
+
+                // Trim old data outside visible time window (keep slight buffer)
+                const minTime = state.time - graphHistory.timeWindow;
+                while (graphHistory.data.length > 2 && graphHistory.data[0].t < minTime - 2) {
+                    graphHistory.data.shift();
+                }
+            }
+
+            // Audio hum sync
+            audio.updateHum(state.I, state.dIdt);
+        }
+
+        // --- Render Circuit Canvas ---
+        function renderCircuit() {
+            const w = circuitCanvas.parentElement.clientWidth;
+            const h = circuitCanvas.parentElement.clientHeight;
+            const ctx = circuitCtx;
+
+            ctx.clearRect(0, 0, w, h);
+
+            const layout = getCircuitLayout(w, h);
+            const { left, right, top, bottom, battery, switchPos, bulb, inductor } = layout;
+
+            // 1. Draw Conducting Wires
+            ctx.save();
+            ctx.lineWidth = 6;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            // Wire glow effect
+            ctx.shadowBlur = 12;
+            ctx.shadowColor = Math.abs(state.I) > 0.05 ? 'rgba(56, 189, 248, 0.4)' : 'rgba(255, 255, 255, 0.05)';
+            ctx.strokeStyle = Math.abs(state.I) > 0.05 ? '#1e3a8a' : '#1e293b';
+
+            ctx.beginPath();
+            // Top wire (split around switch)
+            ctx.moveTo(left, top);
+            ctx.lineTo(switchPos.x - 36, top);
+            ctx.moveTo(switchPos.x + 36, top);
+            ctx.lineTo(right, top);
+
+            // Right wire (split around bulb)
+            ctx.moveTo(right, top);
+            ctx.lineTo(right, bulb.y - 30);
+            ctx.moveTo(right, bulb.y + 30);
+            ctx.lineTo(right, bottom);
+
+            // Bottom wire (split around inductor)
+            ctx.moveTo(right, bottom);
+            ctx.lineTo(inductor.x + 65, bottom);
+            ctx.moveTo(inductor.x - 65, bottom);
+            ctx.lineTo(left, bottom);
+
+            // Left wire (split around battery)
+            ctx.moveTo(left, bottom);
+            ctx.lineTo(left, battery.y + 32);
+            ctx.moveTo(left, battery.y - 32);
+            ctx.lineTo(left, top);
+
+            ctx.stroke();
+
+            // Inner bright copper core
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = Math.abs(state.I) > 0.05 ? '#38bdf8' : '#475569';
+            ctx.stroke();
+            ctx.restore();
+
+            // 2. Draw Electron Flow Particles
+            if (Math.abs(state.I) > 0.005 || state.sparkIntensity > 0) {
+                ctx.save();
+                const pColor = state.electronFlow ? '#00f2fe' : '#fbbf24';
+                ctx.fillStyle = pColor;
+                ctx.shadowColor = pColor;
+                ctx.shadowBlur = 8;
+
+                electrons.forEach((electron) => {
+                    const prog = (electron.progress + state.electronPhase) % 1;
+                    const pos = getPointOnCircuit(prog, layout);
+
+                    // Skip drawing electrons in empty gap if switch is physically disconnected
+                    if (!state.switchClosed && state.dischargeMode === 'spark') {
+                        const inSwitchGap = Math.abs(pos.x - switchPos.x) < 40 && Math.abs(pos.y - top) < 20;
+                        if (inSwitchGap) return;
+                    }
+
+                    // Apply slight normal offset for natural wire thickness
+                    const px = pos.x + (-pos.dir.y * electron.offset);
+                    const py = pos.y + (pos.dir.x * electron.offset);
+
+                    ctx.beginPath();
+                    ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                ctx.restore();
+            }
+
+            // 3. Render Components
+            drawBattery(ctx, battery.x, battery.y);
+            drawSwitch(ctx, switchPos.x, switchPos.y);
+            drawLightbulb(ctx, bulb.x, bulb.y);
+            drawInductor(ctx, inductor.x, inductor.y);
+
+            // 4. Render Spark if break occurred with active current
+            if (state.sparkIntensity > 0.05) {
+                drawSpark(ctx, switchPos.x - 20, top, switchPos.x + 20, top - 25);
+            }
+        }
+
+        // --- Render Component: DC Battery ---
+        function drawBattery(ctx, x, y) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            // Battery housing background
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.roundRect(-24, -30, 48, 60, 8);
+            ctx.fill();
+            ctx.stroke();
+
+            // Plate representation (+ plate top, - plate bottom)
+            // Positive plate (Longer, bright)
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(-16, -10);
+            ctx.lineTo(16, -10);
+            ctx.stroke();
+
+            // Negative plate (Shorter, thick)
+            ctx.strokeStyle = '#3b82f6';
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(-9, 10);
+            ctx.lineTo(9, 10);
+            ctx.stroke();
+
+            // Polarity labels
+            ctx.fillStyle = '#ef4444';
+            ctx.font = 'bold 11px system-ui';
+            ctx.textAlign = 'center';
+            ctx.fillText('+', 0, -16);
+
+            ctx.fillStyle = '#3b82f6';
+            ctx.fillText('−', 0, 22);
+
+            // Battery label badge
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '10px var(--font-mono)';
+            ctx.fillText(`${state.V.toFixed(1)}V`, 0, 4);
+
+            // Outer component tag
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '10px system-ui';
+            ctx.textAlign = 'right';
+            ctx.fillText('DC Source', -30, 4);
+
+            ctx.restore();
+        }
+
+        // --- Render Component: Interactive Switch ---
+        function drawSwitch(ctx, x, y) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            // Contact Terminals
+            ctx.fillStyle = '#94a3b8';
+            ctx.beginPath();
+            ctx.arc(-26, 0, 5, 0, Math.PI * 2);
+            ctx.arc(26, 0, 5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Switch Blade
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+
+            if (state.switchClosed) {
+                // Closed Contact (horizontal connection)
+                ctx.strokeStyle = '#00f2fe';
+                ctx.shadowColor = '#00f2fe';
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.moveTo(-26, 0);
+                ctx.lineTo(26, 0);
+                ctx.stroke();
+
+                // Closed Indicator
+                ctx.fillStyle = '#00f2fe';
+                ctx.font = 'bold 10px var(--font-mono)';
+                ctx.textAlign = 'center';
+                ctx.fillText('CLOSED (ON)', 0, -14);
+            } else {
+                // Open Knife Blade (tilted upwards)
+                ctx.strokeStyle = '#ef4444';
+                ctx.shadowColor = 'transparent';
+                ctx.beginPath();
+                ctx.moveTo(-26, 0);
+                ctx.lineTo(16, -26); // Angled blade
+                ctx.stroke();
+
+                ctx.fillStyle = '#ef4444';
+                ctx.font = 'bold 10px var(--font-mono)';
+                ctx.textAlign = 'center';
+                ctx.fillText(state.dischargeMode === 'flyback' ? 'DISCHARGE LOOP' : 'OPEN CIRCUIT', 0, -32);
+            }
+
+            // Switch pivot hinge
+            ctx.fillStyle = '#f8fafc';
+            ctx.beginPath();
+            ctx.arc(-26, 0, 3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Component Label
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '10px system-ui';
+            ctx.textAlign = 'center';
+            ctx.fillText('Switch [S]', 0, 20);
+
+            ctx.restore();
+        }
+
+        // --- Render Component: Resistor Lightbulb ---
+        function drawLightbulb(ctx, x, y) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            const b = state.bulbBrightness;
+
+            // Dynamic Radiant Glow Halo
+            if (b > 0.01) {
+                const glowRadius = 25 + b * 45;
+                const radialGrad = ctx.createRadialGradient(0, 0, 4, 0, 0, glowRadius);
+                radialGrad.addColorStop(0, `rgba(255, 230, 140, ${Math.min(0.95, b * 0.9)})`);
+                radialGrad.addColorStop(0.4, `rgba(251, 191, 36, ${Math.min(0.6, b * 0.5)})`);
+                radialGrad.addColorStop(1, 'rgba(251, 191, 36, 0)');
+
+                ctx.fillStyle = radialGrad;
+                ctx.beginPath();
+                ctx.arc(0, 0, glowRadius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Glass Bulb Enclosure
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(0, 0, 22, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Glass Reflection Arc
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(0, 0, 18, -Math.PI * 0.7, -Math.PI * 0.3);
+            ctx.stroke();
+
+            // Metallic Base
+            ctx.fillStyle = '#64748b';
+            ctx.fillRect(-8, 20, 16, 8);
+
+            // Internal Filament Posts
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(-6, 20);
+            ctx.lineTo(-5, 4);
+            ctx.moveTo(6, 20);
+            ctx.lineTo(5, 4);
+            ctx.stroke();
+
+            // Glowing Tungsten Filament Coil
+            ctx.save();
+            const filamentR = Math.floor(180 + Math.min(75, b * 75));
+            const filamentG = Math.floor(120 + Math.min(135, b * 135));
+            const filamentB = Math.floor(50 + Math.min(180, b * 180));
+            ctx.strokeStyle = `rgb(${filamentR}, ${filamentG}, ${filamentB})`;
+            ctx.lineWidth = 2.5;
+            if (b > 0.05) {
+                ctx.shadowColor = '#f59e0b';
+                ctx.shadowBlur = 10 + b * 15;
+            }
+
+            ctx.beginPath();
+            ctx.moveTo(-5, 4);
+            ctx.quadraticCurveTo(-2, -8, 0, 4);
+            ctx.quadraticCurveTo(2, -8, 5, 4);
+            ctx.stroke();
+            ctx.restore();
+
+            // Labels
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '10px var(--font-mono)';
+            ctx.textAlign = 'left';
+            ctx.fillText(`R = ${state.R.toFixed(1)}Ω`, 32, -4);
+
+            const powerW = state.I * state.I * state.R;
+            ctx.fillStyle = '#fbbf24';
+            ctx.font = '10px var(--font-mono)';
+            ctx.fillText(`${powerW.toFixed(1)}W`, 32, 12);
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '10px system-ui';
+            ctx.fillText('Bulb (Resistor)', 32, 26);
+
+            ctx.restore();
+        }
+
+        // --- Render Component: Inductor Coil & Dynamic Magnetic Field ---
+        function drawInductor(ctx, x, y) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            const current = state.I;
+            const dIdt = state.dIdt;
+            const L = state.L;
+
+            // Number of visible coil loops scales with Inductance slider!
+            // L from 0.2H to 10H maps to 4 to 12 turns
+            const numTurns = Math.round(4 + (L / 10) * 8);
+            const coilWidth = 110;
+            const turnSpacing = coilWidth / numTurns;
+            const coilRadiusY = 18;
+            const coilStartX = -coilWidth / 2;
+
+            // 1. Draw Magnetic Field Flux Loops & Aura
+            const fieldIntensity = Math.min(1.0, Math.abs(current) / ((state.V / state.R) || 1));
+
+            if (fieldIntensity > 0.02 || Math.abs(dIdt) > 0.1) {
+                ctx.save();
+
+                // Dynamic aura around core
+                const auraGlow = ctx.createRadialGradient(0, 0, 10, 0, 0, 80 + fieldIntensity * 40);
+                const alpha = Math.min(0.5, fieldIntensity * 0.4 + Math.abs(dIdt) * 0.1);
+                
+                // Color shifts: Blue-Violet for stable, Amber-Orange for rapid change (dI/dt != 0)
+                const isChanging = Math.abs(dIdt) > 0.2;
+                const fieldColor = isChanging ? 'rgba(245, 158, 11, ' : 'rgba(168, 85, 247, ';
+
+                auraGlow.addColorStop(0, `${fieldColor}${alpha})`);
+                auraGlow.addColorStop(0.6, `${fieldColor}${alpha * 0.3})`);
+                auraGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+                ctx.fillStyle = auraGlow;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, 85, 55, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Toroidal Magnetic Field Lines (Looping around coil)
+                ctx.lineWidth = 1.2;
+                const numLines = 5;
+                for (let i = 1; i <= numLines; i++) {
+                    const radiusX = 65 + i * 16;
+                    const radiusY = 32 + i * 12;
+                    const lineAlpha = (1 - (i / (numLines + 1))) * fieldIntensity * 0.7;
+
+                    ctx.strokeStyle = isChanging ? `rgba(251, 191, 36, ${lineAlpha})` : `rgba(192, 132, 252, ${lineAlpha})`;
+                    ctx.setLineDash([6, 6]);
+                    ctx.lineDashOffset = -state.fieldPhase * 10 * (dIdt >= 0 ? 1 : -1);
+
+                    // Top magnetic flux loop
+                    ctx.beginPath();
+                    ctx.ellipse(0, -radiusY * 0.6, radiusX, radiusY * 0.7, 0, 0, Math.PI * 2);
+                    ctx.stroke();
+
+                    // Bottom magnetic flux loop
+                    ctx.beginPath();
+                    ctx.ellipse(0, radiusY * 0.6, radiusX, radiusY * 0.7, 0, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+
+                ctx.setLineDash([]);
+                ctx.restore();
+            }
+
+            // 2. Iron Core Center Bar (Subtle permeability guide)
+            ctx.fillStyle = 'rgba(71, 85, 105, 0.4)';
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.2)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.roundRect(coilStartX - 10, -6, coilWidth + 20, 12, 4);
+            ctx.fill();
+            ctx.stroke();
+
+            // 3. Draw 3D Shaded Helical Coil Turns
+            // Back half of turns (darker/receding)
+            ctx.lineWidth = 3.5;
+            ctx.lineCap = 'round';
+            for (let i = 0; i < numTurns; i++) {
+                const turnX = coilStartX + i * turnSpacing;
+                ctx.strokeStyle = '#1e293b';
+                ctx.beginPath();
+                ctx.ellipse(turnX + turnSpacing * 0.5, 0, turnSpacing * 0.5, coilRadiusY, 0, Math.PI, 0, false);
+                ctx.stroke();
+            }
+
+            // Front half of turns (bright copper with glow)
+            for (let i = 0; i < numTurns; i++) {
+                const turnX = coilStartX + i * turnSpacing;
+
+                ctx.save();
+                ctx.strokeStyle = Math.abs(current) > 0.05 ? '#38bdf8' : '#94a3b8';
+                if (fieldIntensity > 0.1) {
+                    ctx.shadowColor = '#00f2fe';
+                    ctx.shadowBlur = 6 + fieldIntensity * 8;
+                }
+
+                ctx.beginPath();
+                ctx.ellipse(turnX + turnSpacing * 0.5, 0, turnSpacing * 0.5, coilRadiusY, 0, 0, Math.PI, false);
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            // 4. Back-EMF Vector Arrow Overlay (Lenz's Law Indicator)
+            if (Math.abs(dIdt) > 0.08) {
+                ctx.save();
+                const isOpposing = dIdt > 0; // Expanding field fights battery (points left), collapsing reinforces (points right)
+                const arrowDir = isOpposing ? -1 : 1;
+                const arrowLength = Math.min(45, Math.abs(dIdt) * 12);
+
+                ctx.strokeStyle = isOpposing ? '#f59e0b' : '#34d399';
+                ctx.fillStyle = isOpposing ? '#f59e0b' : '#34d399';
+                ctx.lineWidth = 2.5;
+                ctx.shadowColor = isOpposing ? '#f59e0b' : '#34d399';
+                ctx.shadowBlur = 8;
+
+                // Back EMF arrow on top of coil
+                const arrowY = -34;
+                ctx.beginPath();
+                ctx.moveTo(-arrowDir * (arrowLength / 2), arrowY);
+                ctx.lineTo(arrowDir * (arrowLength / 2), arrowY);
+                ctx.stroke();
+
+                // Arrowhead
+                ctx.beginPath();
+                ctx.moveTo(arrowDir * (arrowLength / 2), arrowY);
+                ctx.lineTo(arrowDir * (arrowLength / 2) - arrowDir * 6, arrowY - 4);
+                ctx.lineTo(arrowDir * (arrowLength / 2) - arrowDir * 6, arrowY + 4);
+                ctx.closePath();
+                ctx.fill();
+
+                // Back EMF text tag
+                ctx.font = 'bold 10px var(--font-mono)';
+                ctx.textAlign = 'center';
+                ctx.fillText(`Back-EMF: ${state.VL.toFixed(1)}V`, 0, arrowY - 8);
+                ctx.restore();
+            }
+
+            // Inductor Label & Values
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '10px var(--font-mono)';
+            ctx.textAlign = 'center';
+            ctx.fillText(`L = ${state.L.toFixed(1)}H (${numTurns} turns)`, 0, 36);
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '10px system-ui';
+            ctx.fillText('Inductor Coil', 0, 50);
+
+            ctx.restore();
+        }
+
+        // --- Render Spark for Air Gap Discharge ---
+        function drawSpark(ctx, x1, y1, x2, y2) {
+            ctx.save();
+            ctx.strokeStyle = '#38bdf8';
+            ctx.shadowColor = '#00f2fe';
+            ctx.shadowBlur = 15;
+            ctx.lineWidth = 2;
+
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+
+            const steps = 6;
+            for (let i = 1; i < steps; i++) {
+                const t = i / steps;
+                const bx = x1 + (x2 - x1) * t + (Math.random() - 0.5) * 14;
+                const by = y1 + (y2 - y1) * t + (Math.random() - 0.5) * 14;
+                ctx.lineTo(bx, by);
+            }
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+
+            // Bright core
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        // --- Render Real-Time Graph Canvas (Oscilloscope) ---
+        function renderGraph() {
+            const w = graphCanvas.parentElement.clientWidth;
+            const h = graphCanvas.parentElement.clientHeight;
+            const ctx = graphCtx;
+
+            ctx.clearRect(0, 0, w, h);
+
+            const padLeft = 55;
+            const padRight = 30;
+            const padTop = 25;
+            const padBottom = 35;
+
+            const plotW = w - padLeft - padRight;
+            const plotH = h - padTop - padBottom;
+
+            // Background Grid
+            ctx.fillStyle = '#060913';
+            ctx.fillRect(padLeft, padTop, plotW, plotH);
+
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.07)';
+            ctx.lineWidth = 1;
+
+            // Vertical Time Grid Lines
+            const numGridX = 8;
+            for (let i = 0; i <= numGridX; i++) {
+                const gx = padLeft + (plotW / numGridX) * i;
+                ctx.beginPath();
+                ctx.moveTo(gx, padTop);
+                ctx.lineTo(gx, padTop + plotH);
+                ctx.stroke();
+            }
+
+            // Horizontal Value Grid Lines
+            const numGridY = 4;
+            for (let i = 0; i <= numGridY; i++) {
+                const gy = padTop + (plotH / numGridY) * i;
+                ctx.beginPath();
+                ctx.moveTo(padLeft, gy);
+                ctx.lineTo(padLeft + plotW, gy);
+                ctx.stroke();
+            }
+
+            // Determine dynamic vertical scales
+            const I_max_theo = Math.max(1, state.V / state.R);
+            const maxI_scale = I_max_theo * 1.25;
+            const maxV_scale = Math.max(12, state.V * 1.25);
+
+            // Draw Y-Axis Tick Labels
+            ctx.fillStyle = '#64748b';
+            ctx.font = '10px var(--font-mono)';
+            ctx.textAlign = 'right';
+
+            for (let i = 0; i <= numGridY; i++) {
+                const gy = padTop + (plotH / numGridY) * i;
+                const frac = (numGridY - i) / numGridY;
+
+                if (state.graphMode === 'current') {
+                    const currentVal = frac * maxI_scale;
+                    ctx.fillText(`${currentVal.toFixed(1)}A`, padLeft - 8, gy + 3);
+                } else if (state.graphMode === 'voltage') {
+                    const voltVal = frac * maxV_scale;
+                    ctx.fillText(`${voltVal.toFixed(0)}V`, padLeft - 8, gy + 3);
+                } else {
+                    // Dual axis
+                    const currentVal = frac * maxI_scale;
+                    ctx.fillText(`${currentVal.toFixed(1)}A`, padLeft - 8, gy + 3);
+                }
+            }
+
+            // Draw Theoretical Asymptote for Current (I_max = V / R)
+            if (state.graphMode === 'current' || state.graphMode === 'both') {
+                const asympY = padTop + plotH * (1 - (I_max_theo / maxI_scale));
+                ctx.save();
+                ctx.strokeStyle = 'rgba(0, 242, 254, 0.35)';
+                ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                ctx.moveTo(padLeft, asympY);
+                ctx.lineTo(padLeft + plotW, asympY);
+                ctx.stroke();
+
+                ctx.fillStyle = 'rgba(0, 242, 254, 0.8)';
+                ctx.font = '9px var(--font-mono)';
+                ctx.textAlign = 'left';
+                ctx.fillText(`I_max = V/R = ${I_max_theo.toFixed(2)}A`, padLeft + 6, asympY - 4);
+                ctx.restore();
+            }
+
+            // Data Plotting
+            const history = graphHistory.data;
+            if (history.length > 1) {
+                const curTime = state.time;
+                const minTime = Math.max(0, curTime - graphHistory.timeWindow);
+                const maxTime = Math.max(graphHistory.timeWindow, curTime);
+
+                const getCanvasX = (t) => padLeft + ((t - minTime) / (maxTime - minTime)) * plotW;
+                const getCanvasY_I = (val) => padTop + plotH * (1 - Math.max(0, Math.min(maxI_scale, val)) / maxI_scale);
+                const getCanvasY_V = (val) => padTop + plotH * (1 - Math.max(0, Math.min(maxV_scale, val)) / maxV_scale);
+
+                // 1. Plot Voltage Curves (if active)
+                if (state.graphMode === 'voltage' || state.graphMode === 'both') {
+                    // Resistor Voltage VR(t) (Emerald)
+                    ctx.save();
+                    ctx.strokeStyle = '#10b981';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    let started = false;
+                    for (let i = 0; i < history.length; i++) {
+                        const pt = history[i];
+                        if (pt.t < minTime) continue;
+                        const x = getCanvasX(pt.t);
+                        const y = getCanvasY_V(pt.VR);
+                        if (!started) { ctx.moveTo(x, y); started = true; } else { ctx.lineTo(x, y); }
+                    }
+                    ctx.stroke();
+
+                    // Inductor Voltage VL(t) (Amber/Back-EMF)
+                    ctx.strokeStyle = '#f59e0b';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    started = false;
+                    for (let i = 0; i < history.length; i++) {
+                        const pt = history[i];
+                        if (pt.t < minTime) continue;
+                        const x = getCanvasX(pt.t);
+                        const y = getCanvasY_V(Math.max(0, pt.VL));
+                        if (!started) { ctx.moveTo(x, y); started = true; } else { ctx.lineTo(x, y); }
+                    }
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
+                // 2. Plot Current Curve I(t) (Cyan Glow)
+                if (state.graphMode === 'current' || state.graphMode === 'both') {
+                    ctx.save();
+                    ctx.strokeStyle = '#00f2fe';
+                    ctx.lineWidth = 2.5;
+                    ctx.shadowColor = '#00f2fe';
+                    ctx.shadowBlur = 8;
+
+                    ctx.beginPath();
+                    let started = false;
+                    for (let i = 0; i < history.length; i++) {
+                        const pt = history[i];
+                        if (pt.t < minTime) continue;
+                        const x = getCanvasX(pt.t);
+                        const y = getCanvasY_I(pt.I);
+                        if (!started) { ctx.moveTo(x, y); started = true; } else { ctx.lineTo(x, y); }
+                    }
+                    ctx.stroke();
+                    ctx.restore();
+
+                    // Real-Time Sweep Cursor Head
+                    const latest = history[history.length - 1];
+                    const headX = getCanvasX(latest.t);
+                    const headY = getCanvasY_I(latest.I);
+
+                    ctx.fillStyle = '#ffffff';
+                    ctx.shadowColor = '#00f2fe';
+                    ctx.shadowBlur = 12;
+                    ctx.beginPath();
+                    ctx.arc(headX, headY, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            // Graph Axes Frame
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(padLeft, padTop);
+            ctx.lineTo(padLeft, padTop + plotH);
+            ctx.lineTo(padLeft + plotW, padTop + plotH);
+            ctx.stroke();
+
+            // X-Axis Time Label
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '10px var(--font-mono)';
+            ctx.textAlign = 'center';
+            ctx.fillText(`Time elapsed (t = ${state.time.toFixed(2)}s)`, padLeft + plotW / 2, h - 10);
+
+            // Oscilloscope Trace Legend
+            ctx.textAlign = 'right';
+            if (state.graphMode === 'current') {
+                ctx.fillStyle = '#00f2fe';
+                ctx.fillText('— Current I(t)', w - padRight - 10, padTop + 14);
+            } else if (state.graphMode === 'voltage') {
+                ctx.fillStyle = '#10b981';
+                ctx.fillText('— Resistor V_R(t)', w - padRight - 100, padTop + 14);
+                ctx.fillStyle = '#f59e0b';
+                ctx.fillText('— Inductor V_L(t)', w - padRight - 10, padTop + 14);
+            } else {
+                ctx.fillStyle = '#00f2fe';
+                ctx.fillText('— I(t)', w - padRight - 150, padTop + 14);
+                ctx.fillStyle = '#10b981';
+                ctx.fillText('— V_R(t)', w - padRight - 90, padTop + 14);
+                ctx.fillStyle = '#f59e0b';
+                ctx.fillText('— V_L(t)', w - padRight - 10, padTop + 14);
+            }
+        }
+
+        // --- Didactic Live Explanations Logic ---
+        function updateDidacticCoach() {
+            const I = state.I;
+            const dIdt = state.dIdt;
+            const I_max = state.V / state.R;
+            const tau = state.L / state.R;
+
+            if (state.switchClosed) {
+                // Circuit is energizing or at steady state
+                if (I < 0.95 * I_max && Math.abs(dIdt) > 0.05) {
+                    // State 1: Energizing / Expanding field
+                    coachIndicator.style.background = 'var(--cyan-glow)';
+                    coachIndicator.style.boxShadow = '0 0 12px var(--cyan-glow)';
+                    coachTitle.innerHTML = `⚡ State 1 &middot; Magnetic Field Expanding (Counter-EMF Active)`;
+                    coachTitle.style.color = 'var(--cyan-glow)';
+                    coachText.textContent = `The magnetic field is expanding rapidly! This change creates a strong counter-voltage (Back-EMF: ${state.VL.toFixed(1)}V) that opposes the battery. Electrons struggle to accelerate—the inductor acts like electrical inertia (a heavy flywheel).`;
+                    coachSubtext.textContent = `dI/dt = +${dIdt.toFixed(2)} A/s > 0 | Back-EMF VL = -L(dI/dt) = ${state.VL.toFixed(1)}V | Time Constant τ = ${tau.toFixed(2)}s`;
+                    steadyStateBadge.textContent = "Energizing (Expanding)";
+                    steadyStateBadge.style.color = "var(--cyan-glow)";
+                } else {
+                    // State 2: Steady State
+                    coachIndicator.style.background = 'var(--emerald-bright)';
+                    coachIndicator.style.boxShadow = '0 0 12px var(--emerald-bright)';
+                    coachTitle.innerHTML = `✅ State 2 &middot; Steady State Reached (dI/dt ≈ 0)`;
+                    coachTitle.style.color = 'var(--emerald-bright)';
+                    coachText.textContent = `The magnetic field is completely stable. With no change in magnetic flux (dI/dt = 0), the induced back-EMF drops to 0V. The inductor now acts just like a regular zero-resistance wire! Current is limited solely by Ohm's Law (I = V/R).`;
+                    coachSubtext.textContent = `Current I ≈ I_max (${I.toFixed(2)}A) | Inductor Voltage VL = 0.0V | Energy Stored E = ${state.energy.toFixed(2)} Joules`;
+                    steadyStateBadge.textContent = "Steady State (Constant)";
+                    steadyStateBadge.style.color = "var(--emerald-bright)";
+                }
+            } else {
+                // Circuit is OFF
+                if (I > 0.02) {
+                    // State 3: Collapsing field / Discharging
+                    coachIndicator.style.background = 'var(--amber-bright)';
+                    coachIndicator.style.boxShadow = '0 0 12px var(--amber-bright)';
+                    coachTitle.innerHTML = `🧲 State 3 &middot; Magnetic Field Collapsing (Temporary Battery)`;
+                    coachTitle.style.color = 'var(--amber-bright)';
+                    coachText.textContent = `The battery is disconnected, but the magnetic field is collapsing! The collapsing flux forces electrons forward, acting as a temporary battery to keep current flowing until its stored energy (1/2·L·I²) is exhausted in the bulb.`;
+                    coachSubtext.textContent = `dI/dt = ${dIdt.toFixed(2)} A/s < 0 | Releasing ${state.energy.toFixed(2)} J | Exponential decay: I(t) = I₀·e^(-t/τ)`;
+                    steadyStateBadge.textContent = "Discharging (Collapsing)";
+                    steadyStateBadge.style.color = "var(--amber-bright)";
+                } else {
+                    // State 4: Rest / Zero
+                    coachIndicator.style.background = 'var(--text-muted)';
+                    coachIndicator.style.boxShadow = 'none';
+                    coachTitle.innerHTML = `💤 State 4 &middot; Circuit At Rest (Zero Current)`;
+                    coachTitle.style.color = 'var(--text-secondary)';
+                    coachText.textContent = `Circuit is idle with zero current and no stored magnetic field. Click the Switch or press "Power ON" to observe how electrical inertia delays current rise.`;
+                    coachSubtext.textContent = `Ready &middot; Set parameters (V, R, L) and toggle switch to energize`;
+                    steadyStateBadge.textContent = "Idle (Zero Current)";
+                    steadyStateBadge.style.color = "var(--text-muted)";
+                }
+            }
+        }
+
+        // --- Update UI Telemetry Readouts ---
+        function updateTelemetryUI() {
+            valCurrent.textContent = state.I.toFixed(2);
+            valMaxCurrent.textContent = (state.V / state.R).toFixed(2);
+            valInductorV.textContent = Math.abs(state.VL).toFixed(2);
+            valRateChange.textContent = (state.dIdt >= 0 ? '+' : '') + state.dIdt.toFixed(2);
+            valTau.textContent = (state.L / state.R).toFixed(2);
+            valEnergy.textContent = state.energy.toFixed(2);
+
+            badgeVoltage.textContent = `${state.V.toFixed(1)} V`;
+            badgeResistance.textContent = `${state.R.toFixed(1)} Ω`;
+            badgeInductance.textContent = `${state.L.toFixed(1)} H`;
+        }
+
+        // --- User Interaction & Event Listeners ---
+        function toggleMasterSwitch() {
+            state.switchClosed = !state.switchClosed;
+            if (state.switchClosed) {
+                mainPowerSwitch.classList.add('on');
+                mainPowerSwitch.querySelector('.switch-thumb').textContent = 'ON';
+                audio.playSwitchClick(true);
+            } else {
+                mainPowerSwitch.classList.remove('on');
+                mainPowerSwitch.querySelector('.switch-thumb').textContent = 'OFF';
+                audio.playSwitchClick(false);
+                if (state.dischargeMode === 'spark' && state.I > 0.1) {
+                    audio.playSparkSound();
+                }
+            }
+        }
+
+        mainPowerSwitch.addEventListener('click', toggleMasterSwitch);
+
+        // Click directly on switch in circuit canvas
+        circuitCanvas.addEventListener('click', (e) => {
+            const rect = circuitCanvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            const layout = getCircuitLayout(rect.width, rect.height);
+
+            // Check if clicked near switch location
+            const distToSwitch = Math.hypot(mouseX - layout.switchPos.x, mouseY - layout.switchPos.y);
+            if (distToSwitch < 40) {
+                toggleMasterSwitch();
+            }
+        });
+
+        // Auxiliary switch mode buttons
+        btnModeFlyback.addEventListener('click', () => {
+            state.dischargeMode = 'flyback';
+            btnModeFlyback.classList.add('active');
+            btnModeOpenAir.classList.remove('active');
+        });
+
+        btnModeOpenAir.addEventListener('click', () => {
+            state.dischargeMode = 'spark';
+            btnModeOpenAir.classList.add('active');
+            btnModeFlyback.classList.remove('active');
+        });
+
+        // Sliders
+        sliderVoltage.addEventListener('input', (e) => {
+            state.V = parseFloat(e.target.value);
+            updateTelemetryUI();
+        });
+
+        sliderResistance.addEventListener('input', (e) => {
+            state.R = parseFloat(e.target.value);
+            updateTelemetryUI();
+        });
+
+        sliderInductance.addEventListener('input', (e) => {
+            state.L = parseFloat(e.target.value);
+            updateTelemetryUI();
+        });
+
+        // Preset buttons
+        document.querySelectorAll('.preset-btn').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const v = parseFloat(btn.dataset.v);
+                const r = parseFloat(btn.dataset.r);
+                const l = parseFloat(btn.dataset.l);
+
+                state.V = v;
+                state.R = r;
+                state.L = l;
+
+                sliderVoltage.value = v;
+                sliderResistance.value = r;
+                sliderInductance.value = l;
+
+                updateTelemetryUI();
+            });
+        });
+
+        // Simulation playback buttons
+        btnPlayPause.addEventListener('click', () => {
+            state.paused = !state.paused;
+            btnPlayPause.textContent = state.paused ? '▶' : '⏸';
+        });
+
+        btnStep.addEventListener('click', () => {
+            state.paused = true;
+            btnPlayPause.textContent = '▶';
+            updatePhysics(0.05);
+            renderCircuit();
+            renderGraph();
+            updateTelemetryUI();
+            updateDidacticCoach();
+        });
+
+        btnReset.addEventListener('click', () => {
+            state.I = 0.0;
+            state.dIdt = 0.0;
+            state.VL = 0.0;
+            state.VR = 0.0;
+            state.energy = 0.0;
+            state.time = 0.0;
+            state.sparkIntensity = 0.0;
+            state.bulbBrightness = 0.0;
+            graphHistory.data = [];
+            if (state.switchClosed) {
+                toggleMasterSwitch();
+            }
+            updateTelemetryUI();
+            updateDidacticCoach();
+        });
+
+        selectSpeed.addEventListener('change', (e) => {
+            state.timeScale = parseFloat(e.target.value);
+        });
+
+        btnSoundToggle.addEventListener('click', () => {
+            state.soundEnabled = !state.soundEnabled;
+            btnSoundToggle.classList.toggle('active', state.soundEnabled);
+            document.getElementById('soundIcon').textContent = state.soundEnabled ? '🔊' : '🔇';
+            if (state.soundEnabled) audio.init();
+        });
+
+        btnFlowToggle.addEventListener('click', () => {
+            state.electronFlow = !state.electronFlow;
+            btnFlowToggle.classList.toggle('active', state.electronFlow);
+            document.getElementById('flowIcon').textContent = state.electronFlow ? '⚡' : '➔';
+            btnFlowToggle.title = state.electronFlow ? "Showing physical electron flow (- to +)" : "Showing conventional current (+ to -)";
+        });
+
+        // Graph mode switches
+        btnGraphCurrent.addEventListener('click', () => {
+            state.graphMode = 'current';
+            btnGraphCurrent.classList.add('active');
+            btnGraphVoltage.classList.remove('active');
+            btnGraphBoth.classList.remove('active');
+        });
+
+        btnGraphVoltage.addEventListener('click', () => {
+            state.graphMode = 'voltage';
+            btnGraphVoltage.classList.add('active');
+            btnGraphCurrent.classList.remove('active');
+            btnGraphBoth.classList.remove('active');
+        });
+
+        btnGraphBoth.addEventListener('click', () => {
+            state.graphMode = 'both';
+            btnGraphBoth.classList.add('active');
+            btnGraphCurrent.classList.remove('active');
+            btnGraphVoltage.classList.remove('active');
+        });
+
+        btnClearGraph.addEventListener('click', () => {
+            graphHistory.data = [];
+            state.time = 0;
+        });
+
+        // --- Main Animation Loop ---
+        let lastTimestamp = performance.now();
+
+        function animationLoop(timestamp) {
+            const rawDt = Math.min(0.1, (timestamp - lastTimestamp) / 1000);
+            lastTimestamp = timestamp;
+
+            // Physics step
+            updatePhysics(rawDt);
+
+            // Visual rendering
+            renderCircuit();
+            renderGraph();
+
+            // Telemetry & educational feedback
+            updateTelemetryUI();
+            updateDidacticCoach();
+
+            requestAnimationFrame(animationLoop);
+        }
+
+        // Initialize setup
+        resizeCanvases();
+        updateTelemetryUI();
+        updateDidacticCoach();
+        requestAnimationFrame(animationLoop);
+
+    </script>
+</body>
+</html>

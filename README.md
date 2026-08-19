@@ -181,3 +181,40 @@ For composite systems in thermal contact ($A$ and $B$) with total energy $q_{\te
 
 ### Code Dynamics
 The application is structured as a single self-contained HTML/CSS/JavaScript file with no build step required. Factorial computations for values up to $79!$ are executed with exact integer precision using native JavaScript `BigInt` to prevent numerical overflow and precision loss. Microstate sampling in the microcanonical ensemble is implemented through uniform Fisher-Yates permutations of stars-and-bars arrays. A real-time stochastic thermal fluctuation engine models continuous quanta exchanges between oscillators. Multiplicity and entropy scaling curves are rendered using Chart.js with linear and logarithmic toggleable axes, while mathematical expressions are dynamically typeset using KaTeX.
+
+---
+
+## DC Inductance, Back-EMF, and Electrical Inertia in RL Circuits
+
+**Reference File:** `dc_inductance_simulation.html`
+
+### Logical Description
+This script implements a self-contained, interactive physics laboratory simulation designed to provide deep physical and mathematical intuition into the concept of inductance as "electrical inertia" in a Direct Current (DC) series resistor-inductor ($RL$) circuit. The environment visually and quantitatively demonstrates how an inductor opposes changes in current through Faraday-Lenz magnetic induction (Back-EMF $\mathcal{E}_L = -L \frac{dI}{dt}$). When the circuit closes, current rises gradually according to the classic exponential response rather than jumping instantaneously. When disconnected or routed through a discharge bypass, the collapsing magnetic field releases its stored magnetic energy ($E = \frac{1}{2} L I^2$) to act as a temporary battery, sustaining electron flow.
+
+### Physico-Mathematical Modeling
+The time evolution of the current $I(t)$ in a series $RL$ circuit connected to an applied DC voltage source $V(t)$ is governed by Kirchhoff's Voltage Law combined with Faraday's Law of Induction:
+
+$$V_{\text{applied}} = V_R(t) + V_L(t) = I(t) R + L \frac{dI(t)}{dt}$$
+
+Rearranging for the instantaneous rate of change of current:
+
+$$\frac{dI}{dt} = \frac{V_{\text{applied}} - I(t) R}{L}$$
+
+For constant parameters with initial condition $I(0) = 0$ upon switch closure ($V_{\text{applied}} = V$), the exact analytical solution gives the exponential rise:
+
+$$I(t) = \frac{V}{R} \left(1 - e^{-\frac{R}{L}t}\right) = I_{\text{max}} \left(1 - e^{-\frac{t}{\tau}}\right)$$
+
+where $\tau = \frac{L}{R}$ is the inductive time constant. Upon switching to the discharge loop ($V_{\text{applied}} = 0$) with initial current $I_0$, the current undergoes exponential decay:
+
+$$I(t) = I_0 \, e^{-\frac{R}{L}t} = I_0 \, e^{-\frac{t}{\tau}}$$
+
+The stored magnetic energy in the inductor core is given by:
+
+$$E_B(t) = \frac{1}{2} L I(t)^2$$
+
+### Code Dynamics
+The software architecture is entirely self-contained within a single `.html` file with zero external dependencies. The core simulation engine executes numerical sub-stepping using an exact exponential propagator per sub-delta $\Delta t$, eliminating numerical drift, instability, or divergence across extreme parameter values ($L \in [0.2, 10]\text{ H}, R \in [1, 20]\,\Omega, V \in [1, 24]\text{ V}$). The graphical rendering pipeline features:
+1. **Interactive Circuit Canvas**: Real-time animation of flowing electron particles ($v \propto I$), radiant filament lightbulb with thermal lag and power emission ($P = I^2 R$), dynamically parameterized 3D helical inductor coil ($N_{\text{turns}} \propto L$), toroidal magnetic flux field lines with expansion/collapse pulsations, and directional Back-EMF vector overlays.
+2. **Real-Time Dual-Channel Oscilloscope Canvas**: Live sliding time window plotting current $I(t)$, inductor voltage $V_L(t)$, and resistor voltage $V_R(t)$, complete with theoretical asymptote guidelines ($I_{\text{max}} = V/R$) and time constant $\tau$ references.
+3. **Didactic State Coach**: Context-aware educational engine explaining the instantaneous physics across energizing, steady-state, collapsing, and idle circuit phases.
+4. **Synthesized Web Audio API Engine**: Dynamic electromagnetic coil hum (frequency and amplitude modulated by $I$ and $dI/dt$), tactile switch clicks, and spark sound synthesis.
