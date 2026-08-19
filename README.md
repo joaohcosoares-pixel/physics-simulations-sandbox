@@ -218,3 +218,43 @@ The software architecture is entirely self-contained within a single `.html` fil
 2. **Real-Time Dual-Channel Oscilloscope Canvas**: Live sliding time window plotting current $I(t)$, inductor voltage $V_L(t)$, and resistor voltage $V_R(t)$, complete with theoretical asymptote guidelines ($I_{\text{max}} = V/R$) and time constant $\tau$ references.
 3. **Didactic State Coach**: Context-aware educational engine explaining the instantaneous physics across energizing, steady-state, collapsing, and idle circuit phases.
 4. **Synthesized Web Audio API Engine**: Dynamic electromagnetic coil hum (frequency and amplitude modulated by $I$ and $dI/dt$), tactile switch clicks, and spark sound synthesis.
+
+---
+
+## Stern-Gerlach Quantum Experiment: Spin-1/2, Superposition & Sequential Measurements
+
+**Reference File:** `stern_gerlach_experiment.html`
+
+### Logical Description
+This script implements a complete, self-contained, interactive quantum physics laboratory simulation of the iconic 1922 Stern-Gerlach Experiment. The computational environment provides physical and mathematical intuition into spatial quantization, electron spin-1/2 observables, quantum state superposition, wave function collapse, and non-commuting measurement operators ($[\hat{S}_x, \hat{S}_z] \neq 0$). The simulation models sequential Stern-Gerlach filter apparatuses (SG stages) with orientable magnetic gradients, customizable beam-blocking shutters for pure state preparation, and a photoluminescent phosphor detector screen with real-time Monte Carlo statistics.
+
+### Physico-Mathematical Modeling
+The simulation rigorously implements the quantum mechanics of spin-1/2 systems (such as silver $^{107}\text{Ag}$ atoms with an unpaired $5s^1$ valence electron).
+
+1. **Spin Operators & Eigenstates**:
+   In the standard $\{|+z\rangle, |-z\rangle\}$ basis, the spin operator along an arbitrary axis $\vec{n} = (\sin\theta, 0, \cos\theta)$ in the $x-z$ plane is:
+   $$S_{\vec{n}} = \vec{S}\cdot\hat{n} = \frac{\hbar}{2}\begin{pmatrix} \cos\theta & \sin\theta \\ \sin\theta & -\cos\theta \end{pmatrix}$$
+   The corresponding positive ($+\hbar/2$) and negative ($-\hbar/2$) orthonormal eigenstates are:
+   $$|+\theta\rangle = \cos\left(\frac{\theta}{2}\right)|+z\rangle + \sin\left(\frac{\theta}{2}\right)|-z\rangle$$
+   $$|-\theta\rangle = -\sin\left(\frac{\theta}{2}\right)|+z\rangle + \cos\left(\frac{\theta}{2}\right)|-z\rangle = |+(\theta + 180^\circ)\rangle$$
+
+2. **Transition Probabilities (Born Rule)**:
+   When an atom in state $|+\theta_1\rangle$ enters a magnetic field oriented at angle $\theta_2$, the transition probabilities are:
+   $$P_+ = |\langle +\theta_2 | +\theta_1 \rangle|^2 = \cos^2\left(\frac{\theta_1 - \theta_2}{2}\right)$$
+   $$P_- = |\langle -\theta_2 | +\theta_1 \rangle|^2 = \sin^2\left(\frac{\theta_1 - \theta_2}{2}\right)$$
+
+3. **Unpolarized Initial State (Oven)**:
+   The thermal effusive beam from the silver furnace is described by the maximally mixed density matrix $\rho = \frac{1}{2}\mathbb{I} = \frac{1}{2}|+z\rangle\langle+z| + \frac{1}{2}|-z\rangle\langle-z|$, yielding a 50/50 split ($P_+ = P_- = 0.5$) for any initial orientation $\theta_1$.
+
+4. **The Z-X-Z Quantum Paradox (State Erasure & Collapse)**:
+   - **SG1 at 0° (Z)** with $(-)$ blocked $\implies$ output is 100% pure $|+Z\rangle$.
+   - **SG2 at 90° (X)** with $(-)$ blocked $\implies$ $|+Z\rangle = \frac{1}{\sqrt{2}}(|+X\rangle + |-X\rangle)$; measurement collapses state to $|+X\rangle$ with 50% transmission.
+   - **SG3 at 0° (Z)** $\implies$ $|+X\rangle = \frac{1}{\sqrt{2}}(|+Z\rangle + |-Z\rangle)$, yielding a fresh 50/50 split in the Z-basis ($25\%$ $|+Z\rangle$ and $25\%$ $|-Z\rangle$ of SG2 input), demonstrating that measurement along $X$ completely destroyed the prior $Z$ spin phase information.
+
+### Code Dynamics
+The software runs entirely in Vanilla JavaScript and HTML5 Canvas with no dependencies:
+- **Dual Visual Representation**: Simultaneous continuous wave intensity ribbons (alpha & stroke width mapped to $I$) and discrete Poisson/Monte Carlo particle stream with glowing trails and micro-spin vector precession arrows.
+- **Dynamic Cascading Engine**: Dynamic recursive tree calculation propagating split beam intensities and cubic Bézier splines across up to 4 sequential SG stages.
+- **Interactive Shutter System**: Physical absorber plates with warning indicators that selectively block $(+)$ or $(-)$ outputs.
+- **Real-Time Phosphor Screen & Telemetry**: Accumulates atom impacts with exponential phosphorescent decay flashes, continuous digital histograms, and empirical vs theoretical probability matching.
+- **Synthesized Web Audio API**: Procedural Geiger counter clicks on particle detection, electromagnetic hum, shutter clicks, and preset chimes.

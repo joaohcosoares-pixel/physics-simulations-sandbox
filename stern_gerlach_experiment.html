@@ -1,0 +1,2584 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laboratório Quântico de Stern-Gerlach | Simulação Interativa de Spin-1/2</title>
+    <style>
+        :root {
+            --bg-void: #050811;
+            --bg-surface: #0a0f1d;
+            --bg-card: rgba(14, 22, 41, 0.85);
+            --bg-card-hover: rgba(22, 34, 62, 0.95);
+            --bg-glass: rgba(15, 25, 48, 0.6);
+            --border-glass: rgba(0, 240, 255, 0.15);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
+            
+            /* Quantum Neon Palette */
+            --cyan-glow: #00f0ff;
+            --cyan-deep: #0284c7;
+            --purple-glow: #b026ff;
+            --magenta-glow: #ff2a85;
+            --amber-glow: #ffb700;
+            --emerald-glow: #00ffa3;
+            --rose-danger: #f43f5e;
+            
+            --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', 'Roboto Mono', Consolas, monospace;
+            --font-tech: 'Orbitron', system-ui, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-void);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 10%, rgba(0, 240, 255, 0.07) 0%, transparent 45%),
+                radial-gradient(circle at 85% 90%, rgba(176, 38, 255, 0.07) 0%, transparent 50%),
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+            background-attachment: fixed;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-void);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 240, 255, 0.2);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 240, 255, 0.4);
+        }
+
+        /* Header */
+        header {
+            background: rgba(10, 15, 29, 0.88);
+            border-bottom: 1px solid var(--border-glass);
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(16px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.6);
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-logo {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(176, 38, 255, 0.3));
+            border: 1px solid var(--cyan-glow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .brand-logo::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: var(--cyan-glow);
+            animation: scanline 2.5s infinite linear;
+        }
+
+        @keyframes scanline {
+            0% { top: -10%; opacity: 0; }
+            50% { opacity: 1; }
+            100% { top: 110%; opacity: 0; }
+        }
+
+        .brand-titles h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            background: linear-gradient(90deg, #ffffff 40%, var(--cyan-glow) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-titles p {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tag-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 0.68rem;
+            font-family: var(--font-mono);
+            background: rgba(0, 240, 255, 0.1);
+            color: var(--cyan-glow);
+            border: 1px solid rgba(0, 240, 255, 0.25);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-header {
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            background: var(--bg-surface);
+            color: var(--text-main);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .btn-header:hover {
+            border-color: var(--cyan-glow);
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.25);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #0284c7, #7c3aed);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(2, 132, 199, 0.4);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0369a1, #6d28d9);
+            box-shadow: 0 0 22px rgba(0, 240, 255, 0.5);
+        }
+
+        /* Layout Container */
+        .app-container {
+            max-width: 1600px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 16px 20px 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            flex: 1;
+        }
+
+        /* Presets Quick Bar */
+        .presets-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            backdrop-filter: blur(12px);
+            overflow-x: auto;
+        }
+
+        .presets-label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .preset-btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 500;
+            white-space: nowrap;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-main);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .preset-btn:hover {
+            background: rgba(0, 240, 255, 0.12);
+            border-color: var(--cyan-glow);
+            color: #fff;
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);
+        }
+
+        .preset-btn.active {
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.25), rgba(176, 38, 255, 0.25));
+            border-color: var(--cyan-glow);
+            color: #fff;
+            box-shadow: 0 0 14px rgba(0, 240, 255, 0.35);
+        }
+
+        /* Simulation Canvas Viewport */
+        .simulation-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .canvas-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 18px;
+            background: rgba(10, 15, 29, 0.95);
+            border-bottom: 1px solid var(--border-subtle);
+            font-size: 0.8rem;
+        }
+
+        .toolbar-left, .toolbar-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--emerald-glow);
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--emerald-glow);
+            box-shadow: 0 0 8px var(--emerald-glow);
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.85); }
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+            height: 480px;
+            background: #040711;
+            overflow: hidden;
+        }
+
+        canvas#simCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            cursor: crosshair;
+        }
+
+        /* Canvas Floating Overlays / HUD */
+        .canvas-hud {
+            position: absolute;
+            top: 14px;
+            left: 16px;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .hud-panel {
+            background: rgba(8, 12, 24, 0.75);
+            border: 1px solid var(--border-glass);
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-family: var(--font-mono);
+            font-size: 0.74rem;
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            pointer-events: auto;
+        }
+
+        .canvas-legend {
+            position: absolute;
+            bottom: 12px;
+            left: 16px;
+            background: rgba(8, 12, 24, 0.85);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 0.72rem;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            backdrop-filter: blur(8px);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-muted);
+        }
+
+        .legend-color {
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
+        }
+
+        /* Control Panel Grid */
+        .control-grid {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 16px;
+        }
+
+        @media (max-width: 1100px) {
+            .control-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Filters Section */
+        .filters-section {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-main);
+        }
+
+        .filter-cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 14px;
+        }
+
+        .filter-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: 14px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: all 0.2s ease;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .filter-card:hover {
+            border-color: rgba(0, 240, 255, 0.4);
+            box-shadow: 0 6px 24px rgba(0, 240, 255, 0.1);
+        }
+
+        .filter-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 10px;
+        }
+
+        .filter-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-num {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            background: linear-gradient(135deg, var(--cyan-glow), var(--purple-glow));
+            color: #000;
+            font-weight: 800;
+            font-size: 0.78rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .filter-name {
+            font-weight: 600;
+            font-size: 0.88rem;
+        }
+
+        .filter-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-icon-sm {
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            transition: all 0.15s ease;
+        }
+
+        .btn-icon-sm:hover {
+            background: rgba(244, 63, 94, 0.2);
+            border-color: var(--rose-danger);
+            color: #fff;
+        }
+
+        /* Angle Controls in Card */
+        .angle-control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .angle-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.78rem;
+        }
+
+        .angle-val {
+            font-family: var(--font-mono);
+            font-weight: 700;
+            color: var(--cyan-glow);
+            font-size: 0.95rem;
+            background: rgba(0, 240, 255, 0.1);
+            padding: 2px 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(0, 240, 255, 0.2);
+        }
+
+        .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type=range] {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--cyan-glow);
+            box-shadow: 0 0 10px var(--cyan-glow);
+            cursor: pointer;
+            transition: transform 0.1s ease;
+        }
+
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.25);
+        }
+
+        /* Quick Axis Buttons */
+        .axis-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+        }
+
+        .btn-axis {
+            padding: 4px 6px;
+            border-radius: 5px;
+            font-size: 0.72rem;
+            font-family: var(--font-mono);
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-muted);
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.15s ease;
+        }
+
+        .btn-axis:hover, .btn-axis.active {
+            background: rgba(0, 240, 255, 0.15);
+            border-color: var(--cyan-glow);
+            color: var(--cyan-glow);
+        }
+
+        /* Blocker Toggles */
+        .blockers-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            background: rgba(0, 0, 0, 0.25);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .blocker-toggle-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.76rem;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 38px;
+            height: 20px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(255, 255, 255, 0.15);
+            transition: .25s;
+            border-radius: 20px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .25s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: var(--rose-danger);
+            box-shadow: 0 0 8px rgba(244, 63, 94, 0.5);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(18px);
+        }
+
+        /* Quantum Math State Pill */
+        .state-formula-box {
+            background: rgba(0, 240, 255, 0.04);
+            border: 1px dashed rgba(0, 240, 255, 0.2);
+            border-radius: 6px;
+            padding: 8px;
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .math-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .math-highlight {
+            color: var(--cyan-glow);
+            font-weight: 600;
+        }
+
+        /* Sidebar Side Stats & Settings */
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .side-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: 14px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .side-card-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: var(--text-main);
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 8px;
+        }
+
+        /* Particle Flow Controls */
+        .control-row {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 0.76rem;
+            color: var(--text-muted);
+        }
+
+        .control-row-header {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .btn-group-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .btn-action {
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--border-subtle);
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-action:hover {
+            border-color: var(--cyan-glow);
+            background: rgba(0, 240, 255, 0.12);
+            color: #fff;
+        }
+
+        .btn-action.active {
+            background: rgba(0, 240, 255, 0.2);
+            border-color: var(--cyan-glow);
+            color: var(--cyan-glow);
+        }
+
+        /* Detector Statistics Table */
+        .stats-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            background: rgba(0, 0, 0, 0.25);
+            padding: 8px 10px;
+            border-radius: 6px;
+            font-size: 0.74rem;
+        }
+
+        .stat-item-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+        }
+
+        .stat-bar-track {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .stat-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--cyan-deep), var(--cyan-glow));
+            border-radius: 3px;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .stat-bar-fill.magenta {
+            background: linear-gradient(90deg, var(--purple-glow), var(--magenta-glow));
+        }
+
+        /* Theory Tabs & Modals */
+        .info-accordion {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        .accordion-header {
+            padding: 14px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            background: rgba(14, 22, 41, 0.9);
+            font-weight: 600;
+            font-size: 0.88rem;
+            transition: background 0.2s;
+        }
+
+        .accordion-header:hover {
+            background: rgba(22, 34, 62, 0.9);
+        }
+
+        .accordion-content {
+            padding: 16px 20px;
+            font-size: 0.82rem;
+            line-height: 1.6;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border-subtle);
+            display: none;
+        }
+
+        .accordion-content.open {
+            display: block;
+        }
+
+        .theory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+            margin-top: 10px;
+        }
+
+        .theory-box {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 14px;
+        }
+
+        .theory-box h4 {
+            color: var(--cyan-glow);
+            font-size: 0.86rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .code-snippet {
+            background: #020409;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--cyan-glow);
+            margin: 8px 0;
+            overflow-x: auto;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-glass);
+            border-radius: 18px;
+            max-width: 680px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 240, 255, 0.2);
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .modal-close:hover {
+            color: #fff;
+            border-color: var(--rose-danger);
+            background: rgba(244, 63, 94, 0.2);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header {
+                padding: 10px 14px;
+            }
+            .brand-titles h1 {
+                font-size: 1rem;
+            }
+            .app-container {
+                padding: 10px 12px;
+            }
+            .canvas-wrapper {
+                height: 380px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header>
+        <div class="header-brand">
+            <div class="brand-logo">⚛️</div>
+            <div class="brand-titles">
+                <h1>Stern-Gerlach Quantum Lab</h1>
+                <p>
+                    <span>Spin-1/2 & Colapso de Estado</span>
+                    <span class="tag-pill">Ag (Prata)</span>
+                    <span class="tag-pill">P = cos²(Δθ/2)</span>
+                </p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="btn-header" id="btnAudioToggle" title="Alternar Efeitos Sonoros">
+                <span id="audioIcon">🔊</span> Som: <span id="audioStatusText">ON</span>
+            </button>
+            <button class="btn-header" id="btnOpenTheory">
+                📖 Teoria Quântica
+            </button>
+            <button class="btn-header btn-primary" id="btnOpenTutorial">
+                🎓 Guia Interativo
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="app-container">
+
+        <!-- Presets Quick Bar -->
+        <div class="presets-bar">
+            <span class="presets-label">⚡ Experimentos Pré-configurados:</span>
+            <button class="preset-btn active" data-preset="zxz">
+                <span>🌟</span> Paradoxo Z-X-Z (Feynman)
+            </button>
+            <button class="preset-btn" data-preset="zz_deterministic">
+                <span>🎯</span> Alinhamento Z-Z (100% Determinístico)
+            </button>
+            <button class="preset-btn" data-preset="z_notz_orthogonal">
+                <span>🔄</span> Ortogonalidade Z e -Z (0%)
+            </button>
+            <button class="preset-btn" data-preset="malus_zeno">
+                <span>📈</span> Rotação Gradual 0° → 45° → 90°
+            </button>
+            <button class="preset-btn" data-preset="full_tree">
+                <span>🌳</span> Árvore Quântica (Sem Bloqueios)
+            </button>
+            <button class="preset-btn" data-preset="single_sg">
+                <span>🔬</span> Filtro Único Z
+            </button>
+        </div>
+
+        <!-- Simulation Card -->
+        <div class="simulation-card">
+            <div class="canvas-toolbar">
+                <div class="toolbar-left">
+                    <span class="status-badge">
+                        <span class="status-dot"></span> MOTOR QUÂNTICO ATIVO
+                    </span>
+                    <span style="color: var(--text-dim);">|</span>
+                    <span id="beamCountLabel" style="color: var(--text-muted); font-size: 0.75rem;">Feixes Ativos: 2</span>
+                </div>
+                <div class="toolbar-right">
+                    <button class="btn-action" id="btnToggleEmitter" style="padding: 4px 10px; font-size: 0.74rem;">
+                        <span id="emitterIcon">⏸️</span> Pausar Feixe
+                    </button>
+                    <button class="btn-action" id="btnSingleAtom" style="padding: 4px 10px; font-size: 0.74rem;" title="Dispara 1 átomo individual">
+                        <span>🎯</span> Disparar 1 Átomo
+                    </button>
+                    <button class="btn-action" id="btnResetScreen" style="padding: 4px 10px; font-size: 0.74rem;">
+                        <span>🧹</span> Limpar Detector
+                    </button>
+                </div>
+            </div>
+
+            <!-- Canvas Viewport -->
+            <div class="canvas-wrapper">
+                <canvas id="simCanvas"></canvas>
+
+                <!-- Floating Canvas HUD -->
+                <div class="canvas-hud">
+                    <div class="hud-panel">
+                        <span style="color: var(--amber-glow);">🔥 Forno Ag:</span>
+                        <span style="color: #fff;">Feixe Térmico Não Polarizado</span>
+                    </div>
+                </div>
+
+                <!-- Canvas Legend -->
+                <div class="canvas-legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--amber-glow); box-shadow: 0 0 6px var(--amber-glow);"></div>
+                        <span>Não Polarizado (Oven)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--cyan-glow); box-shadow: 0 0 6px var(--cyan-glow);"></div>
+                        <span>Spin (+) |+θ⟩</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--magenta-glow); box-shadow: 0 0 6px var(--magenta-glow);"></div>
+                        <span>Spin (-) |-θ⟩</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--rose-danger);"></div>
+                        <span>Feixe Bloqueado (Absorção)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Control Grid: Filters & Settings -->
+        <div class="control-grid">
+            
+            <!-- Filters List Section -->
+            <div class="filters-section">
+                <div class="section-header">
+                    <div class="section-title">
+                        <span>🧲 Aparelhos de Stern-Gerlach (Filtros Sequenciais)</span>
+                        <span class="tag-pill" id="filterCountPill">3 Filtros</span>
+                    </div>
+                    <button class="btn-action" id="btnAddFilter" style="border-color: var(--cyan-glow); color: var(--cyan-glow);">
+                        <span>➕</span> Adicionar Filtro SG
+                    </button>
+                </div>
+
+                <!-- Dynamic Filter Cards Container -->
+                <div class="filter-cards-container" id="filterCardsContainer">
+                    <!-- Injected via JavaScript -->
+                </div>
+            </div>
+
+            <!-- Side Panel: Stats, Emitter Controls & Bloch Mini -->
+            <div class="side-panel">
+                
+                <!-- Screen Detector Readout Card -->
+                <div class="side-card">
+                    <div class="side-card-title">
+                        <span>📊 Detector de Impacto (Anteparo)</span>
+                        <span style="font-size: 0.72rem; color: var(--text-muted);" id="atomCounter">0 Átomos</span>
+                    </div>
+                    <div class="stats-list" id="detectorStatsList">
+                        <!-- Injected via JS -->
+                    </div>
+                    <div class="btn-group-grid">
+                        <button class="btn-action" id="btnBurst100">
+                            <span>⚡</span> Emitir +100 Átomos
+                        </button>
+                        <button class="btn-action" id="btnBurst1000">
+                            <span>🚀</span> Emitir +1000 Átomos
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quantum Particle Dynamics Controls -->
+                <div class="side-card">
+                    <div class="side-card-title">
+                        <span>⚙️ Dinâmica do Feixe Quântico</span>
+                    </div>
+                    
+                    <div class="control-row">
+                        <div class="control-row-header">
+                            <span>Velocidade das Partículas</span>
+                            <span id="speedVal" style="font-family: var(--font-mono); color: var(--cyan-glow);">1.0x</span>
+                        </div>
+                        <input type="range" id="sliderSpeed" min="0.2" max="3" step="0.1" value="1.0">
+                    </div>
+
+                    <div class="control-row">
+                        <div class="control-row-header">
+                            <span>Densidade de Emissão</span>
+                            <span id="densityVal" style="font-family: var(--font-mono); color: var(--cyan-glow);">Média</span>
+                        </div>
+                        <input type="range" id="sliderDensity" min="1" max="5" step="1" value="3">
+                    </div>
+
+                    <div class="control-row">
+                        <div class="control-row-header">
+                            <span>Modo de Exibição</span>
+                        </div>
+                        <div class="btn-group-grid">
+                            <button class="btn-action active" id="btnModeContinuous">
+                                <span>🌊</span> Feixe + Átomos
+                            </button>
+                            <button class="btn-action" id="btnModeParticlesOnly">
+                                <span>⚛️</span> Só Partículas
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Quantum Law Summary Box -->
+                <div class="side-card" style="background: rgba(0, 240, 255, 0.03); border-color: rgba(0, 240, 255, 0.25);">
+                    <div class="side-card-title" style="color: var(--cyan-glow);">
+                        <span>📐 A Regra de Born para Spin-1/2</span>
+                    </div>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.5;">
+                        A probabilidade de transição entre um estado preparado em <span style="color: #fff; font-family: var(--font-mono);">θ₁</span> e medido em <span style="color: #fff; font-family: var(--font-mono);">θ₂</span> obedece:
+                    </p>
+                    <div class="code-snippet" style="margin: 4px 0; text-align: center;">
+                        P(+) = cos²((θ₁ - θ₂) / 2)<br>
+                        P(-) = sin²((θ₁ - θ₂) / 2)
+                    </div>
+                    <p style="font-size: 0.72rem; color: var(--text-dim);">
+                        O fator <strong>/2</strong> reflete a simetria de rotação do spin quântico (grupo SU(2)), onde uma rotação espacial de 360° inverte o sinal da função de onda!
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Educational Accordion / Deep Dive -->
+        <div class="info-accordion">
+            <div class="accordion-header" id="theoryAccordionHeader">
+                <span>📚 A Física por trás de Stern-Gerlach: Fundamentos & O Paradoxo Explicado</span>
+                <span id="accordionArrow">▼</span>
+            </div>
+            <div class="accordion-content" id="theoryAccordionContent">
+                <div class="theory-grid">
+                    <div class="theory-box">
+                        <h4><span>1.</span> O Experimento Histórico (1922)</h4>
+                        <p>Otto Stern e Walther Gerlach dispararam átomos de prata neutros através de um campo magnético fortemente <strong>não uniforme</strong> (∂B_z / ∂z).</p>
+                        <p style="margin-top: 6px;">Pela física clássica de Maxwell, os momentos de dipolo magnético deveriam ter orientações contínuas e aleatórias, gerando uma mancha vertical contínua no anteparo. Surpreendentemente, a mancha se dividiu em <strong>apenas dois feixes discretos</strong>!</p>
+                    </div>
+
+                    <div class="theory-box">
+                        <h4><span>2.</span> Espaço de Hilbert & Spin-1/2</h4>
+                        <p>O elétron mais externo da prata (5s¹) possui momento angular intrínseco (spin) s = 1/2. Os operadores de spin são representados pelas <strong>Matrizes de Pauli</strong>:</p>
+                        <div class="code-snippet">
+                            S_z = (ħ/2) [[1, 0], [0, -1]]<br>
+                            S_x = (ħ/2) [[0, 1], [1, 0]]
+                        </div>
+                        <p>Como [S_x, S_z] = iħS_y ≠ 0, essas componentes <strong>não comutam</strong> e não podem ter valores bem definidos simultaneamente.</p>
+                    </div>
+
+                    <div class="theory-box">
+                        <h4><span>3.</span> O Paradoxo Z-X-Z Revelado</h4>
+                        <p>1. <strong>Filtro 1 (Z):</strong> Prepara átomos purificados no autoestado |+Z⟩.</p>
+                        <p>2. <strong>Filtro 2 (X):</strong> Reescreve o estado como superposição: |+Z⟩ = (|+X⟩ + |-X⟩)/√2. Ao passar e bloquear |-X⟩, o estado <strong>colapsa</strong> para |+X⟩.</p>
+                        <p>3. <strong>Filtro 3 (Z):</strong> O estado |+X⟩ = (|+Z⟩ + |-Z⟩)/√2 agora se divide 50/50 em Z novamente! A medição em X <em>destruiu totalmente</em> a memória do estado Z anterior.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Interactive Tutorial / Guide Modal -->
+    <div class="modal-overlay" id="tutorialModal">
+        <div class="modal-card">
+            <button class="modal-close" id="btnCloseTutorial">&times;</button>
+            <h2 style="font-size: 1.3rem; margin-bottom: 12px; color: var(--cyan-glow); display: flex; align-items: center; gap: 8px;">
+                🎓 Guia Interativo do Laboratório de Stern-Gerlach
+            </h2>
+            <div style="font-size: 0.86rem; line-height: 1.6; color: var(--text-muted); display: flex; flex-direction: column; gap: 14px;">
+                <p>
+                    Bem-vindo ao simulador quântico de Stern-Gerlach. Esta ferramenta permite explorar na prática um dos experimentos mais profundos dos fundamentos da Mecânica Quântica.
+                </p>
+
+                <div style="background: rgba(0, 240, 255, 0.05); border-left: 3px solid var(--cyan-glow); padding: 10px 14px; border-radius: 0 8px 8px 0;">
+                    <h4 style="color: #fff; font-size: 0.88rem; margin-bottom: 4px;">🎯 Como Explorar os Fenômenos Quânticos:</h4>
+                    <ol style="padding-left: 18px; display: flex; flex-direction: column; gap: 6px;">
+                        <li><strong>Ajuste os Ângulos:</strong> Mova os sliders de cada filtro SG (0° = Eixo Z vertical, 90° = Eixo X horizontal, etc.) e veja a espessura dos feixes mudar em tempo real.</li>
+                        <li><strong>Bloqueie Saídas:</strong> Ative os switches "Bloquear Saída (-)" para purificar o feixe quântico e preparar estados puros.</li>
+                        <li><strong>Teste o Paradoxo Z-X-Z:</strong> Clique no preset "Paradoxo Z-X-Z". Observe que o 3º filtro volta a produzir feixe |-Z⟩ mesmo tendo sido eliminado no 1º filtro!</li>
+                        <li><strong>Dispare Átomos Individuais:</strong> Clique em "Disparar 1 Átomo" ou "+100 Átomos" para testemunhar a aleatoriedade quântica e a convergência estatística com a Regra de Born.</li>
+                    </ol>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
+                    <button class="btn-header btn-primary" id="btnTutorialGotIt" style="padding: 8px 20px;">
+                        Entendido! Começar Experimento 🚀
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Theory Modal -->
+    <div class="modal-overlay" id="theoryModal">
+        <div class="modal-card">
+            <button class="modal-close" id="btnCloseTheory">&times;</button>
+            <h2 style="font-size: 1.3rem; margin-bottom: 12px; color: var(--cyan-glow);">
+                📖 Teoria Quântica do Experimento de Stern-Gerlach
+            </h2>
+            <div style="font-size: 0.85rem; line-height: 1.65; color: var(--text-muted); display: flex; flex-direction: column; gap: 12px;">
+                <p>
+                    Em 1922, Otto Stern e Walther Gerlach conceberam um dispositivo para testar a hipótese da quantização espacial de Sommerfeld. Um feixe colimado de átomos de prata de um forno é direcionado através de um campo magnético B não homogêneo.
+                </p>
+                <h4 style="color: #fff;">1. Força Magnética sobre o Dipolo</h4>
+                <p>A energia potencial de um dipolo magnético μ no campo é U = -μ · B. A força resultante é:</p>
+                <div class="code-snippet">
+                    F_z = - ∂U/∂z = μ_z (∂B_z / ∂z)
+                </div>
+                <h4 style="color: #fff;">2. Espaços de Estados Quânticos</h4>
+                <p>
+                    O momento magnético do átomo de prata provém do spin do elétron desemparelhado: μ = -g_s (e / 2m) S. Como o spin é quantizado em ± ħ/2, os átomos experimentam apenas duas forças opostas discretas.
+                </p>
+                <h4 style="color: #fff;">3. Amplitude de Probabilidade</h4>
+                <p>
+                    Para um ângulo qualquer θ, o autoestado positivo é dado pela combinação linear:
+                </p>
+                <div class="code-snippet">
+                    |+θ⟩ = cos(θ/2) |+z⟩ + sin(θ/2) |-z⟩<br>
+                    |-θ⟩ = -sin(θ/2) |+z⟩ + cos(θ/2) |-z⟩
+                </div>
+                <p>
+                    A probabilidade de transição entre estados com ângulos θ₁ e θ₂ resulta em:
+                    P = |⟨+θ₂ | +θ₁⟩|² = cos²((θ₁ - θ₂) / 2).
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Engine -->
+    <script>
+        /**
+         * STERN-GERLACH QUANTUM SIMULATION ENGINE
+         * High-Precision Quantum Spin-1/2 Mechanics & Interactive 2D Canvas Renderer
+         */
+
+        // Web Audio Synthesizer for realistic Quantum Clicks & SFX
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (AudioContext) {
+                        this.ctx = new AudioContext();
+                    }
+                }
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            toggle() {
+                this.enabled = !this.enabled;
+                return this.enabled;
+            }
+
+            playGeigerClick(frequency = 600) {
+                if (!this.enabled || !this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(frequency + (Math.random() * 200 - 100), this.ctx.currentTime);
+                    
+                    gain.gain.setValueAtTime(0.04, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.025);
+                    
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.025);
+                } catch(e) {}
+            }
+
+            playShutterClick() {
+                if (!this.enabled || !this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(220, this.ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(80, this.ctx.currentTime + 0.06);
+                    
+                    gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.06);
+                    
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.06);
+                } catch(e) {}
+            }
+
+            playPresetChime() {
+                if (!this.enabled || !this.ctx) return;
+                try {
+                    const freqs = [440, 554.37, 659.25];
+                    freqs.forEach((f, i) => {
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(f, this.ctx.currentTime + i * 0.04);
+                        
+                        gain.gain.setValueAtTime(0.03, this.ctx.currentTime + i * 0.04);
+                        gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + i * 0.04 + 0.2);
+                        
+                        osc.connect(gain);
+                        gain.connect(this.ctx.destination);
+                        osc.start(this.ctx.currentTime + i * 0.04);
+                        osc.stop(this.ctx.currentTime + i * 0.04 + 0.2);
+                    });
+                } catch(e) {}
+            }
+        }
+
+        const audio = new SoundEngine();
+
+        // Stern-Gerlach Filter Class
+        class SGFilter {
+            constructor(id, angleDeg = 0, blockNegative = false, blockPositive = false) {
+                this.id = id;
+                this.angle = angleDeg; // Angle in degrees: 0 = +Z (up), 90 = +X (horizontal), 180 = -Z (down), 270 = -X
+                this.blockNegative = blockNegative; // If true, absorbs |-θ⟩ branch
+                this.blockPositive = blockPositive; // If true, absorbs |+θ⟩ branch
+                this.x = 0; // Relative horizontal position on canvas (calculated dynamically)
+                this.width = 70;
+                this.height = 140;
+            }
+
+            getAxisLabel() {
+                const normAngle = ((this.angle % 360) + 360) % 360;
+                if (Math.abs(normAngle - 0) < 1e-2 || Math.abs(normAngle - 360) < 1e-2) return 'Z (0°)';
+                if (Math.abs(normAngle - 90) < 1e-2) return 'X (90°)';
+                if (Math.abs(normAngle - 180) < 1e-2) return '-Z (180°)';
+                if (Math.abs(normAngle - 270) < 1e-2) return '-X (270°)';
+                return `${Math.round(normAngle)}°`;
+            }
+        }
+
+        // Particle Class for Discrete Atom Simulation
+        class AtomParticle {
+            constructor(startX, startY) {
+                this.x = startX;
+                this.y = startY;
+                this.startX = startX;
+                this.startY = startY;
+                
+                this.stageIndex = 0; // 0 = from oven to filter 1, 1 = filter 1 to 2, etc.
+                this.t = 0; // Progress along current bezier segment [0, 1]
+                this.speed = 0.015;
+                
+                this.currentAngle = null; // null = unpolarized from oven
+                this.isPositive = true; // true = (+), false = (-)
+                this.blocked = false;
+                this.finished = false;
+                this.color = '#ffb700'; // Amber for unpolarized initially
+                this.history = []; // Path history points for glowing trail
+                this.spinVectorAngle = Math.random() * Math.PI * 2; // For random fluttering spin arrow
+                this.spinPrecessionSpeed = 0.15;
+                this.targetY = startY;
+                this.activeBeam = null;
+            }
+
+            update(speedMultiplier) {
+                if (this.blocked || this.finished) return;
+
+                this.t += this.speed * speedMultiplier;
+                this.spinVectorAngle += this.spinPrecessionSpeed;
+
+                if (this.activeBeam) {
+                    // Evaluate cubic Bezier position
+                    const b = this.activeBeam;
+                    const u = 1 - this.t;
+                    const tt = this.t * this.t;
+                    const uu = u * u;
+                    const uuu = uu * u;
+                    const ttt = tt * this.t;
+
+                    this.x = uuu * b.p0.x + 3 * uu * this.t * b.p1.x + 3 * u * tt * b.p2.x + ttt * b.p3.x;
+                    this.y = uuu * b.p0.y + 3 * uu * this.t * b.p1.y + 3 * u * tt * b.p2.y + ttt * b.p3.y;
+
+                    this.color = b.color;
+                }
+
+                // Add to trail
+                this.history.push({ x: this.x, y: this.y, alpha: 1.0 });
+                if (this.history.length > 10) {
+                    this.history.shift();
+                }
+
+                // Fade trail points
+                for (let pt of this.history) {
+                    pt.alpha *= 0.88;
+                }
+            }
+        }
+
+        // Phosphor Flash Animation
+        class PhosphorFlash {
+            constructor(x, y, color = '#00f0ff', isBlocked = false) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.isBlocked = isBlocked;
+                this.radius = isBlocked ? 6 : 14;
+                this.alpha = 1.0;
+                this.decay = isBlocked ? 0.05 : 0.025;
+            }
+
+            update() {
+                this.alpha -= this.decay;
+                this.radius += 0.3;
+                return this.alpha > 0;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.alpha);
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.shadowColor = this.color;
+                ctx.shadowBlur = 12;
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // Main Quantum Simulation Controller
+        class SternGerlachSimulation {
+            constructor() {
+                this.canvas = document.getElementById('simCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                
+                this.filters = [];
+                this.beams = []; // Calculated tree of continuous beams
+                this.particles = []; // Active discrete atom particles
+                this.flashes = []; // Screen flash effects
+                
+                // Simulation State
+                this.running = true;
+                this.mode = 'both'; // 'both' (continuous + particles) or 'particles'
+                this.speedMultiplier = 1.0;
+                this.densityLevel = 3; // 1 to 5
+                this.spawnTimer = 0;
+                this.totalAtomsEmitted = 0;
+                this.detectorHits = {}; // Map of target y coordinates to counts
+                
+                // Layout Geometry
+                this.oven = { x: 50, y: 240, width: 64, height: 80 };
+                this.detector = { x: 1000, y: 50, width: 36, height: 380 };
+                
+                this.initPresets();
+                this.setupDOM();
+                this.handleResize();
+                this.setPreset('zxz');
+                
+                // Start Animation Loop
+                this.lastTime = performance.now();
+                requestAnimationFrame((t) => this.loop(t));
+            }
+
+            initPresets() {
+                this.presets = {
+                    'zxz': {
+                        title: 'Paradoxo Clássico Z-X-Z (Feynman)',
+                        filters: [
+                            new SGFilter(1, 0, true, false),   // SG1 at 0° (Z), block negative
+                            new SGFilter(2, 90, true, false),  // SG2 at 90° (X), block negative
+                            new SGFilter(3, 0, false, false)   // SG3 at 0° (Z), no block (shows 50% +Z and 50% -Z again!)
+                        ]
+                    },
+                    'zz_deterministic': {
+                        title: 'Alinhamento Z-Z Determinístico',
+                        filters: [
+                            new SGFilter(1, 0, true, false),   // SG1 at 0° (Z), block -
+                            new SGFilter(2, 0, false, false)   // SG2 at 0° (Z), shows 100% |+Z⟩
+                        ]
+                    },
+                    'z_notz_orthogonal': {
+                        title: 'Ortogonalidade Z e -Z (0%)',
+                        filters: [
+                            new SGFilter(1, 0, true, false),   // SG1 at 0° (Z), block -
+                            new SGFilter(2, 180, false, false) // SG2 at 180° (-Z), shows 100% |-Z⟩
+                        ]
+                    },
+                    'malus_zeno': {
+                        title: 'Rotação Gradual 0° → 45° → 90° (Efeito Zeno)',
+                        filters: [
+                            new SGFilter(1, 0, true, false),   // SG1 at 0°
+                            new SGFilter(2, 45, true, false),  // SG2 at 45°
+                            new SGFilter(3, 90, false, false)  // SG3 at 90°
+                        ]
+                    },
+                    'full_tree': {
+                        title: 'Árvore Quântica Completa (Sem Bloqueios)',
+                        filters: [
+                            new SGFilter(1, 0, false, false),
+                            new SGFilter(2, 90, false, false)
+                        ]
+                    },
+                    'single_sg': {
+                        title: 'Filtro Único Z',
+                        filters: [
+                            new SGFilter(1, 0, false, false)
+                        ]
+                    }
+                };
+            }
+
+            setPreset(presetKey) {
+                if (!this.presets[presetKey]) return;
+                const p = this.presets[presetKey];
+                
+                // Deep clone filters
+                this.filters = p.filters.map((f, idx) => new SGFilter(idx + 1, f.angle, f.blockNegative, f.blockPositive));
+                
+                // Update active button state
+                document.querySelectorAll('.preset-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.preset === presetKey);
+                });
+
+                this.resetStatistics();
+                this.recalculateBeams();
+                this.renderFilterCards();
+                audio.playPresetChime();
+            }
+
+            resetStatistics() {
+                this.totalAtomsEmitted = 0;
+                this.detectorHits = {};
+                this.particles = [];
+                this.flashes = [];
+                document.getElementById('atomCounter').textContent = '0 Átomos';
+                this.updateDetectorStatsUI();
+            }
+
+            setupDOM() {
+                window.addEventListener('resize', () => this.handleResize());
+
+                // Presets buttons
+                document.querySelectorAll('.preset-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        audio.init();
+                        this.setPreset(btn.dataset.preset);
+                    });
+                });
+
+                // Add Filter button
+                document.getElementById('btnAddFilter').addEventListener('click', () => {
+                    audio.init();
+                    if (this.filters.length >= 4) {
+                        alert('Máximo de 4 filtros para manter clareza visual no laboratório!');
+                        return;
+                    }
+                    const newId = this.filters.length + 1;
+                    this.filters.push(new SGFilter(newId, 0, false, false));
+                    this.recalculateBeams();
+                    this.renderFilterCards();
+                    this.resetStatistics();
+                });
+
+                // Toolbar Controls
+                const btnEmitter = document.getElementById('btnToggleEmitter');
+                btnEmitter.addEventListener('click', () => {
+                    audio.init();
+                    this.running = !this.running;
+                    document.getElementById('emitterIcon').textContent = this.running ? '⏸️' : '▶️';
+                    btnEmitter.innerHTML = `${this.running ? '⏸️ Pausar Feixe' : '▶️ Retomar Feixe'}`;
+                });
+
+                document.getElementById('btnSingleAtom').addEventListener('click', () => {
+                    audio.init();
+                    this.spawnAtomParticle();
+                });
+
+                document.getElementById('btnResetScreen').addEventListener('click', () => {
+                    audio.init();
+                    this.resetStatistics();
+                });
+
+                document.getElementById('btnBurst100').addEventListener('click', () => {
+                    audio.init();
+                    this.burstAtoms(100);
+                });
+
+                document.getElementById('btnBurst1000').addEventListener('click', () => {
+                    audio.init();
+                    this.burstAtoms(1000);
+                });
+
+                // Sliders
+                const speedSlider = document.getElementById('sliderSpeed');
+                speedSlider.addEventListener('input', (e) => {
+                    this.speedMultiplier = parseFloat(e.target.value);
+                    document.getElementById('speedVal').textContent = `${this.speedMultiplier.toFixed(1)}x`;
+                });
+
+                const densitySlider = document.getElementById('sliderDensity');
+                densitySlider.addEventListener('input', (e) => {
+                    this.densityLevel = parseInt(e.target.value);
+                    const labels = ['Muito Baixa', 'Baixa', 'Média', 'Alta', 'Intensa'];
+                    document.getElementById('densityVal').textContent = labels[this.densityLevel - 1];
+                });
+
+                // Mode toggles
+                const btnContinuous = document.getElementById('btnModeContinuous');
+                const btnParticles = document.getElementById('btnModeParticlesOnly');
+                btnContinuous.addEventListener('click', () => {
+                    this.mode = 'both';
+                    btnContinuous.classList.add('active');
+                    btnParticles.classList.remove('active');
+                });
+                btnParticles.addEventListener('click', () => {
+                    this.mode = 'particles';
+                    btnParticles.classList.add('active');
+                    btnContinuous.classList.remove('active');
+                });
+
+                // Audio Toggle
+                const btnAudio = document.getElementById('btnAudioToggle');
+                btnAudio.addEventListener('click', () => {
+                    audio.init();
+                    const state = audio.toggle();
+                    document.getElementById('audioStatusText').textContent = state ? 'ON' : 'OFF';
+                    document.getElementById('audioIcon').textContent = state ? '🔊' : '🔇';
+                });
+
+                // Modals
+                const setupModal = (btnOpen, modalId, btnClose) => {
+                    const modal = document.getElementById(modalId);
+                    const open = () => { audio.init(); modal.classList.add('open'); };
+                    const close = () => modal.classList.remove('open');
+                    
+                    document.getElementById(btnOpen).addEventListener('click', open);
+                    document.getElementById(btnClose).addEventListener('click', close);
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) close();
+                    });
+                    return { open, close };
+                };
+
+                setupModal('btnOpenTutorial', 'tutorialModal', 'btnCloseTutorial');
+                setupModal('btnOpenTheory', 'theoryModal', 'btnCloseTheory');
+                document.getElementById('btnTutorialGotIt').addEventListener('click', () => {
+                    document.getElementById('tutorialModal').classList.remove('open');
+                });
+
+                // Theory Accordion
+                const accHeader = document.getElementById('theoryAccordionHeader');
+                const accContent = document.getElementById('theoryAccordionContent');
+                const accArrow = document.getElementById('accordionArrow');
+                accHeader.addEventListener('click', () => {
+                    accContent.classList.toggle('open');
+                    accArrow.textContent = accContent.classList.contains('open') ? '▲' : '▼';
+                });
+            }
+
+            handleResize() {
+                const rect = this.canvas.parentElement.getBoundingClientRect();
+                const dpr = window.devicePixelRatio || 1;
+                this.canvas.width = rect.width * dpr;
+                this.canvas.height = rect.height * dpr;
+                this.ctx.resetTransform();
+                this.ctx.scale(dpr, dpr);
+                
+                this.viewWidth = rect.width;
+                this.viewHeight = rect.height;
+
+                // Adjust geometry
+                this.oven.x = 40;
+                this.oven.y = this.viewHeight / 2;
+                this.detector.x = this.viewWidth - 55;
+                this.detector.y = 40;
+                this.detector.height = this.viewHeight - 80;
+
+                this.recalculateFilterPositions();
+                this.recalculateBeams();
+            }
+
+            recalculateFilterPositions() {
+                const availableWidth = this.detector.x - (this.oven.x + this.oven.width + 50);
+                const step = availableWidth / (this.filters.length + 1);
+
+                this.filters.forEach((f, idx) => {
+                    f.x = this.oven.x + this.oven.width + 50 + step * (idx + 1) - (f.width / 2);
+                });
+            }
+
+            /**
+             * Quantum Physics Beam Engine
+             * Recursively computes all split beam trajectories and intensities
+             */
+            recalculateBeams() {
+                this.recalculateFilterPositions();
+                this.beams = [];
+
+                // Stage 0: Beam originating from Oven to Filter 1 (or directly to Detector)
+                const startY = this.oven.y;
+                const firstTargetX = this.filters.length > 0 ? this.filters[0].x : this.detector.x;
+
+                const rootBeam = {
+                    id: 'beam_root',
+                    stage: 0,
+                    p0: { x: this.oven.x + this.oven.width, y: startY },
+                    p1: { x: this.oven.x + this.oven.width + (firstTargetX - (this.oven.x + this.oven.width)) * 0.5, y: startY },
+                    p2: { x: firstTargetX - (firstTargetX - (this.oven.x + this.oven.width)) * 0.5, y: startY },
+                    p3: { x: firstTargetX, y: startY },
+                    intensity: 1.0,
+                    angle: null, // null means unpolarized
+                    label: 'Não Polarizado (100%)',
+                    diracLabel: '|ψ_oven⟩',
+                    color: '#ffb700',
+                    blocked: false,
+                    targetY: startY,
+                    children: []
+                };
+
+                this.beams.push(rootBeam);
+
+                if (this.filters.length > 0) {
+                    this.propagateFilter(0, [rootBeam]);
+                }
+
+                // Update UI Labels
+                document.getElementById('filterCountPill').textContent = `${this.filters.length} Filtro${this.filters.length > 1 ? 's' : ''}`;
+                document.getElementById('beamCountLabel').textContent = `Feixes Calculados: ${this.beams.length}`;
+                this.updateDetectorStatsUI();
+            }
+
+            propagateFilter(filterIndex, incomingBeams) {
+                if (filterIndex >= this.filters.length) return;
+
+                const filter = this.filters[filterIndex];
+                const nextX = (filterIndex + 1 < this.filters.length) 
+                    ? this.filters[filterIndex + 1].x 
+                    : this.detector.x;
+
+                const newOutgoingBeams = [];
+
+                incomingBeams.forEach(inBeam => {
+                    if (inBeam.blocked || inBeam.intensity <= 0.0001) return;
+
+                    const inAngle = inBeam.angle; // in degrees, or null
+                    const filterAngle = filter.angle; // in degrees
+
+                    let pPlus = 0.5;
+                    let pMinus = 0.5;
+
+                    if (inAngle === null) {
+                        // Unpolarized oven beam: splits 50/50 for ANY filter angle
+                        pPlus = 0.5;
+                        pMinus = 0.5;
+                    } else {
+                        // Polarized quantum state Born Rule:
+                        const deltaRad = ((inAngle - filterAngle) * Math.PI) / 180;
+                        pPlus = Math.pow(Math.cos(deltaRad / 2), 2);
+                        pMinus = Math.pow(Math.sin(deltaRad / 2), 2);
+                    }
+
+                    const intensityPlus = inBeam.intensity * pPlus;
+                    const intensityMinus = inBeam.intensity * pMinus;
+
+                    // Vertical deflection distance depending on cascade depth
+                    const verticalSpread = Math.max(35, 110 / Math.pow(1.35, filterIndex));
+                    const outYPlus = inBeam.p3.y - verticalSpread;
+                    const outYMinus = inBeam.p3.y + verticalSpread;
+
+                    // Positive (+) Beam branch
+                    const beamPlus = {
+                        id: `${inBeam.id}_F${filter.id}_plus`,
+                        stage: filterIndex + 1,
+                        filterId: filter.id,
+                        isPositive: true,
+                        p0: { x: filter.x + filter.width, y: inBeam.p3.y },
+                        p1: { x: filter.x + filter.width + (nextX - (filter.x + filter.width)) * 0.4, y: inBeam.p3.y },
+                        p2: { x: nextX - (nextX - (filter.x + filter.width)) * 0.4, y: outYPlus },
+                        p3: { x: nextX, y: outYPlus },
+                        intensity: intensityPlus,
+                        angle: filterAngle,
+                        pBranch: pPlus,
+                        label: `${(intensityPlus * 100).toFixed(1)}% |+${filter.getAxisLabel()}⟩`,
+                        diracLabel: `|+${filter.getAxisLabel()}⟩`,
+                        color: '#00f0ff',
+                        blocked: filter.blockPositive,
+                        targetY: outYPlus,
+                        parent: inBeam
+                    };
+
+                    // Negative (-) Beam branch
+                    const minusAngle = (filterAngle + 180) % 360;
+                    const beamMinus = {
+                        id: `${inBeam.id}_F${filter.id}_minus`,
+                        stage: filterIndex + 1,
+                        filterId: filter.id,
+                        isPositive: false,
+                        p0: { x: filter.x + filter.width, y: inBeam.p3.y },
+                        p1: { x: filter.x + filter.width + (nextX - (filter.x + filter.width)) * 0.4, y: inBeam.p3.y },
+                        p2: { x: nextX - (nextX - (filter.x + filter.width)) * 0.4, y: outYMinus },
+                        p3: { x: nextX, y: outYMinus },
+                        intensity: intensityMinus,
+                        angle: minusAngle,
+                        pBranch: pMinus,
+                        label: `${(intensityMinus * 100).toFixed(1)}% |-${filter.getAxisLabel()}⟩`,
+                        diracLabel: `|-${filter.getAxisLabel()}⟩`,
+                        color: '#ff2a85',
+                        blocked: filter.blockNegative,
+                        targetY: outYMinus,
+                        parent: inBeam
+                    };
+
+                    this.beams.push(beamPlus);
+                    this.beams.push(beamMinus);
+
+                    if (!beamPlus.blocked && beamPlus.intensity > 0.0001) newOutgoingBeams.push(beamPlus);
+                    if (!beamMinus.blocked && beamMinus.intensity > 0.0001) newOutgoingBeams.push(beamMinus);
+                });
+
+                if (newOutgoingBeams.length > 0) {
+                    this.propagateFilter(filterIndex + 1, newOutgoingBeams);
+                }
+            }
+
+            /**
+             * Particle Emission & Monte Carlo Sampling
+             */
+            spawnAtomParticle() {
+                const p = new AtomParticle(this.oven.x + this.oven.width, this.oven.y);
+                // Assign to root beam
+                p.activeBeam = this.beams[0];
+                this.particles.push(p);
+                this.totalAtomsEmitted++;
+                document.getElementById('atomCounter').textContent = `${this.totalAtomsEmitted} Átomos`;
+            }
+
+            burstAtoms(count = 100) {
+                for (let i = 0; i < count; i++) {
+                    this.simulateSingleAtomMonteCarlo();
+                }
+                this.totalAtomsEmitted += count;
+                document.getElementById('atomCounter').textContent = `${this.totalAtomsEmitted} Átomos`;
+                this.updateDetectorStatsUI();
+                audio.playGeigerClick(800);
+            }
+
+            simulateSingleAtomMonteCarlo() {
+                let currentAngle = null; // Unpolarized
+
+                for (let i = 0; i < this.filters.length; i++) {
+                    const filter = this.filters[i];
+                    let pPlus = 0.5;
+
+                    if (currentAngle !== null) {
+                        const deltaRad = ((currentAngle - filter.angle) * Math.PI) / 180;
+                        pPlus = Math.pow(Math.cos(deltaRad / 2), 2);
+                    }
+
+                    const rand = Math.random();
+                    if (rand < pPlus) {
+                        // Went (+)
+                        if (filter.blockPositive) return; // Absorbed!
+                        currentAngle = filter.angle;
+                    } else {
+                        // Went (-)
+                        if (filter.blockNegative) return; // Absorbed!
+                        currentAngle = (filter.angle + 180) % 360;
+                    }
+                }
+
+                // Reached detector! Find matching final beam target Y
+                const terminalBeams = this.beams.filter(b => b.stage === this.filters.length && !b.blocked && b.intensity > 0.0001);
+                // Probabilistically assign hit to one of the active terminal beams
+                const totalIntensity = terminalBeams.reduce((sum, b) => sum + b.intensity, 0);
+                if (totalIntensity <= 0) return;
+
+                let r = Math.random() * totalIntensity;
+                for (let b of terminalBeams) {
+                    r -= b.intensity;
+                    if (r <= 0) {
+                        this.registerHit(b.id, b.p3.y, b.color);
+                        break;
+                    }
+                }
+            }
+
+            registerHit(beamId, y, color = '#00f0ff') {
+                if (!this.detectorHits[beamId]) {
+                    this.detectorHits[beamId] = 0;
+                }
+                this.detectorHits[beamId]++;
+                this.flashes.push(new PhosphorFlash(this.detector.x + 10, y + (Math.random() * 8 - 4), color));
+                audio.playGeigerClick(500 + (Math.abs(y) % 400));
+            }
+
+            /**
+             * Filter Cards UI Renderer & Event Binding
+             */
+            renderFilterCards() {
+                const container = document.getElementById('filterCardsContainer');
+                container.innerHTML = '';
+
+                this.filters.forEach((filter, idx) => {
+                    const card = document.createElement('div');
+                    card.className = 'filter-card';
+                    card.id = `filterCard_${filter.id}`;
+
+                    const axisLabel = filter.getAxisLabel();
+                    const rad = (filter.angle * Math.PI) / 180;
+                    const cosHalf = Math.cos(rad / 2).toFixed(3);
+                    const sinHalf = Math.sin(rad / 2).toFixed(3);
+
+                    card.innerHTML = `
+                        <div class="filter-card-header">
+                            <div class="filter-badge">
+                                <div class="filter-num">${idx + 1}</div>
+                                <div class="filter-name">Aparelho SG #${idx + 1}</div>
+                            </div>
+                            <div class="filter-actions">
+                                ${this.filters.length > 1 ? `
+                                    <button class="btn-icon-sm btn-remove-filter" data-idx="${idx}" title="Remover este filtro">
+                                        ✕
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        <!-- Angle Control -->
+                        <div class="angle-control-group">
+                            <div class="angle-header">
+                                <span style="color: var(--text-muted);">Orientação do Campo Magnético:</span>
+                                <span class="angle-val" id="angleDisplay_${filter.id}">${filter.angle}° [${axisLabel}]</span>
+                            </div>
+                            <div class="slider-row">
+                                <input type="range" class="filter-angle-slider" data-idx="${idx}" min="0" max="360" step="1" value="${filter.angle}">
+                            </div>
+                            <div class="axis-buttons">
+                                <button class="btn-axis ${filter.angle === 0 ? 'active' : ''}" data-idx="${idx}" data-deg="0">+Z (0°)</button>
+                                <button class="btn-axis ${filter.angle === 90 ? 'active' : ''}" data-idx="${idx}" data-deg="90">+X (90°)</button>
+                                <button class="btn-axis ${filter.angle === 180 ? 'active' : ''}" data-idx="${idx}" data-deg="180">-Z (180°)</button>
+                                <button class="btn-axis ${filter.angle === 270 ? 'active' : ''}" data-idx="${idx}" data-deg="270">-X (270°)</button>
+                            </div>
+                        </div>
+
+                        <!-- Shutter / Blocker Controls -->
+                        <div class="blockers-group">
+                            <div class="blocker-toggle-row">
+                                <span style="color: var(--magenta-glow); font-weight: 600;">🚫 Bloquear Saída Negativa (-)</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" class="toggle-block-neg" data-idx="${idx}" ${filter.blockNegative ? 'checked' : ''}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="blocker-toggle-row" style="margin-top: 4px;">
+                                <span style="color: var(--cyan-glow); font-weight: 600;">🚫 Bloquear Saída Positiva (+)</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" class="toggle-block-pos" data-idx="${idx}" ${filter.blockPositive ? 'checked' : ''}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Quantum State Representation Box -->
+                        <div class="state-formula-box">
+                            <div class="math-row">
+                                <span>Estado Puro |+θ⟩:</span>
+                                <span class="math-highlight">${cosHalf}|+z⟩ + ${sinHalf}|-z⟩</span>
+                            </div>
+                            <div class="math-row">
+                                <span>Valor Esperado ⟨S_z⟩:</span>
+                                <span style="color: #fff; font-family: var(--font-mono);">${(Math.cos(rad) * 0.5).toFixed(2)} ℏ</span>
+                            </div>
+                        </div>
+                    `;
+
+                    container.appendChild(card);
+                });
+
+                // Attach Event Listeners to dynamic elements
+                container.querySelectorAll('.filter-angle-slider').forEach(slider => {
+                    slider.addEventListener('input', (e) => {
+                        const idx = parseInt(e.target.dataset.idx);
+                        const val = parseInt(e.target.value);
+                        this.filters[idx].angle = val;
+                        
+                        document.getElementById(`angleDisplay_${this.filters[idx].id}`).textContent = `${val}° [${this.filters[idx].getAxisLabel()}]`;
+                        this.recalculateBeams();
+                        this.renderFilterCards();
+                    });
+                });
+
+                container.querySelectorAll('.btn-axis').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        audio.init();
+                        const idx = parseInt(btn.dataset.idx);
+                        const deg = parseInt(btn.dataset.deg);
+                        this.filters[idx].angle = deg;
+                        this.recalculateBeams();
+                        this.renderFilterCards();
+                    });
+                });
+
+                container.querySelectorAll('.toggle-block-neg').forEach(toggle => {
+                    toggle.addEventListener('change', (e) => {
+                        audio.init();
+                        audio.playShutterClick();
+                        const idx = parseInt(toggle.dataset.idx);
+                        this.filters[idx].blockNegative = toggle.checked;
+                        this.recalculateBeams();
+                        this.renderFilterCards();
+                    });
+                });
+
+                container.querySelectorAll('.toggle-block-pos').forEach(toggle => {
+                    toggle.addEventListener('change', (e) => {
+                        audio.init();
+                        audio.playShutterClick();
+                        const idx = parseInt(toggle.dataset.idx);
+                        this.filters[idx].blockPositive = toggle.checked;
+                        this.recalculateBeams();
+                        this.renderFilterCards();
+                    });
+                });
+
+                container.querySelectorAll('.btn-remove-filter').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        audio.init();
+                        const idx = parseInt(btn.dataset.idx);
+                        this.filters.splice(idx, 1);
+                        this.filters.forEach((f, i) => f.id = i + 1);
+                        this.recalculateBeams();
+                        this.renderFilterCards();
+                        this.resetStatistics();
+                    });
+                });
+            }
+
+            /**
+             * Detector Statistics Table & Readout UI
+             */
+            updateDetectorStatsUI() {
+                const list = document.getElementById('detectorStatsList');
+                list.innerHTML = '';
+
+                // Get all terminal beams reaching the detector
+                const terminalBeams = this.beams.filter(b => b.stage === this.filters.length);
+
+                if (terminalBeams.length === 0) {
+                    list.innerHTML = '<div style="color: var(--text-dim); font-size: 0.75rem; text-align: center;">Nenhum feixe ativo alcança o anteparo.</div>';
+                    return;
+                }
+
+                terminalBeams.forEach(b => {
+                    const hits = this.detectorHits[b.id] || 0;
+                    const empiricalPct = this.totalAtomsEmitted > 0 
+                        ? ((hits / this.totalAtomsEmitted) * 100).toFixed(1) 
+                        : '0.0';
+                    const theoreticalPct = (b.intensity * 100).toFixed(1);
+
+                    const item = document.createElement('div');
+                    item.className = 'stat-item';
+                    item.innerHTML = `
+                        <div class="stat-item-header">
+                            <span style="color: ${b.blocked ? 'var(--rose-danger)' : b.color};">
+                                ${b.blocked ? '🚫 [BLOQUEADO]' : b.diracLabel}
+                            </span>
+                            <span style="font-family: var(--font-mono); color: #fff;">
+                                Teórico: ${b.blocked ? '0.0%' : theoreticalPct + '%'}
+                            </span>
+                        </div>
+                        <div class="stat-bar-track">
+                            <div class="stat-bar-fill ${b.isPositive ? '' : 'magenta'}" style="width: ${b.blocked ? 0 : theoreticalPct}%;"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.68rem; color: var(--text-muted); margin-top: 2px;">
+                            <span>Contagem empírica: <strong>${hits}</strong></span>
+                            <span>Freq: <strong>${empiricalPct}%</strong></span>
+                        </div>
+                    `;
+                    list.appendChild(item);
+                });
+            }
+
+            /**
+             * Particle Update & Propagation in Canvas Space
+             */
+            updateParticles(dt) {
+                if (this.running) {
+                    this.spawnTimer += dt * this.speedMultiplier;
+                    const spawnInterval = 0.25 / this.densityLevel;
+                    if (this.spawnTimer >= spawnInterval) {
+                        this.spawnTimer = 0;
+                        this.spawnAtomParticle();
+                    }
+                }
+
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    const p = this.particles[i];
+                    p.update(this.speedMultiplier);
+
+                    // Check if particle reached the end of current beam
+                    if (p.t >= 1.0) {
+                        const b = p.activeBeam;
+                        if (!b) {
+                            this.particles.splice(i, 1);
+                            continue;
+                        }
+
+                        // Reached filter or detector
+                        if (b.stage < this.filters.length) {
+                            const filter = this.filters[b.stage];
+                            
+                            // Determine quantum transition at this filter
+                            let pPlus = 0.5;
+                            if (p.currentAngle !== null) {
+                                const deltaRad = ((p.currentAngle - filter.angle) * Math.PI) / 180;
+                                pPlus = Math.pow(Math.cos(deltaRad / 2), 2);
+                            }
+
+                            const rand = Math.random();
+                            const wentPlus = rand < pPlus;
+                            p.currentAngle = wentPlus ? filter.angle : (filter.angle + 180) % 360;
+                            p.isPositive = wentPlus;
+
+                            // Check blocker
+                            const isBlocked = wentPlus ? filter.blockPositive : filter.blockNegative;
+                            if (isBlocked) {
+                                p.blocked = true;
+                                this.flashes.push(new PhosphorFlash(filter.x + filter.width + 5, p.y, 'rgba(244, 63, 94, 0.8)', true));
+                                this.particles.splice(i, 1);
+                                continue;
+                            }
+
+                            // Find matching child beam
+                            const nextBeam = this.beams.find(nb => 
+                                nb.parent === b && 
+                                nb.isPositive === wentPlus
+                            );
+
+                            if (nextBeam && !nextBeam.blocked) {
+                                p.activeBeam = nextBeam;
+                                p.t = 0;
+                            } else {
+                                this.particles.splice(i, 1);
+                            }
+                        } else {
+                            // Reached final detector!
+                            this.registerHit(b.id, p.y, b.color);
+                            this.particles.splice(i, 1);
+                        }
+                    }
+                }
+
+                // Update Flashes
+                for (let i = this.flashes.length - 1; i >= 0; i--) {
+                    if (!this.flashes[i].update()) {
+                        this.flashes.splice(i, 1);
+                    }
+                }
+            }
+
+            /**
+             * Main Render Pipeline
+             */
+            draw() {
+                const ctx = this.ctx;
+                const width = this.viewWidth;
+                const height = this.viewHeight;
+
+                ctx.clearRect(0, 0, width, height);
+
+                // Draw Grid & Lab Workbench background
+                this.drawBackground(ctx, width, height);
+
+                // 1. Draw Continuous Beam Ribbons (if active mode)
+                if (this.mode === 'both') {
+                    this.drawBeams(ctx);
+                }
+
+                // 2. Draw Oven (Left)
+                this.drawOven(ctx);
+
+                // 3. Draw SG Magnet Filters & Shutter Blockers
+                this.drawFilters(ctx);
+
+                // 4. Draw Detector Screen (Right)
+                this.drawDetector(ctx);
+
+                // 5. Draw Atom Particles & Spin Vectors
+                this.drawParticles(ctx);
+
+                // 6. Draw Phosphor Flashes
+                this.flashes.forEach(f => f.draw(ctx));
+
+                // 7. Draw Floating Probability Badges & Dirac Kets
+                this.drawBeamHUDLabels(ctx);
+            }
+
+            drawBackground(ctx, width, height) {
+                // Subtle quantum guide lines
+                ctx.save();
+                ctx.strokeStyle = 'rgba(0, 240, 255, 0.04)';
+                ctx.lineWidth = 1;
+                
+                // Horizontal center axis
+                ctx.setLineDash([4, 6]);
+                ctx.beginPath();
+                ctx.moveTo(0, this.oven.y);
+                ctx.lineTo(width, this.oven.y);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.restore();
+            }
+
+            drawOven(ctx) {
+                const o = this.oven;
+                ctx.save();
+
+                // Furnace body
+                const grad = ctx.createLinearGradient(o.x, o.y - o.height / 2, o.x + o.width, o.y + o.height / 2);
+                grad.addColorStop(0, '#1e293b');
+                grad.addColorStop(0.5, '#334155');
+                grad.addColorStop(1, '#0f172a');
+
+                ctx.fillStyle = grad;
+                ctx.strokeStyle = 'rgba(255, 183, 0, 0.5)';
+                ctx.lineWidth = 2;
+                ctx.shadowColor = 'rgba(255, 183, 0, 0.3)';
+                ctx.shadowBlur = 15;
+
+                // Rounded Rect Chamber
+                ctx.beginPath();
+                ctx.roundRect(o.x, o.y - o.height / 2, o.width, o.height, 10);
+                ctx.fill();
+                ctx.stroke();
+
+                // Glowing thermal heating core
+                const coreGrad = ctx.createRadialGradient(o.x + o.width * 0.4, o.y, 2, o.x + o.width * 0.4, o.y, 25);
+                coreGrad.addColorStop(0, 'rgba(255, 240, 180, 0.9)');
+                coreGrad.addColorStop(0.5, 'rgba(255, 183, 0, 0.6)');
+                coreGrad.addColorStop(1, 'rgba(255, 80, 0, 0)');
+                ctx.fillStyle = coreGrad;
+                ctx.beginPath();
+                ctx.arc(o.x + o.width * 0.4, o.y, 25, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Collimator Nozzle
+                ctx.fillStyle = '#475569';
+                ctx.fillRect(o.x + o.width - 2, o.y - 8, 8, 16);
+
+                // Label
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#ffb700';
+                ctx.font = 'bold 11px var(--font-mono)';
+                ctx.textAlign = 'center';
+                ctx.fillText('FORNO Ag', o.x + o.width / 2, o.y + o.height / 2 + 18);
+                ctx.fillStyle = 'rgba(255,255,255,0.6)';
+                ctx.font = '9px var(--font-mono)';
+                ctx.fillText('T = 400°C', o.x + o.width / 2, o.y + o.height / 2 + 30);
+
+                ctx.restore();
+            }
+
+            drawFilters(ctx) {
+                this.filters.forEach((filter, idx) => {
+                    ctx.save();
+                    const fx = filter.x;
+                    const fy = this.oven.y;
+                    const hw = filter.width / 2;
+                    const hh = filter.height / 2;
+
+                    // 1. Magnetic Pole Enclosure Body
+                    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+                    ctx.strokeStyle = 'rgba(0, 240, 255, 0.3)';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.roundRect(fx, fy - hh, filter.width, filter.height, 12);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // 2. Upper Magnetic Pole (Sharp Knife Edge - Inhomogeneous gradient)
+                    const rad = (filter.angle * Math.PI) / 180;
+                    ctx.fillStyle = '#38bdf8';
+                    ctx.beginPath();
+                    ctx.moveTo(fx + 10, fy - hh + 10);
+                    ctx.lineTo(fx + filter.width - 10, fy - hh + 10);
+                    ctx.lineTo(fx + hw, fy - 18);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // North label
+                    ctx.fillStyle = '#0f172a';
+                    ctx.font = 'bold 10px var(--font-mono)';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('N', fx + hw, fy - hh + 22);
+
+                    // 3. Lower Magnetic Pole (Concave Channel)
+                    ctx.fillStyle = '#ec4899';
+                    ctx.beginPath();
+                    ctx.moveTo(fx + 10, fy + hh - 10);
+                    ctx.lineTo(fx + filter.width - 10, fy + hh - 10);
+                    ctx.lineTo(fx + filter.width - 10, fy + 22);
+                    ctx.quadraticCurveTo(fx + hw, fy + 12, fx + 10, fy + 22);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // South label
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 10px var(--font-mono)';
+                    ctx.fillText('S', fx + hw, fy + hh - 16);
+
+                    // 4. Inhomogeneous Magnetic Field Lines dBz/dz
+                    ctx.strokeStyle = 'rgba(0, 240, 255, 0.25)';
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([2, 3]);
+                    for (let i = -1; i <= 1; i++) {
+                        ctx.beginPath();
+                        ctx.moveTo(fx + hw + i * 8, fy - 16);
+                        ctx.lineTo(fx + hw + i * 16, fy + 14);
+                        ctx.stroke();
+                    }
+                    ctx.setLineDash([]);
+
+                    // 5. Magnetic Axis Compass Dial & Degree Badge
+                    ctx.fillStyle = '#00f0ff';
+                    ctx.font = 'bold 11px var(--font-mono)';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`SG #${filter.id}`, fx + hw, fy - hh - 14);
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.font = '10px var(--font-mono)';
+                    ctx.fillText(`${filter.getAxisLabel()}`, fx + hw, fy - hh - 3);
+
+                    // 6. Shutter / Absorber Plates (if toggled)
+                    if (filter.blockNegative) {
+                        this.drawShutterPlate(ctx, fx + filter.width - 6, fy + 24, 'Saída (-) Bloqueada');
+                    }
+                    if (filter.blockPositive) {
+                        this.drawShutterPlate(ctx, fx + filter.width - 6, fy - 48, 'Saída (+) Bloqueada');
+                    }
+
+                    ctx.restore();
+                });
+            }
+
+            drawShutterPlate(ctx, x, y, label) {
+                ctx.save();
+                // Barrier plate
+                ctx.fillStyle = 'rgba(244, 63, 94, 0.9)';
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 1;
+                ctx.shadowColor = 'rgba(244, 63, 94, 0.8)';
+                ctx.shadowBlur = 10;
+                
+                ctx.beginPath();
+                ctx.roundRect(x, y, 10, 32, 3);
+                ctx.fill();
+                ctx.stroke();
+
+                // Warning stripes
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(x + 2, y + 8);
+                ctx.lineTo(x + 8, y + 14);
+                ctx.moveTo(x + 2, y + 18);
+                ctx.lineTo(x + 8, y + 24);
+                ctx.stroke();
+
+                ctx.restore();
+            }
+
+            drawDetector(ctx) {
+                const d = this.detector;
+                ctx.save();
+
+                // Phosphor Screen Body
+                const grad = ctx.createLinearGradient(d.x, d.y, d.x + d.width, d.y);
+                grad.addColorStop(0, '#064e3b');
+                grad.addColorStop(0.3, '#022c22');
+                grad.addColorStop(1, '#064e3b');
+
+                ctx.fillStyle = grad;
+                ctx.strokeStyle = 'rgba(0, 255, 163, 0.4)';
+                ctx.lineWidth = 2;
+                ctx.shadowColor = 'rgba(0, 255, 163, 0.3)';
+                ctx.shadowBlur = 15;
+
+                ctx.beginPath();
+                ctx.roundRect(d.x, d.y, d.width, d.height, 8);
+                ctx.fill();
+                ctx.stroke();
+
+                // Phosphor Grid ticks
+                ctx.strokeStyle = 'rgba(0, 255, 163, 0.2)';
+                ctx.lineWidth = 1;
+                for (let y = d.y + 20; y < d.y + d.height; y += 25) {
+                    ctx.beginPath();
+                    ctx.moveTo(d.x + 4, y);
+                    ctx.lineTo(d.x + d.width - 4, y);
+                    ctx.stroke();
+                }
+
+                // Header & Footer Labels
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#00ffa3';
+                ctx.font = 'bold 11px var(--font-mono)';
+                ctx.textAlign = 'center';
+                ctx.fillText('ANTEPARO', d.x + d.width / 2, d.y - 12);
+                ctx.fillStyle = 'rgba(255,255,255,0.6)';
+                ctx.font = '9px var(--font-mono)';
+                ctx.fillText('DETECTOR', d.x + d.width / 2, d.y + d.height + 16);
+
+                ctx.restore();
+            }
+
+            drawBeams(ctx) {
+                ctx.save();
+
+                this.beams.forEach(b => {
+                    if (b.intensity <= 0.0001) return;
+
+                    // Core beam width and alpha proportional to intensity
+                    const baseWidth = Math.max(1.5, b.intensity * 9);
+                    const alpha = b.blocked ? 0.25 : Math.max(0.2, b.intensity);
+
+                    // 1. Soft Outer Glow
+                    ctx.save();
+                    ctx.globalAlpha = alpha * 0.4;
+                    ctx.strokeStyle = b.color;
+                    ctx.lineWidth = baseWidth + 8;
+                    ctx.shadowColor = b.color;
+                    ctx.shadowBlur = 18;
+                    ctx.beginPath();
+                    ctx.moveTo(b.p0.x, b.p0.y);
+                    ctx.bezierCurveTo(b.p1.x, b.p1.y, b.p2.x, b.p2.y, b.p3.x, b.p3.y);
+                    ctx.stroke();
+                    ctx.restore();
+
+                    // 2. Sharp Core Laser Beam
+                    ctx.save();
+                    ctx.globalAlpha = alpha;
+                    ctx.strokeStyle = b.blocked ? 'rgba(244, 63, 94, 0.4)' : b.color;
+                    ctx.lineWidth = baseWidth;
+                    ctx.beginPath();
+                    ctx.moveTo(b.p0.x, b.p0.y);
+                    ctx.bezierCurveTo(b.p1.x, b.p1.y, b.p2.x, b.p2.y, b.p3.x, b.p3.y);
+                    ctx.stroke();
+                    ctx.restore();
+                });
+
+                ctx.restore();
+            }
+
+            drawParticles(ctx) {
+                ctx.save();
+
+                this.particles.forEach(p => {
+                    // 1. Trail
+                    if (p.history.length > 1) {
+                        for (let j = 0; j < p.history.length - 1; j++) {
+                            const pt1 = p.history[j];
+                            const pt2 = p.history[j + 1];
+                            ctx.strokeStyle = p.color;
+                            ctx.globalAlpha = pt1.alpha * 0.5;
+                            ctx.lineWidth = 3;
+                            ctx.beginPath();
+                            ctx.moveTo(pt1.x, pt1.y);
+                            ctx.lineTo(pt2.x, pt2.y);
+                            ctx.stroke();
+                        }
+                    }
+
+                    // 2. Particle Core
+                    ctx.globalAlpha = 1.0;
+                    ctx.fillStyle = '#ffffff';
+                    ctx.shadowColor = p.color;
+                    ctx.shadowBlur = 10;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 3.5, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // 3. Mini Spin Vector Arrow S
+                    const arrowLen = 12;
+                    let angle = p.spinVectorAngle;
+                    if (p.currentAngle !== null) {
+                        angle = (p.currentAngle * Math.PI) / 180 - Math.PI / 2;
+                    }
+                    const ax = p.x + Math.cos(angle) * arrowLen;
+                    const ay = p.y + Math.sin(angle) * arrowLen;
+
+                    ctx.strokeStyle = p.color;
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(p.x, p.y);
+                    ctx.lineTo(ax, ay);
+                    ctx.stroke();
+
+                    // Arrow head
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(ax, ay, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+
+                ctx.restore();
+            }
+
+            drawBeamHUDLabels(ctx) {
+                ctx.save();
+
+                this.beams.forEach(b => {
+                    if (b.stage === 0) return; // Skip oven root
+                    if (b.intensity <= 0.001) return;
+
+                    // Position label midway along the cubic Bezier curve (t = 0.5)
+                    const t = 0.55;
+                    const u = 1 - t;
+                    const midX = u*u*u*b.p0.x + 3*u*u*t*b.p1.x + 3*u*t*t*b.p2.x + t*t*t*b.p3.x;
+                    const midY = u*u*u*b.p0.y + 3*u*u*t*b.p1.y + 3*u*t*t*b.p2.y + t*t*t*b.p3.y;
+
+                    const labelText = b.label;
+                    ctx.font = 'bold 10px var(--font-mono)';
+                    const textMetrics = ctx.measureText(labelText);
+                    const pillWidth = textMetrics.width + 16;
+                    const pillHeight = 20;
+
+                    // Background HUD Pill
+                    ctx.fillStyle = 'rgba(8, 12, 24, 0.88)';
+                    ctx.strokeStyle = b.blocked ? 'rgba(244, 63, 94, 0.6)' : b.color;
+                    ctx.lineWidth = 1;
+                    ctx.shadowColor = 'rgba(0,0,0,0.6)';
+                    ctx.shadowBlur = 6;
+
+                    ctx.beginPath();
+                    ctx.roundRect(midX - pillWidth / 2, midY - pillHeight / 2 - 12, pillWidth, pillHeight, 5);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Text
+                    ctx.fillStyle = b.blocked ? 'var(--rose-danger)' : '#fff';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(b.blocked ? `🚫 ${labelText}` : labelText, midX, midY - 12);
+                });
+
+                ctx.restore();
+            }
+
+            loop(timestamp) {
+                const dt = Math.min((timestamp - this.lastTime) / 1000, 0.1);
+                this.lastTime = timestamp;
+
+                this.updateParticles(dt);
+                this.draw();
+
+                requestAnimationFrame((t) => this.loop(t));
+            }
+        }
+
+        // Initialize Application when DOM is ready
+        window.addEventListener('DOMContentLoaded', () => {
+            window.sim = new SternGerlachSimulation();
+        });
+    </script>
+</body>
+</html>
