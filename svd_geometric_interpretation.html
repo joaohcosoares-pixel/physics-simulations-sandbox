@@ -1,0 +1,2069 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interpretação Geométrica da Decomposição em Valores Singulares (SVD) em ℝ²</title>
+    
+    <!-- Fontes Google para visual limpo e moderno -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Configuração e Inclusão do MathJax 3 -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: {
+                fontCache: 'global'
+            },
+            startup: {
+                ready: () => {
+                    MathJax.startup.defaultReady();
+                    window.mathJaxReady = true;
+                    if (window.updateMathDisplay) {
+                        window.updateMathDisplay();
+                    }
+                }
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+    <style>
+        /* ==========================================================================
+           1. VARIÁVEIS CSS E DESIGN SYSTEM (TEMA ESCURO CIENTÍFICO)
+           ========================================================================== */
+        :root {
+            --bg-dark: #090d16;
+            --bg-card: rgba(15, 23, 42, 0.85);
+            --bg-card-hover: rgba(30, 41, 59, 0.7);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --border-focus: rgba(99, 102, 241, 0.5);
+            
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
+            
+            /* Cores dos Vetores Singulares e Elementos Geométricos */
+            --color-v1: #06b6d4;       /* Ciano vibrante para v1 e sigma1*u1 */
+            --color-v1-glow: rgba(6, 182, 212, 0.35);
+            --color-v2: #f43f5e;       /* Rosa/Coral para v2 e sigma2*u2 */
+            --color-v2-glow: rgba(244, 63, 94, 0.35);
+            --color-x: #fbbf24;        /* Âmbar/Dourado para vetor interativo x e Ax */
+            --color-x-glow: rgba(251, 191, 36, 0.4);
+            --color-circle: rgba(148, 163, 184, 0.45);
+            --color-ellipse: rgba(99, 102, 241, 0.8);
+            --color-ellipse-fill: rgba(99, 102, 241, 0.08);
+            --color-grid: rgba(255, 255, 255, 0.05);
+            --color-axis: rgba(255, 255, 255, 0.22);
+            --accent-purple: #818cf8;
+            
+            --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+            --font-mono: 'Fira Code', monospace;
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Layout Principal */
+        .app-container {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* Área de Visualização Gráfica */
+        .main-viewport {
+            flex: 1;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            background: radial-gradient(circle at 50% 50%, #111827 0%, #090d16 100%);
+        }
+
+        /* Barra Superior da Viewport */
+        .viewport-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            z-index: 10;
+        }
+
+        .header-title-group h1 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-title-group p {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+        }
+
+        .view-mode-tabs {
+            display: flex;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 3px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            gap: 2px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 6px 14px;
+            font-size: 0.78rem;
+            font-weight: 500;
+            font-family: var(--font-sans);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-btn.active {
+            color: #ffffff;
+            background: #4f46e5;
+            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
+        }
+
+        /* Container de Canvases */
+        .canvases-wrapper {
+            flex: 1;
+            display: flex;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Visualização Dupla (Simultânea) */
+        .dual-view-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            gap: 1px;
+            background-color: var(--border-color);
+        }
+
+        .canvas-pane {
+            flex: 1;
+            height: 100%;
+            position: relative;
+            background-color: var(--bg-dark);
+            display: flex;
+            flex-direction: column;
+            cursor: crosshair;
+        }
+
+        .canvas-pane-header {
+            position: absolute;
+            top: 14px;
+            left: 16px;
+            right: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .pane-badge {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: var(--radius-md);
+            pointer-events: auto;
+        }
+
+        .pane-badge h2 {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pane-badge p {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+            margin-top: 2px;
+        }
+
+        .legend-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.72rem;
+            font-family: var(--font-mono);
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-right: 4px;
+            background: rgba(0, 0, 0, 0.35);
+        }
+
+        .dot-v1 { width: 8px; height: 8px; border-radius: 50%; background-color: var(--color-v1); box-shadow: 0 0 6px var(--color-v1); }
+        .dot-v2 { width: 8px; height: 8px; border-radius: 50%; background-color: var(--color-v2); box-shadow: 0 0 6px var(--color-v2); }
+        .dot-x  { width: 8px; height: 8px; border-radius: 50%; background-color: var(--color-x);  box-shadow: 0 0 6px var(--color-x); }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            touch-action: none;
+        }
+
+        /* Container de Passo a Passo */
+        .step-view-container {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .step-navbar {
+            padding: 12px 20px;
+            background: rgba(15, 23, 42, 0.7);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 5;
+        }
+
+        .step-buttons-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .step-nav-btn {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 6px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 0.78rem;
+            font-family: var(--font-sans);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .step-nav-btn:hover {
+            color: var(--text-main);
+            background: rgba(51, 65, 85, 0.8);
+        }
+
+        .step-nav-btn.active {
+            background: #4f46e5;
+            color: #ffffff;
+            border-color: #6366f1;
+            font-weight: 600;
+        }
+
+        .step-anim-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .play-btn {
+            background: #10b981;
+            border: none;
+            color: #ffffff;
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+
+        .play-btn:hover {
+            background: #059669;
+        }
+
+        .step-slider-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.75rem;
+            font-family: var(--font-mono);
+            color: var(--text-muted);
+        }
+
+        .step-slider-container input[type="range"] {
+            width: 140px;
+        }
+
+        .step-explanation-overlay {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(15, 23, 42, 0.88);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 16px 20px;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+
+        .step-expl-text h3 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        .step-expl-text p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .step-formula-box {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 8px 16px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+        }
+
+        /* Pipeline 4-Stage Grid View */
+        .pipeline-view-container {
+            display: none;
+            width: 100%;
+            height: 100%;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            background-color: var(--border-color);
+        }
+
+        .pipeline-col {
+            background-color: var(--bg-dark);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .pipeline-col-header {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(8px);
+            padding: 6px 10px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+            font-size: 0.74rem;
+            font-family: var(--font-mono);
+            z-index: 5;
+            text-align: center;
+        }
+
+        /* Barra Lateral de Controles e Informações Matemáticas */
+        .sidebar {
+            width: 420px;
+            height: 100%;
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            gap: 18px;
+            overflow-y: auto;
+            z-index: 20;
+            box-shadow: -10px 0 35px rgba(0, 0, 0, 0.6);
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 4px;
+        }
+
+        /* Cartões de Seção */
+        .section-card {
+            background: rgba(30, 41, 59, 0.45);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-size: 0.84rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Grade da Matriz A */
+        .matrix-input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.25);
+            padding: 12px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+        }
+
+        .matrix-cell {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .matrix-cell-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.74rem;
+            font-family: var(--font-mono);
+            color: var(--text-muted);
+        }
+
+        .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 5px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.12);
+            outline: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #6366f1;
+            border: 2px solid #ffffff;
+            cursor: pointer;
+            box-shadow: 0 0 6px rgba(99, 102, 241, 0.6);
+            transition: transform 0.1s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .num-input {
+            width: 54px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            color: var(--text-main);
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            padding: 3px 6px;
+            text-align: right;
+            outline: none;
+        }
+
+        .num-input:focus {
+            border-color: var(--border-focus);
+            box-shadow: 0 0 6px rgba(99, 102, 241, 0.3);
+        }
+
+        /* Botões de Presets */
+        .preset-chips-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .preset-chip {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 0.72rem;
+            padding: 4px 8px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .preset-chip:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Controles do Vetor Interativo x */
+        .vector-control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .vector-angle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.78rem;
+            font-family: var(--font-mono);
+        }
+
+        .btn-auto-rotate {
+            background: rgba(251, 191, 36, 0.15);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            color: #fbbf24;
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 0.76rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn-auto-rotate:hover {
+            background: rgba(251, 191, 36, 0.25);
+        }
+
+        .btn-auto-rotate.active {
+            background: #fbbf24;
+            color: #000000;
+            font-weight: 600;
+        }
+
+        /* Exibição da Equação SVD com MathJax */
+        .svd-mathjax-container {
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 12px 10px;
+            text-align: center;
+            overflow-x: auto;
+            min-height: 85px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Tabela de Métricas e Telemetria */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .metric-box {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 8px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .metric-label {
+            font-size: 0.68rem;
+            color: var(--text-dim);
+            font-family: var(--font-sans);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .metric-value {
+            font-size: 0.88rem;
+            font-family: var(--font-mono);
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        /* Barra de Relação Fundamental Av_i = sigma_i u_i */
+        .svd-relations-box {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-family: var(--font-mono);
+            font-size: 0.74rem;
+            background: rgba(0, 0, 0, 0.25);
+            padding: 10px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        .relation-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Opções Visuais Adicionais */
+        .options-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            font-size: 0.76rem;
+            color: var(--text-muted);
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .checkbox-label input {
+            accent-color: #6366f1;
+            cursor: pointer;
+        }
+
+        /* Responsividade */
+        @media (max-width: 1024px) {
+            .app-container {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                height: 380px;
+                border-left: none;
+                border-top: 1px solid var(--border-color);
+            }
+            .dual-view-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        
+        <!-- Viewport Principal dos Gráficos -->
+        <main class="main-viewport">
+            
+            <!-- Barra Superior com Controles de Modo -->
+            <header class="viewport-header">
+                <div class="header-title-group">
+                    <h1>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2.5">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <ellipse cx="12" cy="12" rx="10" ry="5" transform="rotate(-30 12 12)"></ellipse>
+                        </svg>
+                        Decomposição em Valores Singulares (SVD)
+                    </h1>
+                    <p>Interpretação Geométrica em $\mathbb{R}^2$ &bull; $A = U \Sigma V^T$</p>
+                </div>
+
+                <div class="view-mode-tabs">
+                    <button class="tab-btn active" id="tabDualView" title="Exibe domínio e contradomínio lado a lado">
+                        <span>◫</span> Planos Simultâneos
+                    </button>
+                    <button class="tab-btn" id="tabStepView" title="Decomposição passo a passo: V^T -> Sigma -> U">
+                        <span>🪜</span> Passo a Passo ($U \Sigma V^T$)
+                    </button>
+                    <button class="tab-btn" id="tabPipelineView" title="Visualização simultânea dos 4 estágios">
+                        <span>📊</span> Pipeline Completo
+                    </button>
+                </div>
+            </header>
+
+            <!-- Container Principal dos Canvases -->
+            <div class="canvases-wrapper">
+                
+                <!-- 1. MODO PLANOS SIMULTÂNEOS (Padrão) -->
+                <div class="dual-view-container" id="dualViewContainer">
+                    
+                    <!-- Plano de Domínio (R² Original) -->
+                    <div class="canvas-pane" id="domainPane">
+                        <div class="canvas-pane-header">
+                            <div class="pane-badge">
+                                <h2>Plano de Domínio ($\mathbb{R}^2$ Original)</h2>
+                                <p>Circunferência Unitária $S = \{x \in \mathbb{R}^2 \mid \|x\| = 1\}$</p>
+                                <div style="margin-top: 6px;">
+                                    <span class="legend-tag"><span class="dot-v1"></span> $v_1$</span>
+                                    <span class="legend-tag"><span class="dot-v2"></span> $v_2$</span>
+                                    <span class="legend-tag"><span class="dot-x"></span> $x$ (Arraste)</span>
+                                </div>
+                            </div>
+                        </div>
+                        <canvas id="domainCanvas"></canvas>
+                    </div>
+
+                    <!-- Plano de Contradomínio (R² Transformado) -->
+                    <div class="canvas-pane" id="codomainPane">
+                        <div class="canvas-pane-header">
+                            <div class="pane-badge">
+                                <h2>Plano de Contradomínio ($\mathbb{R}^2$ Transformado)</h2>
+                                <p>Elipse Imagem $E = \{Ax \mid x \in S\}$</p>
+                                <div style="margin-top: 6px;">
+                                    <span class="legend-tag"><span class="dot-v1"></span> $\sigma_1 u_1 = A v_1$</span>
+                                    <span class="legend-tag"><span class="dot-v2"></span> $\sigma_2 u_2 = A v_2$</span>
+                                    <span class="legend-tag"><span class="dot-x"></span> $Ax$ (Mapeado)</span>
+                                </div>
+                            </div>
+                        </div>
+                        <canvas id="codomainCanvas"></canvas>
+                    </div>
+
+                </div>
+
+                <!-- 2. MODO PASSO A PASSO (V^T -> Sigma -> U) -->
+                <div class="step-view-container" id="stepViewContainer">
+                    <div class="step-navbar">
+                        <div class="step-buttons-group">
+                            <button class="step-nav-btn active" data-step="0">0. Domínio ($x$)</button>
+                            <button class="step-nav-btn" data-step="1">1. Rotação $V^T$</button>
+                            <button class="step-nav-btn" data-step="2">2. Escala $\Sigma$</button>
+                            <button class="step-nav-btn" data-step="3">3. Rotação $U$ ($Ax$)</button>
+                        </div>
+                        <div class="step-anim-controls">
+                            <button class="play-btn" id="btnPlayStepAnim">
+                                <span id="stepPlayIcon">▶</span> <span id="stepPlayLabel">Animar Decomposição</span>
+                            </button>
+                            <div class="step-slider-container">
+                                <span>Progresso $t$:</span>
+                                <input type="range" id="stepProgressSlider" min="0" max="3" step="0.01" value="0">
+                                <span id="stepProgressVal">0.00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <canvas id="stepCanvas" style="flex:1;"></canvas>
+
+                    <div class="step-explanation-overlay">
+                        <div class="step-expl-text">
+                            <h3 id="stepExplTitle">Estágio 0: Domínio Original</h3>
+                            <p id="stepExplDesc">A circunferência unitária e a base ortonormal de vetores singulares à direita $\{v_1, v_2\}$ no espaço de domínio.</p>
+                        </div>
+                        <div class="step-formula-box" id="stepFormulaBox">
+                            $x \in S^1$
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. MODO PIPELINE COMPLETO (4 Estágios Simultâneos) -->
+                <div class="pipeline-view-container" id="pipelineViewContainer">
+                    <div class="pipeline-col">
+                        <div class="pipeline-col-header">0. Domínio Original ($x \in S$)</div>
+                        <canvas id="pipeCanvas0"></canvas>
+                    </div>
+                    <div class="pipeline-col">
+                        <div class="pipeline-col-header">1. Rotação $V^T x$</div>
+                        <canvas id="pipeCanvas1"></canvas>
+                    </div>
+                    <div class="pipeline-col">
+                        <div class="pipeline-col-header">2. Escalonamento $\Sigma V^T x$</div>
+                        <canvas id="pipeCanvas2"></canvas>
+                    </div>
+                    <div class="pipeline-col">
+                        <div class="pipeline-col-header">3. Rotação Final $U \Sigma V^T x = Ax$</div>
+                        <canvas id="pipeCanvas3"></canvas>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+        <!-- Barra Lateral de Controles e Telemetria Matemática -->
+        <aside class="sidebar">
+            
+            <!-- 1. Matriz de Transformação Linear A -->
+            <section class="section-card">
+                <div class="card-header">
+                    <span class="card-title">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/><path d="M15 3v18"/><path d="M3 9h18"/><path d="M3 15h18"/></svg>
+                        Matriz de Transformação $A \in \mathbb{R}^{2 \times 2}$
+                    </span>
+                    <button class="preset-chip" id="btnResetMatrix" title="Redefinir para matriz identidade">Resetar $I$</button>
+                </div>
+
+                <div class="matrix-input-grid">
+                    <!-- a11 -->
+                    <div class="matrix-cell">
+                        <div class="matrix-cell-label">
+                            <span>$a_{11}$</span>
+                            <span id="val_a11">1.50</span>
+                        </div>
+                        <div class="slider-row">
+                            <input type="range" id="slider_a11" min="-3" max="3" step="0.05" value="1.5">
+                            <input type="number" id="num_a11" class="num-input" min="-3" max="3" step="0.05" value="1.50">
+                        </div>
+                    </div>
+
+                    <!-- a12 -->
+                    <div class="matrix-cell">
+                        <div class="matrix-cell-label">
+                            <span>$a_{12}$</span>
+                            <span id="val_a12">1.00</span>
+                        </div>
+                        <div class="slider-row">
+                            <input type="range" id="slider_a12" min="-3" max="3" step="0.05" value="1.0">
+                            <input type="number" id="num_a12" class="num-input" min="-3" max="3" step="0.05" value="1.00">
+                        </div>
+                    </div>
+
+                    <!-- a21 -->
+                    <div class="matrix-cell">
+                        <div class="matrix-cell-label">
+                            <span>$a_{21}$</span>
+                            <span id="val_a21">0.50</span>
+                        </div>
+                        <div class="slider-row">
+                            <input type="range" id="slider_a21" min="-3" max="3" step="0.05" value="0.5">
+                            <input type="number" id="num_a21" class="num-input" min="-3" max="3" step="0.05" value="0.50">
+                        </div>
+                    </div>
+
+                    <!-- a22 -->
+                    <div class="matrix-cell">
+                        <div class="matrix-cell-label">
+                            <span>$a_{22}$</span>
+                            <span id="val_a22">1.50</span>
+                        </div>
+                        <div class="slider-row">
+                            <input type="range" id="slider_a22" min="-3" max="3" step="0.05" value="1.5">
+                            <input type="number" id="num_a22" class="num-input" min="-3" max="3" step="0.05" value="1.50">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Presets Didáticos -->
+                <div>
+                    <div style="font-size: 0.72rem; color: var(--text-dim); margin-bottom: 6px;">TRANSFORMAÇÕES NOTÁVEIS:</div>
+                    <div class="preset-chips-container">
+                        <button class="preset-chip" data-preset="shear">Cisalhamento</button>
+                        <button class="preset-chip" data-preset="rotscale">Rotação + Escala</button>
+                        <button class="preset-chip" data-preset="diag">Diagonal</button>
+                        <button class="preset-chip" data-preset="rank1">Posto 1 (Singular)</button>
+                        <button class="preset-chip" data-preset="ortho">Ortogonal</button>
+                        <button class="preset-chip" data-preset="symm">Simétrica</button>
+                        <button class="preset-chip" data-preset="reflect">Reflexão</button>
+                        <button class="preset-chip" data-preset="random">🎲 Aleatória</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. Decomposição SVD em Tempo Real com MathJax -->
+            <section class="section-card">
+                <div class="card-title">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/></svg>
+                    Decomposição Matricial $A = U \Sigma V^T$
+                </div>
+                
+                <div class="svd-mathjax-container" id="mathjaxFormulaOutput">
+                    $$\begin{pmatrix} 1.50 & 1.00 \\ 0.50 & 1.50 \end{pmatrix} = U \Sigma V^T$$
+                </div>
+
+                <!-- Relações Fundamentais -->
+                <div class="svd-relations-box">
+                    <div class="relation-row" style="color: var(--color-v1);">
+                        <span>$A v_1 = \sigma_1 u_1$:</span>
+                        <span id="relation_v1_val">(1.91, 1.34)</span>
+                    </div>
+                    <div class="relation-row" style="color: var(--color-v2);">
+                        <span>$A v_2 = \sigma_2 u_2$:</span>
+                        <span id="relation_v2_val">(-0.41, 0.58)</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. Controle do Vetor Interativo x -->
+            <section class="section-card">
+                <div class="card-title">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2"><line x1="5" y1="19" x2="19" y2="5"></line><polyline points="12 5 19 5 19 12"></polyline></svg>
+                    Vetor Interativo $x \in S^1$
+                </div>
+
+                <div class="vector-control-group">
+                    <div class="vector-angle-row">
+                        <span>Ângulo $\theta_x$: <strong id="angleValText">45.0°</strong></span>
+                        <span style="color: var(--text-dim); font-size: 0.72rem;">(Arraste no Canvas)</span>
+                    </div>
+                    <input type="range" id="angleSlider" min="0" max="360" step="0.5" value="45">
+
+                    <button class="btn-auto-rotate" id="btnAutoRotate">
+                        <span id="rotateIcon">🔄</span> Girar Vetor $x$ Automaticamente
+                    </button>
+                </div>
+
+                <div class="svd-relations-box" style="margin-top: 4px;">
+                    <div class="relation-row" style="color: var(--color-x);">
+                        <span>$x$:</span>
+                        <span id="vector_x_val">(0.71, 0.71)</span>
+                    </div>
+                    <div class="relation-row" style="color: var(--color-x);">
+                        <span>$A x$:</span>
+                        <span id="vector_ax_val">(1.77, 1.41) &bull; $\|Ax\| = 2.26$</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. Propriedades Espectrais e Métricas -->
+            <section class="section-card">
+                <div class="card-title">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                    Métricas e Propriedades
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-box">
+                        <span class="metric-label">Valor Singular $\sigma_1$</span>
+                        <span class="metric-value" id="metric_sigma1" style="color: var(--color-v1);">2.33</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-label">Valor Singular $\sigma_2$</span>
+                        <span class="metric-value" id="metric_sigma2" style="color: var(--color-v2);">0.71</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-label">Determinante $\det(A)$</span>
+                        <span class="metric-value" id="metric_det">1.75</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-label">Condicionamento $\kappa(A)$</span>
+                        <span class="metric-value" id="metric_cond">3.28</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-label">Norma Espectral $\|A\|_2$</span>
+                        <span class="metric-value" id="metric_norm">2.33</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-label">Posto $\operatorname{rank}(A)$</span>
+                        <span class="metric-value" id="metric_rank">2 (Completo)</span>
+                    </div>
+                </div>
+
+                <div class="options-row" style="margin-top: 6px;">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="chkShowProjections" checked>
+                        <span>Projeções de $x$</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="chkShowTrace" checked>
+                        <span>Rastro Dinâmico de $Ax$</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="chkShowGrid" checked>
+                        <span>Grade Coordenada</span>
+                    </label>
+                </div>
+            </section>
+
+        </aside>
+
+    </div>
+
+    <!-- ==========================================================================
+       SCRIPT PRINCIPAL DA SIMULAÇÃO (MATEMÁTICA, CANVAS E INTERATIVIDADE)
+       ========================================================================== -->
+    <script>
+        /**
+         * Simulação Interativa da Interpretação Geométrica da SVD em R^2
+         * Rigorosamente modelada com computação analítica da SVD 2x2.
+         */
+
+        // --- Estado Global da Aplicação ---
+        const state = {
+            // Elementos da Matriz A
+            a11: 1.5,
+            a12: 1.0,
+            a21: 0.5,
+            a22: 1.5,
+
+            // Vetor Interativo x
+            angleX: Math.PI / 4, // 45 graus
+            isRotatingX: false,
+            rotateSpeed: 0.015,
+
+            // Modo de Visualização: 'dual', 'step', 'pipeline'
+            viewMode: 'dual',
+
+            // Estado da Decomposição Passo a Passo
+            stepProgress: 0, // 0.0 a 3.0
+            isStepAnimating: false,
+
+            // Configurações Gráficas
+            showProjections: true,
+            showTrace: true,
+            showGrid: true,
+            
+            // Histórico de Rastro de Ax
+            axTrace: [],
+            maxTracePoints: 120,
+
+            // Interação com Mouse
+            isDraggingDomain: false,
+
+            // Resultados Calculados da SVD
+            svd: null
+        };
+
+        // --- Presets Notáveis ---
+        const PRESETS = {
+            shear: { a11: 1.0, a12: 1.5, a21: 0.0, a22: 1.0 },
+            rotscale: { a11: 1.41, a12: -1.41, a21: 0.71, a22: 0.71 },
+            diag: { a11: 2.5, a12: 0.0, a21: 0.0, a22: 1.2 },
+            rank1: { a11: 1.5, a12: 1.0, a21: 3.0, a22: 2.0 },
+            ortho: { a11: 0.5, a12: -0.87, a21: 0.87, a22: 0.5 },
+            symm: { a11: 2.0, a12: 1.0, a21: 1.0, a22: -1.0 },
+            reflect: { a11: 0.0, a12: 1.0, a21: 1.0, a22: 0.0 },
+            random: () => ({
+                a11: +(Math.random() * 4 - 2).toFixed(2),
+                a12: +(Math.random() * 4 - 2).toFixed(2),
+                a21: +(Math.random() * 4 - 2).toFixed(2),
+                a22: +(Math.random() * 4 - 2).toFixed(2)
+            })
+        };
+
+        // --- 1. MÓDULO MATEMÁTICO: DECOMPOSIÇÃO EM VALORES SINGULARES (SVD 2x2) ---
+        function computeSVD(a, b, c, d) {
+            // Matriz A = [a, b; c, d]
+            // Calculamos A^T * A = [E, F; F, G]
+            const E = a * a + c * c;
+            const G = b * b + d * d;
+            const F = a * b + c * d;
+
+            // Autovalores de A^T * A
+            const tr = E + G;
+            const diff = E - G;
+            const disc = Math.sqrt(Math.max(0, diff * diff + 4 * F * F));
+
+            const lambda1 = Math.max(0, (tr + disc) / 2);
+            const lambda2 = Math.max(0, (tr - disc) / 2);
+
+            const sigma1 = Math.sqrt(lambda1);
+            const sigma2 = Math.sqrt(lambda2);
+
+            // Vetores singulares à direita V = [v1, v2] (autovetores ortonormais de A^T A)
+            let thetaV = 0;
+            if (disc > 1e-12) {
+                thetaV = 0.5 * Math.atan2(2 * F, diff);
+            }
+
+            let v1 = { x: Math.cos(thetaV), y: Math.sin(thetaV) };
+            let v2 = { x: -Math.sin(thetaV), y: Math.cos(thetaV) };
+
+            // Garantir que v1 corresponde a lambda1
+            const testL1 = v1.x * (E * v1.x + F * v1.y) + v1.y * (F * v1.x + G * v1.y);
+            const testL2 = v2.x * (E * v2.x + F * v2.y) + v2.y * (F * v2.x + G * v2.y);
+            if (testL1 < testL2) {
+                const tmp = { ...v1 };
+                v1 = { ...v2 };
+                v2 = { x: -tmp.x, y: -tmp.y };
+            }
+
+            // Vetores singulares à esquerda U = [u1, u2] via A v_i = sigma_i u_i
+            const Av1 = {
+                x: a * v1.x + b * v1.y,
+                y: c * v1.x + d * v1.y
+            };
+            const Av2 = {
+                x: a * v2.x + b * v2.y,
+                y: c * v2.x + d * v2.y
+            };
+
+            let u1 = { x: 1, y: 0 };
+            let u2 = { x: 0, y: 1 };
+            const EPS = 1e-10;
+
+            if (sigma1 > EPS) {
+                u1 = { x: Av1.x / sigma1, y: Av1.y / sigma1 };
+            }
+
+            if (sigma2 > EPS) {
+                u2 = { x: Av2.x / sigma2, y: Av2.y / sigma2 };
+            } else {
+                // Posto < 2: construir u2 ortonormal a u1 respeitando a orientação
+                const detA = a * d - b * c;
+                if (detA >= 0) {
+                    u2 = { x: -u1.y, y: u1.x };
+                } else {
+                    u2 = { x: u1.y, y: -u1.x };
+                }
+            }
+
+            const detA = a * d - b * c;
+            const cond = sigma2 > EPS ? (sigma1 / sigma2) : Infinity;
+            const rank = (sigma1 > EPS ? 1 : 0) + (sigma2 > EPS ? 1 : 0);
+
+            return {
+                a, b, c, d,
+                sigma1, sigma2,
+                v1, v2,
+                u1, u2,
+                Av1, Av2,
+                thetaV,
+                thetaU: Math.atan2(u1.y, u1.x),
+                detA,
+                cond,
+                rank
+            };
+        }
+
+        // --- Recalcular SVD com Base no Estado Atual ---
+        function updateSVD() {
+            state.svd = computeSVD(state.a11, state.a12, state.a21, state.a22);
+            updateUIElements();
+            debouncedMathJax();
+        }
+
+        // --- 2. RENDERIZAÇÃO GRÁFICA (CANVAS 2D DE ALTA PRECISÃO) ---
+        const domainCanvas = document.getElementById('domainCanvas');
+        const codomainCanvas = document.getElementById('codomainCanvas');
+        const stepCanvas = document.getElementById('stepCanvas');
+        const pipeCanvas0 = document.getElementById('pipeCanvas0');
+        const pipeCanvas1 = document.getElementById('pipeCanvas1');
+        const pipeCanvas2 = document.getElementById('pipeCanvas2');
+        const pipeCanvas3 = document.getElementById('pipeCanvas3');
+
+        // Configuração de Escala e Resolução HiDPI
+        function setupHiDPICanvas(canvas) {
+            if (!canvas) return null;
+            const rect = canvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            const width = rect.width;
+            const height = rect.height;
+
+            if (canvas.width !== width * dpr || canvas.height !== height * dpr) {
+                canvas.width = width * dpr;
+                canvas.height = height * dpr;
+            }
+
+            const ctx = canvas.getContext('2d');
+            ctx.resetTransform();
+            ctx.scale(dpr, dpr);
+            return { ctx, width, height };
+        }
+
+        // Desenhar Eixos e Grade Cartesiana
+        function drawGrid(ctx, width, height, scale, originX, originY) {
+            if (!state.showGrid) return;
+            
+            ctx.save();
+            ctx.lineWidth = 1;
+            
+            // Linhas da Grade Secundária
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            const step = scale * 0.5; // marcas a cada 0.5 unidades
+            
+            const startX = ((originX % step) - step);
+            for (let x = startX; x < width; x += step) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, height);
+                ctx.stroke();
+            }
+
+            const startY = ((originY % step) - step);
+            for (let y = startY; y < height; y += step) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+                ctx.stroke();
+            }
+
+            // Eixos Principais
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+            ctx.lineWidth = 1.5;
+
+            // Eixo X
+            ctx.beginPath();
+            ctx.moveTo(0, originY);
+            ctx.lineTo(width, originY);
+            ctx.stroke();
+
+            // Eixo Y
+            ctx.beginPath();
+            ctx.moveTo(originX, 0);
+            ctx.lineTo(originX, height);
+            ctx.stroke();
+
+            // Marcações Numéricas nos Eixos
+            ctx.fillStyle = 'rgba(148, 163, 184, 0.6)';
+            ctx.font = '10px Fira Code, monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+
+            const maxUnits = Math.ceil(Math.max(width, height) / scale);
+            for (let i = -maxUnits; i <= maxUnits; i++) {
+                if (i === 0) continue;
+                const px = originX + i * scale;
+                const py = originY - i * scale;
+
+                if (px > 20 && px < width - 20) {
+                    ctx.beginPath();
+                    ctx.moveTo(px, originY - 3);
+                    ctx.lineTo(px, originY + 3);
+                    ctx.stroke();
+                    ctx.fillText(i.toString(), px, originY + 6);
+                }
+
+                if (py > 20 && py < height - 20) {
+                    ctx.beginPath();
+                    ctx.moveTo(originX - 3, py);
+                    ctx.lineTo(originX + 3, py);
+                    ctx.stroke();
+                    ctx.textAlign = 'right';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(i.toString(), originX - 6, py);
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'top';
+                }
+            }
+
+            ctx.restore();
+        }
+
+        // Função Utilitária para Desenhar Vetores com Setas Nítidas
+        function drawVector(ctx, ox, oy, vx, vy, color, label, lineWidth = 2.5, isDashed = false) {
+            const headlen = 10;
+            const angle = Math.atan2(-vy, vx);
+            const tox = ox + vx;
+            const toy = oy - vy;
+            const length = Math.hypot(vx, vy);
+
+            if (length < 2) return; // Vetor nulo não precisa de seta
+
+            ctx.save();
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            ctx.lineWidth = lineWidth;
+
+            if (isDashed) {
+                ctx.setLineDash([4, 4]);
+            }
+
+            // Corpo do vetor
+            ctx.beginPath();
+            ctx.moveTo(ox, oy);
+            ctx.lineTo(tox, toy);
+            ctx.stroke();
+
+            // Ponta da seta
+            ctx.setLineDash([]);
+            ctx.beginPath();
+            ctx.moveTo(tox, toy);
+            ctx.lineTo(tox - headlen * Math.cos(angle - Math.PI / 7), toy + headlen * Math.sin(angle - Math.PI / 7));
+            ctx.lineTo(tox - headlen * Math.cos(angle + Math.PI / 7), toy + headlen * Math.sin(angle + Math.PI / 7));
+            ctx.closePath();
+            ctx.fill();
+
+            // Rótulo
+            if (label) {
+                ctx.font = '600 12px Inter, sans-serif';
+                ctx.fillStyle = color;
+                const offset = 14;
+                const lx = tox + offset * Math.cos(angle);
+                const ly = toy - offset * Math.sin(angle);
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(label, lx, ly);
+            }
+
+            ctx.restore();
+        }
+
+        // --- Renderizar Plano de Domínio ---
+        function renderDomain() {
+            const setup = setupHiDPICanvas(domainCanvas);
+            if (!setup) return;
+            const { ctx, width, height } = setup;
+
+            const ox = width / 2;
+            const oy = height / 2;
+            const scale = Math.min(width, height) / 7.5; // Espaço para [-3.5, 3.5]
+
+            // Fundo
+            ctx.clearRect(0, 0, width, height);
+            drawGrid(ctx, width, height, scale, ox, oy);
+
+            const svd = state.svd;
+
+            // 1. Circunferência Unitária S^1
+            ctx.save();
+            ctx.strokeStyle = 'rgba(6, 182, 212, 0.4)';
+            ctx.fillStyle = 'rgba(6, 182, 212, 0.04)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(ox, oy, scale, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+
+            // 2. Projeções ortogonais do vetor x sobre a base {v1, v2}
+            const xVal = { x: Math.cos(state.angleX), y: Math.sin(state.angleX) };
+            const c1 = xVal.x * svd.v1.x + xVal.y * svd.v1.y; // x . v1
+            const c2 = xVal.x * svd.v2.x + xVal.y * svd.v2.y; // x . v2
+
+            if (state.showProjections) {
+                ctx.save();
+                ctx.strokeStyle = 'rgba(251, 191, 36, 0.35)';
+                ctx.setLineDash([3, 3]);
+                ctx.lineWidth = 1.2;
+
+                const p1x = ox + c1 * svd.v1.x * scale;
+                const p1y = oy - c1 * svd.v1.y * scale;
+                const px = ox + xVal.x * scale;
+                const py = oy - xVal.y * scale;
+
+                ctx.beginPath();
+                ctx.moveTo(p1x, p1y);
+                ctx.lineTo(px, py);
+                ctx.stroke();
+
+                const p2x = ox + c2 * svd.v2.x * scale;
+                const p2y = oy - c2 * svd.v2.y * scale;
+
+                ctx.beginPath();
+                ctx.moveTo(p2x, p2y);
+                ctx.lineTo(px, py);
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            // 3. Vetores Ortonormais v1 e v2
+            drawVector(ctx, ox, oy, svd.v1.x * scale, svd.v1.y * scale, '#06b6d4', 'v₁', 3);
+            drawVector(ctx, ox, oy, svd.v2.x * scale, svd.v2.y * scale, '#f43f5e', 'v₂', 3);
+
+            // Símbolo de ângulo reto entre v1 e v2
+            ctx.save();
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.lineWidth = 1;
+            const rArm = 12;
+            const v1Norm = svd.v1;
+            const v2Norm = svd.v2;
+            const pA = { x: ox + v1Norm.x * rArm, y: oy - v1Norm.y * rArm };
+            const pB = { x: ox + (v1Norm.x + v2Norm.x) * rArm, y: oy - (v1Norm.y + v2Norm.y) * rArm };
+            const pC = { x: ox + v2Norm.x * rArm, y: oy - v2Norm.y * rArm };
+            ctx.beginPath();
+            ctx.moveTo(pA.x, pA.y);
+            ctx.lineTo(pB.x, pB.y);
+            ctx.lineTo(pC.x, pC.y);
+            ctx.stroke();
+            ctx.restore();
+
+            // 4. Vetor Interativo x (com handle de arraste)
+            const vx = xVal.x * scale;
+            const vy = xVal.y * scale;
+            drawVector(ctx, ox, oy, vx, vy, '#fbbf24', 'x', 3.5);
+
+            // Ponto de Arraste na ponta de x
+            ctx.save();
+            ctx.fillStyle = '#fbbf24';
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.shadowColor = '#fbbf24';
+            ctx.shadowBlur = 8;
+            ctx.beginPath();
+            ctx.arc(ox + vx, oy - vy, 6, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        // --- Renderizar Plano de Contradomínio ---
+        function renderCodomain() {
+            const setup = setupHiDPICanvas(codomainCanvas);
+            if (!setup) return;
+            const { ctx, width, height } = setup;
+
+            const ox = width / 2;
+            const oy = height / 2;
+            const scale = Math.min(width, height) / 7.5;
+
+            // Fundo
+            ctx.clearRect(0, 0, width, height);
+            drawGrid(ctx, width, height, scale, ox, oy);
+
+            const svd = state.svd;
+
+            // 1. Círculo Unitário Fantasma de Referência
+            ctx.save();
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+            ctx.setLineDash([4, 4]);
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(ox, oy, scale, 0, 2 * Math.PI);
+            ctx.stroke();
+            ctx.restore();
+
+            // 2. Elipse Imagem E = { A x | ||x|| = 1 }
+            ctx.save();
+            ctx.beginPath();
+            const segments = 180;
+            for (let i = 0; i <= segments; i++) {
+                const theta = (i / segments) * 2 * Math.PI;
+                const px = Math.cos(theta);
+                const py = Math.sin(theta);
+
+                const tx = svd.a * px + svd.b * py;
+                const ty = svd.c * px + svd.d * py;
+
+                const cx = ox + tx * scale;
+                const cy = oy - ty * scale;
+
+                if (i === 0) ctx.moveTo(cx, cy);
+                else ctx.lineTo(cx, cy);
+            }
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(99, 102, 241, 0.08)';
+            ctx.fill();
+            ctx.strokeStyle = '#818cf8';
+            ctx.lineWidth = 2.5;
+            ctx.shadowColor = 'rgba(99, 102, 241, 0.4)';
+            ctx.shadowBlur = 10;
+            ctx.stroke();
+            ctx.restore();
+
+            // 3. Semieixos Principais da Elipse: sigma1*u1 e sigma2*u2 (Mesmas cores de v1 e v2)
+            drawVector(ctx, ox, oy, svd.Av1.x * scale, svd.Av1.y * scale, '#06b6d4', 'σ₁u₁ = Av₁', 3.5);
+            drawVector(ctx, ox, oy, svd.Av2.x * scale, svd.Av2.y * scale, '#f43f5e', 'σ₂u₂ = Av₂', 3.5);
+
+            // Vetores unitários u1 e u2 tracejados se sigma_i for grande
+            if (svd.sigma1 > 1.2) {
+                drawVector(ctx, ox, oy, svd.u1.x * scale, svd.u1.y * scale, 'rgba(6, 182, 212, 0.4)', 'u₁', 1.5, true);
+            }
+            if (svd.sigma2 > 1.2) {
+                drawVector(ctx, ox, oy, svd.u2.x * scale, svd.u2.y * scale, 'rgba(244, 63, 94, 0.4)', 'u₂', 1.5, true);
+            }
+
+            // 4. Rastro Dinâmico de Ax
+            if (state.showTrace && state.axTrace.length > 1) {
+                ctx.save();
+                ctx.beginPath();
+                for (let i = 0; i < state.axTrace.length; i++) {
+                    const pt = state.axTrace[i];
+                    const px = ox + pt.x * scale;
+                    const py = oy - pt.y * scale;
+                    if (i === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+                ctx.strokeStyle = 'rgba(251, 191, 36, 0.3)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            // 5. Vetor Resultante Ax
+            const xVal = { x: Math.cos(state.angleX), y: Math.sin(state.angleX) };
+            const axVal = {
+                x: svd.a * xVal.x + svd.b * xVal.y,
+                y: svd.c * xVal.x + svd.d * xVal.y
+            };
+
+            drawVector(ctx, ox, oy, axVal.x * scale, axVal.y * scale, '#fbbf24', 'Ax', 3.5);
+
+            // Ponto terminal de Ax
+            ctx.save();
+            ctx.fillStyle = '#fbbf24';
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.shadowColor = '#fbbf24';
+            ctx.shadowBlur = 8;
+            ctx.beginPath();
+            ctx.arc(ox + axVal.x * scale, oy - axVal.y * scale, 5, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        // --- 3. MODO PASSO A PASSO (DECOMPOSIÇÃO V^T -> Sigma -> U) ---
+        function renderStepView() {
+            const setup = setupHiDPICanvas(stepCanvas);
+            if (!setup) return;
+            const { ctx, width, height } = setup;
+
+            const ox = width / 2;
+            const oy = height / 2;
+            const scale = Math.min(width, height) / 7.5;
+
+            ctx.clearRect(0, 0, width, height);
+            drawGrid(ctx, width, height, scale, ox, oy);
+
+            const svd = state.svd;
+            const t = state.stepProgress; // 0.0 a 3.0
+
+            // Vetor x original
+            const x0 = { x: Math.cos(state.angleX), y: Math.sin(state.angleX) };
+
+            // Matriz intermediária de transformação M(t)
+            let curMatrix = { m11: 1, m12: 0, m21: 0, m22: 1 };
+            let title = '', desc = '', formula = '';
+
+            if (t <= 1.0) {
+                // Interpolação de 0 a 1: Identidade -> V^T
+                const p = t;
+                const currentAngle = -p * svd.thetaV; // Rotação reversa
+                curMatrix = {
+                    m11: Math.cos(currentAngle),
+                    m12: -Math.sin(currentAngle),
+                    m21: Math.sin(currentAngle),
+                    m22: Math.cos(currentAngle)
+                };
+                title = `Estágio 1: Aplicação de Vᵀ (Rotação / Isometria) [${Math.round(p * 100)}%]`;
+                desc = `A transformação Vᵀ alinha a base ortonormal de vetores singulares {v₁, v₂} com os eixos canônicos {e₁, e₂}. Preserva distâncias e ângulos (isometria).`;
+                formula = `$x_1 = V^T x = \\begin{pmatrix} v_1 \\cdot x \\\\ v_2 \\cdot x \\end{pmatrix}$`;
+            } else if (t <= 2.0) {
+                // Interpolação de 1 a 2: V^T -> Sigma V^T
+                const p = t - 1.0;
+                const s1 = 1 + p * (svd.sigma1 - 1);
+                const s2 = 1 + p * (svd.sigma2 - 1);
+
+                // M = diag(s1, s2) * V^T
+                const VT11 = svd.v1.x, VT12 = svd.v1.y;
+                const VT21 = svd.v2.x, VT22 = svd.v2.y;
+
+                curMatrix = {
+                    m11: s1 * VT11,
+                    m12: s1 * VT12,
+                    m21: s2 * VT21,
+                    m22: s2 * VT22
+                };
+                title = `Estágio 2: Aplicação de Σ (Escalonamento Anisotrópico) [${Math.round(p * 100)}%]`;
+                desc = `A matriz diagonal Σ estica o espaço ao longo do eixo horizontal pelo fator σ₁ = ${svd.sigma1.toFixed(2)} e pelo eixo vertical pelo fator σ₂ = ${svd.sigma2.toFixed(2)}. O círculo se torna uma elipse alinhada aos eixos.`;
+                formula = `$x_2 = \\Sigma V^T x = \\begin{pmatrix} \\sigma_1 (v_1 \\cdot x) \\\\ \\sigma_2 (v_2 \\cdot x) \\end{pmatrix}$`;
+            } else {
+                // Interpolação de 2 a 3: Sigma V^T -> U Sigma V^T = A
+                const p = t - 2.0;
+
+                const S11 = svd.sigma1 * svd.v1.x, S12 = svd.sigma1 * svd.v1.y;
+                const S21 = svd.sigma2 * svd.v2.x, S22 = svd.sigma2 * svd.v2.y;
+
+                curMatrix = {
+                    m11: (1 - p) * S11 + p * (svd.a),
+                    m12: (1 - p) * S12 + p * (svd.b),
+                    m21: (1 - p) * S21 + p * (svd.c),
+                    m22: (1 - p) * S22 + p * (svd.d)
+                };
+                title = `Estágio 3: Aplicação de U (Rotação Final no Contradomínio) [${Math.round(p * 100)}%]`;
+                desc = `A matriz ortogonal U rotaciona e orienta a elipse escalonada para o espaço de contradomínio final, completando a transformação A = U Σ Vᵀ.`;
+                formula = `$x_3 = U \\Sigma V^T x = A x$`;
+            }
+
+            // Atualizar textos do overlay explicativo
+            document.getElementById('stepExplTitle').textContent = title;
+            document.getElementById('stepExplDesc').textContent = desc;
+            document.getElementById('stepFormulaBox').innerHTML = formula;
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                MathJax.typesetPromise([document.getElementById('stepFormulaBox')]).catch(() => {});
+            }
+
+            // Desenhar Curva Deformada no Estágio Atual
+            ctx.save();
+            ctx.beginPath();
+            const segs = 180;
+            for (let i = 0; i <= segs; i++) {
+                const theta = (i / segs) * 2 * Math.PI;
+                const px = Math.cos(theta);
+                const py = Math.sin(theta);
+                const tx = curMatrix.m11 * px + curMatrix.m12 * py;
+                const ty = curMatrix.m21 * px + curMatrix.m22 * py;
+                const cx = ox + tx * scale;
+                const cy = oy - ty * scale;
+                if (i === 0) ctx.moveTo(cx, cy);
+                else ctx.lineTo(cx, cy);
+            }
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(99, 102, 241, 0.1)';
+            ctx.fill();
+            ctx.strokeStyle = '#818cf8';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+            ctx.restore();
+
+            // Vetores de Base Transformados
+            const mv1 = {
+                x: curMatrix.m11 * svd.v1.x + curMatrix.m12 * svd.v1.y,
+                y: curMatrix.m21 * svd.v1.x + curMatrix.m22 * svd.v1.y
+            };
+            const mv2 = {
+                x: curMatrix.m11 * svd.v2.x + curMatrix.m12 * svd.v2.y,
+                y: curMatrix.m21 * svd.v2.x + curMatrix.m22 * svd.v2.y
+            };
+
+            drawVector(ctx, ox, oy, mv1.x * scale, mv1.y * scale, '#06b6d4', 'e₁ → σ₁u₁', 3);
+            drawVector(ctx, ox, oy, mv2.x * scale, mv2.y * scale, '#f43f5e', 'e₂ → σ₂u₂', 3);
+
+            // Vetor x transformado
+            const mx = {
+                x: curMatrix.m11 * x0.x + curMatrix.m12 * x0.y,
+                y: curMatrix.m21 * x0.x + curMatrix.m22 * x0.y
+            };
+            drawVector(ctx, ox, oy, mx.x * scale, mx.y * scale, '#fbbf24', 'x(t)', 3.5);
+        }
+
+        // --- 4. MODO PIPELINE COMPLETO (4 MINI-CANVASES SIMULTÂNEOS) ---
+        function renderPipeline() {
+            const svd = state.svd;
+            const x0 = { x: Math.cos(state.angleX), y: Math.sin(state.angleX) };
+
+            const renderSubCanvas = (canvas, transformFn, v1Trans, v2Trans, xTrans, colorCurve) => {
+                const setup = setupHiDPICanvas(canvas);
+                if (!setup) return;
+                const { ctx, width, height } = setup;
+                const ox = width / 2;
+                const oy = height / 2;
+                const scale = Math.min(width, height) / 7.5;
+
+                ctx.clearRect(0, 0, width, height);
+                drawGrid(ctx, width, height, scale, ox, oy);
+
+                // Desenhar curva transformada
+                ctx.save();
+                ctx.beginPath();
+                for (let i = 0; i <= 100; i++) {
+                    const th = (i / 100) * 2 * Math.PI;
+                    const p = transformFn(Math.cos(th), Math.sin(th));
+                    const cx = ox + p.x * scale;
+                    const cy = oy - p.y * scale;
+                    if (i === 0) ctx.moveTo(cx, cy);
+                    else ctx.lineTo(cx, cy);
+                }
+                ctx.closePath();
+                ctx.strokeStyle = colorCurve;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.restore();
+
+                // Vetores
+                drawVector(ctx, ox, oy, v1Trans.x * scale, v1Trans.y * scale, '#06b6d4', '', 2.5);
+                drawVector(ctx, ox, oy, v2Trans.x * scale, v2Trans.y * scale, '#f43f5e', '', 2.5);
+                drawVector(ctx, ox, oy, xTrans.x * scale, xTrans.y * scale, '#fbbf24', '', 3);
+            };
+
+            // 0. Domínio
+            renderSubCanvas(
+                pipeCanvas0,
+                (x, y) => ({ x, y }),
+                svd.v1, svd.v2, x0,
+                'rgba(6, 182, 212, 0.5)'
+            );
+
+            // 1. Rotação V^T
+            const vt_x = { x: svd.v1.x * x0.x + svd.v1.y * x0.y, y: svd.v2.x * x0.x + svd.v2.y * x0.y };
+            renderSubCanvas(
+                pipeCanvas1,
+                (x, y) => ({ x: svd.v1.x * x + svd.v1.y * y, y: svd.v2.x * x + svd.v2.y * y }),
+                { x: 1, y: 0 }, { x: 0, y: 1 }, vt_x,
+                'rgba(99, 102, 241, 0.6)'
+            );
+
+            // 2. Escalonamento Sigma
+            const sig_x = { x: svd.sigma1 * vt_x.x, y: svd.sigma2 * vt_x.y };
+            renderSubCanvas(
+                pipeCanvas2,
+                (x, y) => {
+                    const vtx = svd.v1.x * x + svd.v1.y * y;
+                    const vty = svd.v2.x * x + svd.v2.y * y;
+                    return { x: svd.sigma1 * vtx, y: svd.sigma2 * vty };
+                },
+                { x: svd.sigma1, y: 0 }, { x: 0, y: svd.sigma2 }, sig_x,
+                'rgba(129, 140, 248, 0.7)'
+            );
+
+            // 3. Rotação Final U (Ax)
+            const ax = { x: svd.a * x0.x + svd.b * x0.y, y: svd.c * x0.x + svd.d * x0.y };
+            renderSubCanvas(
+                pipeCanvas3,
+                (x, y) => ({ x: svd.a * x + svd.b * y, y: svd.c * x + svd.d * y }),
+                svd.Av1, svd.Av2, ax,
+                '#818cf8'
+            );
+        }
+
+        // --- Loop Principal de Renderização ---
+        function render() {
+            if (state.viewMode === 'dual') {
+                renderDomain();
+                renderCodomain();
+            } else if (state.viewMode === 'step') {
+                renderStepView();
+            } else if (state.viewMode === 'pipeline') {
+                renderPipeline();
+            }
+        }
+
+        // --- Animações Automáticas ---
+        function animationLoop() {
+            // Animação de Rotação Automática de x
+            if (state.isRotatingX) {
+                state.angleX = (state.angleX + state.rotateSpeed) % (2 * Math.PI);
+                const angleDeg = (state.angleX * 180 / Math.PI).toFixed(1);
+                document.getElementById('angleSlider').value = (state.angleX * 180 / Math.PI).toFixed(1);
+                document.getElementById('angleValText').textContent = angleDeg + '°';
+                updateTrace();
+                updateDynamicVectorsUI();
+            }
+
+            // Animação da Decomposição Passo a Passo
+            if (state.isStepAnimating && state.viewMode === 'step') {
+                state.stepProgress += 0.015;
+                if (state.stepProgress > 3.0) {
+                    state.stepProgress = 0;
+                }
+                document.getElementById('stepProgressSlider').value = state.stepProgress.toFixed(2);
+                document.getElementById('stepProgressVal').textContent = state.stepProgress.toFixed(2);
+                updateStepButtonsHighlight();
+            }
+
+            render();
+            requestAnimationFrame(animationLoop);
+        }
+
+        // Atualizar Histórico de Rastro de Ax
+        function updateTrace() {
+            const svd = state.svd;
+            const xVal = { x: Math.cos(state.angleX), y: Math.sin(state.angleX) };
+            const axVal = {
+                x: svd.a * xVal.x + svd.b * xVal.y,
+                y: svd.c * xVal.x + svd.d * xVal.y
+            };
+            state.axTrace.push(axVal);
+            if (state.axTrace.length > state.maxTracePoints) {
+                state.axTrace.shift();
+            }
+        }
+
+        // --- 5. ATUALIZAÇÃO DA INTERFACE E MATHJAX ---
+        function updateUIElements() {
+            const svd = state.svd;
+
+            // Atualizar valores nos sliders e inputs numéricos
+            ['a11', 'a12', 'a21', 'a22'].forEach(id => {
+                document.getElementById(`val_${id}`).textContent = state[id].toFixed(2);
+                document.getElementById(`slider_${id}`).value = state[id];
+                document.getElementById(`num_${id}`).value = state[id].toFixed(2);
+            });
+
+            // Atualizar métricas
+            document.getElementById('metric_sigma1').textContent = svd.sigma1.toFixed(3);
+            document.getElementById('metric_sigma2').textContent = svd.sigma2.toFixed(3);
+            document.getElementById('metric_det').textContent = svd.detA.toFixed(3);
+            document.getElementById('metric_cond').textContent = isFinite(svd.cond) ? svd.cond.toFixed(2) : '∞ (Singular)';
+            document.getElementById('metric_norm').textContent = svd.sigma1.toFixed(3);
+            document.getElementById('metric_rank').textContent = svd.rank === 2 ? '2 (Completo)' : (svd.rank === 1 ? '1 (Degenerado)' : '0 (Nulo)');
+
+            // Relações Fundamentais
+            document.getElementById('relation_v1_val').textContent = `(${svd.Av1.x.toFixed(2)}, ${svd.Av1.y.toFixed(2)})`;
+            document.getElementById('relation_v2_val').textContent = `(${svd.Av2.x.toFixed(2)}, ${svd.Av2.y.toFixed(2)})`;
+
+            updateDynamicVectorsUI();
+        }
+
+        function updateDynamicVectorsUI() {
+            const svd = state.svd;
+            const xVal = { x: Math.cos(state.angleX), y: Math.sin(state.angleX) };
+            const axVal = {
+                x: svd.a * xVal.x + svd.b * xVal.y,
+                y: svd.c * xVal.x + svd.d * xVal.y
+            };
+            const normAx = Math.hypot(axVal.x, axVal.y);
+
+            document.getElementById('vector_x_val').textContent = `(${xVal.x.toFixed(2)}, ${xVal.y.toFixed(2)})`;
+            document.getElementById('vector_ax_val').innerHTML = `(${axVal.x.toFixed(2)}, ${axVal.y.toFixed(2)}) &bull; $\\|Ax\\| = ${normAx.toFixed(2)}$`;
+        }
+
+        // Renderização do MathJax com Debounce
+        let mathJaxTimeout = null;
+        function debouncedMathJax() {
+            if (mathJaxTimeout) clearTimeout(mathJaxTimeout);
+            mathJaxTimeout = setTimeout(() => {
+                updateMathDisplay();
+            }, 60);
+        }
+
+        window.updateMathDisplay = function() {
+            const svd = state.svd;
+            if (!svd) return;
+
+            const formulaDiv = document.getElementById('mathjaxFormulaOutput');
+            if (!formulaDiv) return;
+
+            const formatNum = (n) => (n >= 0 ? ' ' : '') + n.toFixed(2);
+
+            const latex = `$$\\begin{pmatrix} ${formatNum(svd.a)} & ${formatNum(svd.b)} \\\\ ${formatNum(svd.c)} & ${formatNum(svd.d)} \\end{pmatrix} = ` +
+                          `\\underbrace{\\begin{pmatrix} ${formatNum(svd.u1.x)} & ${formatNum(svd.u2.x)} \\\\ ${formatNum(svd.u1.y)} & ${formatNum(svd.u2.y)} \\end{pmatrix}}_{U} ` +
+                          `\\underbrace{\\begin{pmatrix} ${formatNum(svd.sigma1)} & 0.00 \\\\ 0.00 & ${formatNum(svd.sigma2)} \\end{pmatrix}}_{\\Sigma} ` +
+                          `\\underbrace{\\begin{pmatrix} ${formatNum(svd.v1.x)} & ${formatNum(svd.v1.y)} \\\\ ${formatNum(svd.v2.x)} & ${formatNum(svd.v2.y)} \\end{pmatrix}}_{V^T}$$`;
+
+            formulaDiv.innerHTML = latex;
+
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                MathJax.typesetPromise([formulaDiv]).catch(() => {});
+            }
+        };
+
+        // --- 6. EVENT LISTENERS E INTERATIVIDADE ---
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // Inicializar SVD
+            updateSVD();
+
+            // Configurar Sliders e Inputs de Matriz
+            ['a11', 'a12', 'a21', 'a22'].forEach(id => {
+                const slider = document.getElementById(`slider_${id}`);
+                const num = document.getElementById(`num_${id}`);
+
+                slider.addEventListener('input', (e) => {
+                    state[id] = parseFloat(e.target.value);
+                    num.value = state[id].toFixed(2);
+                    state.axTrace = [];
+                    updateSVD();
+                });
+
+                num.addEventListener('change', (e) => {
+                    let val = parseFloat(e.target.value);
+                    if (isNaN(val)) val = 0;
+                    val = Math.max(-3, Math.min(3, val));
+                    state[id] = val;
+                    slider.value = val;
+                    e.target.value = val.toFixed(2);
+                    state.axTrace = [];
+                    updateSVD();
+                });
+            });
+
+            // Presets
+            document.querySelectorAll('.preset-chip[data-preset]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const presetKey = btn.getAttribute('data-preset');
+                    const preset = typeof PRESETS[presetKey] === 'function' ? PRESETS[presetKey]() : PRESETS[presetKey];
+                    if (preset) {
+                        state.a11 = preset.a11;
+                        state.a12 = preset.a12;
+                        state.a21 = preset.a21;
+                        state.a22 = preset.a22;
+                        state.axTrace = [];
+                        updateSVD();
+                    }
+                });
+            });
+
+            // Resetar Matriz
+            document.getElementById('btnResetMatrix').addEventListener('click', () => {
+                state.a11 = 1.0; state.a12 = 0.0;
+                state.a21 = 0.0; state.a22 = 1.0;
+                state.axTrace = [];
+                updateSVD();
+            });
+
+            // Controle de Ângulo do Vetor x
+            const angleSlider = document.getElementById('angleSlider');
+            angleSlider.addEventListener('input', (e) => {
+                state.angleX = (parseFloat(e.target.value) * Math.PI) / 180;
+                document.getElementById('angleValText').textContent = parseFloat(e.target.value).toFixed(1) + '°';
+                updateTrace();
+                updateDynamicVectorsUI();
+            });
+
+            // Botão Auto-Girar Vetor x
+            const btnAutoRotate = document.getElementById('btnAutoRotate');
+            btnAutoRotate.addEventListener('click', () => {
+                state.isRotatingX = !state.isRotatingX;
+                btnAutoRotate.classList.toggle('active', state.isRotatingX);
+                btnAutoRotate.innerHTML = state.isRotatingX ? '⏸ Pausar Giro de x' : '🔄 Girar Vetor x Automaticamente';
+            });
+
+            // Tabs de Modo de Visualização
+            const tabDualView = document.getElementById('tabDualView');
+            const tabStepView = document.getElementById('tabStepView');
+            const tabPipelineView = document.getElementById('tabPipelineView');
+
+            const dualViewContainer = document.getElementById('dualViewContainer');
+            const stepViewContainer = document.getElementById('stepViewContainer');
+            const pipelineViewContainer = document.getElementById('pipelineViewContainer');
+
+            const setViewMode = (mode) => {
+                state.viewMode = mode;
+                [tabDualView, tabStepView, tabPipelineView].forEach(t => t.classList.remove('active'));
+                dualViewContainer.style.display = 'none';
+                stepViewContainer.style.display = 'none';
+                pipelineViewContainer.style.display = 'none';
+
+                if (mode === 'dual') {
+                    tabDualView.classList.add('active');
+                    dualViewContainer.style.display = 'flex';
+                } else if (mode === 'step') {
+                    tabStepView.classList.add('active');
+                    stepViewContainer.style.display = 'flex';
+                } else if (mode === 'pipeline') {
+                    tabPipelineView.classList.add('active');
+                    pipelineViewContainer.style.display = 'grid';
+                }
+            };
+
+            tabDualView.addEventListener('click', () => setViewMode('dual'));
+            tabStepView.addEventListener('click', () => setViewMode('step'));
+            tabPipelineView.addEventListener('click', () => setViewMode('pipeline'));
+
+            // Controles do Modo Passo a Passo
+            document.querySelectorAll('.step-nav-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const stepNum = parseFloat(btn.getAttribute('data-step'));
+                    state.stepProgress = stepNum;
+                    document.getElementById('stepProgressSlider').value = stepNum;
+                    document.getElementById('stepProgressVal').textContent = stepNum.toFixed(2);
+                    updateStepButtonsHighlight();
+                });
+            });
+
+            const stepProgressSlider = document.getElementById('stepProgressSlider');
+            stepProgressSlider.addEventListener('input', (e) => {
+                state.stepProgress = parseFloat(e.target.value);
+                document.getElementById('stepProgressVal').textContent = state.stepProgress.toFixed(2);
+                updateStepButtonsHighlight();
+            });
+
+            const btnPlayStepAnim = document.getElementById('btnPlayStepAnim');
+            btnPlayStepAnim.addEventListener('click', () => {
+                state.isStepAnimating = !state.isStepAnimating;
+                document.getElementById('stepPlayIcon').textContent = state.isStepAnimating ? '⏸' : '▶';
+                document.getElementById('stepPlayLabel').textContent = state.isStepAnimating ? 'Pausar Animação' : 'Animar Decomposição';
+                btnPlayStepAnim.style.background = state.isStepAnimating ? '#ef4444' : '#10b981';
+            });
+
+            // Opções de Exibição
+            document.getElementById('chkShowProjections').addEventListener('change', (e) => state.showProjections = e.target.checked);
+            document.getElementById('chkShowTrace').addEventListener('change', (e) => {
+                state.showTrace = e.target.checked;
+                if (!state.showTrace) state.axTrace = [];
+            });
+            document.getElementById('chkShowGrid').addEventListener('change', (e) => state.showGrid = e.target.checked);
+
+            // Interação com Mouse / Toque no Canvas do Domínio
+            const handleDomainPointer = (e) => {
+                const rect = domainCanvas.getBoundingClientRect();
+                const ox = rect.width / 2;
+                const oy = rect.height / 2;
+                const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+                const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+                if (clientX === undefined) return;
+
+                const dx = (clientX - rect.left) - ox;
+                const dy = oy - (clientY - rect.top);
+
+                let angle = Math.atan2(dy, dx);
+                if (angle < 0) angle += 2 * Math.PI;
+
+                state.angleX = angle;
+                const deg = (angle * 180 / Math.PI).toFixed(1);
+                document.getElementById('angleSlider').value = deg;
+                document.getElementById('angleValText').textContent = deg + '°';
+                updateTrace();
+                updateDynamicVectorsUI();
+            };
+
+            domainCanvas.addEventListener('mousedown', (e) => {
+                state.isDraggingDomain = true;
+                handleDomainPointer(e);
+            });
+            window.addEventListener('mousemove', (e) => {
+                if (state.isDraggingDomain) handleDomainPointer(e);
+            });
+            window.addEventListener('mouseup', () => state.isDraggingDomain = false);
+
+            domainCanvas.addEventListener('touchstart', (e) => {
+                state.isDraggingDomain = true;
+                handleDomainPointer(e);
+            }, { passive: true });
+            window.addEventListener('touchmove', (e) => {
+                if (state.isDraggingDomain) handleDomainPointer(e);
+            }, { passive: true });
+            window.addEventListener('touchend', () => state.isDraggingDomain = false);
+
+            // Redimensionamento de Janela
+            window.addEventListener('resize', () => {
+                render();
+            });
+
+            // Iniciar Loop de Renderização Contínua
+            requestAnimationFrame(animationLoop);
+        });
+
+        function updateStepButtonsHighlight() {
+            const currentStep = Math.min(3, Math.floor(state.stepProgress));
+            document.querySelectorAll('.step-nav-btn').forEach(btn => {
+                const s = parseInt(btn.getAttribute('data-step'));
+                btn.classList.toggle('active', s === currentStep);
+            });
+        }
+    </script>
+</body>
+</html>
