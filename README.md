@@ -258,3 +258,46 @@ The software runs entirely in Vanilla JavaScript and HTML5 Canvas with no depend
 - **Interactive Shutter System**: Physical absorber plates with warning indicators that selectively block $(+)$ or $(-)$ outputs.
 - **Real-Time Phosphor Screen & Telemetry**: Accumulates atom impacts with exponential phosphorescent decay flashes, continuous digital histograms, and empirical vs theoretical probability matching.
 - **Synthesized Web Audio API**: Procedural Geiger counter clicks on particle detection, electromagnetic hum, shutter clicks, and preset chimes.
+
+---
+
+## Galileo's Free Fall Law: Feather vs. Freight Train in Vacuum and Atmosphere
+
+**Reference File:** `galileo_free_fall_feather_train.html`
+
+### Logical Description
+This script implements a high-precision, interactive computational physics laboratory designed to demonstrate and prove Galileo Galilei's Principle of Free Fall and the Weak Equivalence Principle. The simulation establishes an extreme mass-contrast scenario by dropping a delicate bird feather ($m_1 = 5\text{ g}$) alongside a heavy industrial cargo locomotive train ($m_2 = 50\text{ metric tons}$) under both atmospheric conditions (with non-linear aerodynamic drag) and an ideal evacuated vacuum tube ($P = 0\text{ Pa}, \rho = 0$). The architecture provides real-time side-by-side dual-chamber comparative visualization, optical laser photogates, ghost stroboscopic trajectories, synchronized multi-variable kinematic charts, and interactive environment parameter tuning.
+
+### Physico-Mathematical Modeling
+In the absence of a fluid medium (vacuum regime, $\rho = 0$), the only force acting on a body is the gravitational attraction. According to Newton's Second Law combined with the Weak Equivalence Principle ($m_{\text{inertial}} = m_{\text{gravitational}}$):
+
+$$F_{\text{net}} = m_i a = m_g g \implies a(t) = g = \text{constant}$$
+
+Because the mass algebraically cancels out, all objects undergo identical uniform gravitational acceleration regardless of mass, geometry, or composition. The kinematics in vacuum are strictly quadratic:
+
+$$v(t) = g t, \quad y(t) = \frac{1}{2} g t^2, \quad t_{\text{queda}} = \sqrt{\frac{2h}{g}}$$
+
+In real atmospheric air ($\rho = 1.225\text{ kg/m}^3$), falling bodies experience upward aerodynamic drag modeled in the turbulent Newtonian drag regime ($\text{Re} \gg 10^3$):
+
+$$F_d = \frac{1}{2} \rho C_d A v^2$$
+
+The resulting non-linear ordinary differential equation governing the vertical motion is:
+
+$$m \frac{dv}{dt} = m g - \frac{1}{2} \rho C_d A v |v| \implies a(t) = g - \left(\frac{\rho C_d}{2}\right) \left(\frac{A}{m}\right) v^2$$
+
+Here, the decisive parameter governing real-world fall dynamics is the **area-to-mass ratio** ($A/m$):
+- **Feather**: $A/m \approx 3.0\text{ m}^2/\text{kg}$ (enormous ratio $\implies$ massive deceleration per unit velocity). It rapidly reaches a very low terminal velocity $v_t \approx 2.11\text{ m/s}$ ($7.6\text{ km/h}$) in less than $0.3\text{ s}$, after which $a \approx 0$ and motion becomes linear: $y(t) \approx v_t t$.
+- **Train**: $A/m \approx 0.0002\text{ m}^2/\text{kg}$ (negligible ratio $\implies$ drag is miniscule compared to its immense weight $mg$). Its terminal velocity is $v_t \approx 338.2\text{ m/s}$ ($1,217\text{ km/h}$), meaning over typical drop heights ($10\text{ m} - 150\text{ m}$) the train behaves essentially as a free-falling body at $a \approx g$.
+
+Terminal velocity ($v_t$) and the exact analytical kinematic solution from rest are given by:
+
+$$v_t = \sqrt{\frac{2 m g}{\rho C_d A}}, \quad v(t) = v_t \tanh\left(\frac{g t}{v_t}\right), \quad y(t) = \frac{v_t^2}{g} \ln\left(\cosh\left(\frac{g t}{v_t}\right)\right)$$
+
+### Code Dynamics
+From a software engineering and numerical analysis perspective, the simulation core executes:
+- **Numerical Integration Engine**: Resolves the non-linear differential equations using an explicit 4th-Order Runge-Kutta (RK4) integration algorithm with 10 temporal sub-steps per frame to ensure zero numerical drift and sub-millisecond impact precision.
+- **Dual-Chamber HTML5 Canvas Pipeline**: Simultaneously renders the atmospheric tube (with procedural aerodynamic streamlines, air dust motes, dynamic vector arrows, and flutter oscillations) and the evacuated vacuum tube (with synchronous Galileo alignment guidelines and ghost stroboscopic trails at $\Delta t = 0.25\text{ s}$).
+- **Optical Laser Photogate Matrix**: Millisecond-accurate digital sensors placed along the drop column ($0\%, 25\%, 50\%, 75\%, 100\%$) that record precision interrupt timestamps.
+- **Synchronized Real-Time Oscilloscope**: Interactive Chart.js module streaming live curves of position $y(t)$, velocity $v(t)$, and acceleration $a(t)$ across all 4 body-environment permutations.
+- **Synthesized Web Audio API**: Procedurally synthesizes mechanical latch release clicks, velocity-modulated aerodynamic rush/friction, optical photogate beeps, low-frequency train ground impact booms, and soft feather landings without external audio files.
+- **Comprehensive Didactic Engine**: Integrated KaTeX mathematical derivations, historical context (Galileo's thought experiment and Apollo 15 Lunar drop), and parametric environment presets (Earth, Moon, Tower of Pisa, Jupiter).

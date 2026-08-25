@@ -1,0 +1,2618 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Laboratório de Queda Livre de Galileu: Pena vs. Trem no Vácuo e no Ar</title>
+
+  <!-- CDNs: Chart.js, KaTeX, Font Awesome e Google Fonts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Cinzel:wght@600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg-void: #060913;
+      --bg-surface: #0b1120;
+      --bg-card: rgba(15, 23, 42, 0.85);
+      --bg-card-hover: rgba(30, 41, 59, 0.95);
+      --bg-glass: rgba(15, 25, 48, 0.65);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-glass: rgba(56, 189, 248, 0.2);
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      /* Vibrant Palettes */
+      --cyan-glow: #00f2fe;
+      --cyan-dim: #0284c7;
+      --amber-glow: #f59e0b;
+      --amber-bright: #fbbf24;
+      --emerald-glow: #10b981;
+      --emerald-bright: #34d399;
+      --violet-glow: #a855f7;
+      --rose-danger: #f43f5e;
+      --blue-electric: #38bdf8;
+      --feather-gold: #fde047;
+      --train-metal: #94a3b8;
+      
+      --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', 'Roboto Mono', Menlo, Consolas, monospace;
+      --font-classical: 'Cinzel', serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-void);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 15% 10%, rgba(56, 189, 248, 0.08) 0%, transparent 45%),
+        radial-gradient(circle at 85% 85%, rgba(168, 85, 247, 0.08) 0%, transparent 50%),
+        linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+      background-attachment: fixed;
+    }
+
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-void);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(56, 189, 248, 0.25);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(56, 189, 248, 0.45);
+    }
+
+    /* Header */
+    header {
+      background: rgba(11, 17, 32, 0.92);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      backdrop-filter: blur(16px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+    }
+
+    .brand-container {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-icon {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #0284c7, #7c3aed);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      color: #fff;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+    }
+
+    .brand-text h1 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(90deg, #ffffff 30%, #38bdf8 70%, #c084fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-text p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Mode Navigation Tabs */
+    .view-tabs {
+      display: flex;
+      background: rgba(15, 23, 42, 0.8);
+      padding: 4px;
+      border-radius: 10px;
+      border: 1px solid var(--border-subtle);
+      gap: 4px;
+    }
+
+    .view-tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 6px 14px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      font-family: var(--font-sans);
+    }
+
+    .view-tab-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .view-tab-btn.active {
+      color: #ffffff;
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      box-shadow: 0 2px 10px rgba(2, 132, 199, 0.4);
+    }
+
+    /* Tool Buttons */
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .icon-btn:hover {
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--blue-electric);
+      border-color: rgba(56, 189, 248, 0.3);
+    }
+
+    .icon-btn.active {
+      background: rgba(56, 189, 248, 0.2);
+      color: var(--cyan-glow);
+      border-color: var(--cyan-glow);
+    }
+
+    /* Main Container */
+    main {
+      flex: 1;
+      max-width: 1720px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 20px;
+    }
+
+    @media (max-width: 1280px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Left Column: Visual Simulation & Live Charts */
+    .simulation-column {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Glass Cards */
+    .glass-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-glass);
+      border-radius: 14px;
+      padding: 16px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .glass-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.4), transparent);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: -0.01em;
+    }
+
+    .card-title i {
+      color: var(--blue-electric);
+    }
+
+    .badge {
+      font-size: 0.72rem;
+      font-family: var(--font-mono);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-cyan {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--blue-electric);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+
+    .badge-amber {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--amber-bright);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .badge-emerald {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--emerald-bright);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .badge-purple {
+      background: rgba(168, 85, 247, 0.15);
+      color: #c084fc;
+      border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+
+    /* Simulation Canvas Stage */
+    .viewport-container {
+      position: relative;
+      width: 100%;
+      height: 520px;
+      background: #030712;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      overflow: hidden;
+      box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.8);
+    }
+
+    #simCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Overlay HUD inside Canvas */
+    .canvas-hud {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+
+    .chamber-label {
+      background: rgba(11, 17, 32, 0.85);
+      border: 1px solid var(--border-subtle);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-family: var(--font-mono);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .chamber-label.air {
+      border-color: rgba(245, 158, 11, 0.3);
+      color: #fde68a;
+    }
+
+    .chamber-label.vacuum {
+      border-color: rgba(56, 189, 248, 0.3);
+      color: #bae6fd;
+    }
+
+    /* Timeline and Quick Bar */
+    .timeline-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      background: rgba(15, 23, 42, 0.7);
+      border-radius: 10px;
+      border: 1px solid var(--border-subtle);
+      margin-top: 10px;
+    }
+
+    .btn-main-drop {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+      font-family: var(--font-sans);
+    }
+
+    .btn-main-drop:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 25px rgba(16, 185, 129, 0.6);
+      background: linear-gradient(135deg, #34d399, #10b981);
+    }
+
+    .btn-main-drop:active {
+      transform: translateY(1px);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.82rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .time-display {
+      margin-left: auto;
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      color: var(--cyan-glow);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 4px 12px;
+      border-radius: 6px;
+      border: 1px solid rgba(56, 189, 248, 0.2);
+    }
+
+    /* Live Telemetry Grid */
+    .telemetry-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    @media (max-width: 900px) {
+      .telemetry-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .stat-box {
+      background: rgba(11, 17, 32, 0.7);
+      border: 1px solid var(--border-subtle);
+      padding: 10px;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .stat-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .stat-val {
+      font-size: 1.15rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: #fff;
+    }
+
+    .stat-sub {
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+    }
+
+    /* Charts Section */
+    .charts-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 1100px) {
+      .charts-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .chart-wrapper {
+      position: relative;
+      height: 220px;
+      width: 100%;
+    }
+
+    /* Right Column: Controls, Parameters & Theory */
+    .controls-column {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Control Groups */
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .control-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .control-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+    }
+
+    .control-title {
+      font-weight: 600;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .control-val-tag {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--cyan-glow);
+      background: rgba(0, 242, 254, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.78rem;
+    }
+
+    /* Range Sliders */
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      outline: none;
+      transition: background 0.2s;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--blue-electric);
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.7);
+      border: 2px solid #ffffff;
+      transition: transform 0.1s;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    /* Preset Buttons Grid */
+    .preset-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+    }
+
+    .preset-btn {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      padding: 8px;
+      border-radius: 8px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 2px;
+      transition: all 0.2s;
+      text-align: left;
+    }
+
+    .preset-btn:hover {
+      background: rgba(56, 189, 248, 0.08);
+      border-color: rgba(56, 189, 248, 0.3);
+      color: var(--text-main);
+    }
+
+    .preset-btn.active {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: var(--blue-electric);
+      color: var(--cyan-glow);
+    }
+
+    .preset-title {
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .preset-desc {
+      font-size: 0.68rem;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+    }
+
+    /* Toggles Grid */
+    .toggles-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .toggle-card {
+      background: rgba(11, 17, 32, 0.6);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .toggle-card:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .toggle-label {
+      font-size: 0.76rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Switch Component */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 32px;
+      height: 18px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider-round {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(255, 255, 255, 0.15);
+      transition: .3s;
+      border-radius: 20px;
+    }
+
+    .slider-round:before {
+      position: absolute;
+      content: "";
+      height: 12px;
+      width: 12px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider-round {
+      background-color: var(--blue-electric);
+      box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+    }
+
+    input:checked + .slider-round:before {
+      transform: translateX(14px);
+    }
+
+    /* Object Inspector Comparison Table */
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.76rem;
+      font-family: var(--font-mono);
+      margin-top: 6px;
+    }
+
+    .comparison-table th {
+      text-align: left;
+      padding: 6px 8px;
+      color: var(--text-dim);
+      border-bottom: 1px solid var(--border-subtle);
+      font-weight: 600;
+    }
+
+    .comparison-table td {
+      padding: 6px 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    .val-feather {
+      color: var(--feather-gold);
+      font-weight: 700;
+    }
+
+    .val-train {
+      color: var(--blue-electric);
+      font-weight: 700;
+    }
+
+    /* Photogates Result Box */
+    .photogate-banner {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(6, 95, 70, 0.2));
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .photogate-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--emerald-bright);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .photogate-times {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+    }
+
+    .time-item {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* Historical Quote Box */
+    .historical-quote {
+      border-left: 3px solid #f59e0b;
+      padding-left: 12px;
+      font-style: italic;
+      color: #cbd5e1;
+      font-size: 0.82rem;
+      line-height: 1.4;
+      background: rgba(245, 158, 11, 0.05);
+      padding: 10px 12px;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .historical-quote-author {
+      font-style: normal;
+      font-weight: 700;
+      color: var(--amber-bright);
+      font-size: 0.75rem;
+      margin-top: 4px;
+      font-family: var(--font-mono);
+    }
+
+    /* Accordion & Theory Details */
+    .accordion-item {
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      overflow: hidden;
+      background: rgba(11, 17, 32, 0.6);
+      margin-bottom: 8px;
+    }
+
+    .accordion-header {
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.02);
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--text-main);
+      transition: background 0.2s;
+    }
+
+    .accordion-header:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .accordion-body {
+      padding: 12px 14px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      border-top: 1px solid var(--border-subtle);
+      display: none;
+    }
+
+    .accordion-body.open {
+      display: block;
+    }
+
+    .katex-display {
+      margin: 8px 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border-subtle);
+      background: rgba(11, 17, 32, 0.85);
+      padding: 14px 24px;
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 30px;
+    }
+
+    /* Animation pulse */
+    @keyframes pulseGlow {
+      0% { box-shadow: 0 0 10px rgba(56, 189, 248, 0.3); }
+      50% { box-shadow: 0 0 25px rgba(56, 189, 248, 0.7); }
+      100% { box-shadow: 0 0 10px rgba(56, 189, 248, 0.3); }
+    }
+
+    .pulse-glow {
+      animation: pulseGlow 2s infinite;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header>
+    <div class="brand-container">
+      <div class="brand-icon">
+        <i class="fa-solid fa-feather-pointed"></i>
+      </div>
+      <div class="brand-text">
+        <h1>Laboratório de Queda Livre de Galileu <span class="badge badge-cyan">v2.5 Pro</span></h1>
+        <p>Pena vs. Trem no Vácuo e no Ar &bull; Princípio da Equivalência &bull; Aerodinâmica de Fluidos</p>
+      </div>
+    </div>
+
+    <!-- Center Mode Tabs -->
+    <div class="view-tabs">
+      <button class="view-tab-btn active" id="tabDual" onclick="setSimulationView('dual')">
+        <i class="fa-solid fa-columns"></i> Câmaras Lado a Lado (Comparativo Quádruplo)
+      </button>
+      <button class="view-tab-btn" id="tabSingle" onclick="setSimulationView('single')">
+        <i class="fa-solid fa-compress"></i> Câmara Única (Zoom & Pressão)
+      </button>
+      <button class="view-tab-btn" id="tabTheory" onclick="setSimulationView('theory')">
+        <i class="fa-solid fa-book-open"></i> Teoria & Demonstração Formal
+      </button>
+    </div>
+
+    <!-- Right Header Actions -->
+    <div class="header-actions">
+      <button class="icon-btn active" id="soundBtn" title="Ativar/Desativar Efeitos Sonoros" onclick="toggleSound()">
+        <i class="fa-solid fa-volume-high"></i>
+      </button>
+      <button class="icon-btn" id="fsBtn" title="Tela Cheia" onclick="toggleFullScreen()">
+        <i class="fa-solid fa-expand"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Grid Workspace -->
+  <main>
+
+    <!-- LEFT COLUMN: Physical Simulation & Real-Time Analytics -->
+    <div class="simulation-column">
+
+      <!-- Interactive Canvas Card -->
+      <div class="glass-card">
+        <div class="card-header">
+          <div class="card-title">
+            <i class="fa-solid fa-atom"></i> Tubos de Queda Livre de Alta Precisão
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <span class="badge badge-emerald" id="simStatusBadge">PRONTO PARA O DISPARO</span>
+            <span class="badge badge-purple" id="slowMoBadge">VELOCIDADE: 1.0x</span>
+          </div>
+        </div>
+
+        <!-- Canvas Viewport -->
+        <div class="viewport-container" id="viewportBox">
+          <canvas id="simCanvas"></canvas>
+
+          <!-- Floating HUD Labels -->
+          <div class="canvas-hud" id="dualHud">
+            <div class="chamber-label air">
+              <i class="fa-solid fa-wind"></i> CÂMARA 1: AR ATMOSFÉRICO (1 atm &bull; &rho; = <span id="hudAirDensity">1.225</span> kg/m³)
+            </div>
+            <div class="chamber-label vacuum">
+              <i class="fa-solid fa-meteor"></i> CÂMARA 2: TUBO DE VÁCUO DE GALILEU (0 Pa &bull; &rho; = 0.000 kg/m³)
+            </div>
+          </div>
+        </div>
+
+        <!-- Simulation Toolbar -->
+        <div class="timeline-bar">
+          <button class="btn-main-drop" id="dropBtn" onclick="triggerDrop()">
+            <i class="fa-solid fa-play"></i> <span id="dropBtnText">SOLTAR OBJETOS</span>
+          </button>
+          <button class="btn-secondary" id="pauseBtn" onclick="togglePause()">
+            <i class="fa-solid fa-pause"></i> Pausar
+          </button>
+          <button class="btn-secondary" onclick="stepSimulation()">
+            <i class="fa-solid fa-forward-step"></i> Passo (+0.05s)
+          </button>
+          <button class="btn-secondary" onclick="resetSimulation()">
+            <i class="fa-solid fa-rotate-left"></i> Reiniciar
+          </button>
+
+          <!-- Slow Motion Select -->
+          <div style="display: flex; align-items: center; gap: 6px; margin-left: 8px;">
+            <label style="font-size: 0.78rem; color: var(--text-muted); font-family: var(--font-mono);">Velocidade:</label>
+            <select id="slowMoSelect" onchange="changeTimeScale(this.value)" style="background: rgba(0,0,0,0.5); color: #fff; border: 1px solid var(--border-subtle); padding: 4px 8px; border-radius: 6px; font-family: var(--font-mono); font-size: 0.78rem;">
+              <option value="1.0">1.0x (Tempo Real)</option>
+              <option value="0.5">0.5x (Câmera Lenta)</option>
+              <option value="0.25">0.25x (Super Slow-Mo)</option>
+              <option value="0.1">0.1x (Análise de Impacto)</option>
+              <option value="0.05">0.05x (Ultra Detalhe)</option>
+            </select>
+          </div>
+
+          <!-- Real-Time Digital Chronometer -->
+          <div class="time-display">
+            <i class="fa-solid fa-stopwatch"></i>
+            <span id="chronometerDisplay">00:00.000 s</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Real-Time Telemetry Cards -->
+      <div class="telemetry-grid">
+        <div class="stat-box">
+          <div class="stat-label">
+            <i class="fa-solid fa-ruler-vertical" style="color: var(--blue-electric);"></i> ALTURA DA QUEDA (h)
+          </div>
+          <div class="stat-val" id="statHeight">40.0 m</div>
+          <div class="stat-sub">Tempo teórico vácuo: <span id="statTheoryTime" style="color: var(--cyan-glow);">2.855 s</span></div>
+        </div>
+
+        <div class="stat-box">
+          <div class="stat-label">
+            <i class="fa-solid fa-feather" style="color: var(--feather-gold);"></i> PENA (AR vs VÁCUO)
+          </div>
+          <div class="stat-val" id="statFeatherAirVel">0.0 km/h</div>
+          <div class="stat-sub">Vel. Terminal Ar: <span id="statFeatherVt" style="color: var(--feather-gold);">7.6 km/h</span></div>
+        </div>
+
+        <div class="stat-box">
+          <div class="stat-label">
+            <i class="fa-solid fa-train" style="color: var(--blue-electric);"></i> TREM (AR vs VÁCUO)
+          </div>
+          <div class="stat-val" id="statTrainAirVel">0.0 km/h</div>
+          <div class="stat-sub">Vel. Terminal Ar: <span id="statTrainVt" style="color: var(--blue-electric);">1217.5 km/h</span></div>
+        </div>
+
+        <div class="stat-box" style="border-color: rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.05);">
+          <div class="stat-label" style="color: var(--emerald-bright);">
+            <i class="fa-solid fa-bullseye"></i> DIFERENÇA DE CHEGADA (&Delta;t)
+          </div>
+          <div class="stat-val" id="statDeltaTime" style="color: var(--emerald-bright);">0.000 s</div>
+          <div class="stat-sub" id="statDeltaSub">No Vácuo: &Delta;t = 0.000 s (Exato!)</div>
+        </div>
+      </div>
+
+      <!-- Real-Time Synchronized Charting -->
+      <div class="glass-card" id="chartsCard">
+        <div class="card-header">
+          <div class="card-title">
+            <i class="fa-solid fa-chart-line"></i> Curvas Cinemáticas Comparativas em Tempo Real
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn-secondary" style="padding: 4px 10px; font-size: 0.75rem;" onclick="toggleChartType('y')">Posição y(t)</button>
+            <button class="btn-secondary" style="padding: 4px 10px; font-size: 0.75rem;" onclick="toggleChartType('v')">Velocidade v(t)</button>
+            <button class="btn-secondary" style="padding: 4px 10px; font-size: 0.75rem;" onclick="toggleChartType('a')">Aceleração a(t)</button>
+          </div>
+        </div>
+
+        <div class="charts-container">
+          <div class="chart-wrapper">
+            <canvas id="chartPosition"></canvas>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="chartVelocity"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Theoretical Section Accordions (Visible on tab change or scroll) -->
+      <div class="glass-card" id="theoryCard">
+        <div class="card-header">
+          <div class="card-title">
+            <i class="fa-solid fa-graduation-cap"></i> Fundamentos Físico-Matemáticos & Experimentos Históricos
+          </div>
+          <span class="badge badge-cyan">RIGOR CIENTÍFICO</span>
+        </div>
+
+        <!-- Historical Galileo vs Aristotle -->
+        <div class="accordion-item">
+          <div class="accordion-header" onclick="toggleAccordion(this)">
+            <span><i class="fa-solid fa-scale-unbalanced-flip" style="color: #f59e0b; margin-right: 6px;"></i> O Paradoxo Aristotélico e o Experimento Mental de Galileu</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </div>
+          <div class="accordion-body open">
+            <p>Por quase dois milênios, a física ocidental foi dominada pela visão de <strong>Aristóteles de Estagira (384–322 a.C.)</strong>, que postulava que a velocidade de queda de um corpo era diretamente proporcional ao seu peso ($v \propto m$), ou seja, um corpo 10 vezes mais pesado cairia 10 vezes mais rápido.</p>
+            <br />
+            <p>Em 1638, no livro <em>"Discorsi e Dimostrazioni Matematiche Intorno a Due Nuove Scienze"</em>, <strong>Galileu Galilei</strong> refutou Aristóteles através de uma brilhante prova por redução ao absurdo (experimento mental):</p>
+            <div class="historical-quote" style="margin: 10px 0;">
+              "Imagine que amarramos uma grande pedra pesada ($M$) a uma pequena pedra leve ($m$). Segundo a hipótese aristotélica, a pedra leve cai mais devagar e deveria frear o conjunto, tornando a velocidade final menor que a de $M$ isolada. Contudo, o sistema combinado $(M+m)$ tem uma massa maior que $M$ isolada, portanto deveria cair mais rápido! Essa contradição lógica é insuperável, provando que todos os corpos devem cair com rigorosamente a mesma aceleração quando desprovidos de resistência do ar."
+              <div class="historical-quote-author">— Galileu Galilei (1638)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Equivalence Principle -->
+        <div class="accordion-item">
+          <div class="accordion-header" onclick="toggleAccordion(this)">
+            <span><i class="fa-solid fa-infinity" style="color: #38bdf8; margin-right: 6px;"></i> Princípio da Equivalência Fraca: Massa Inercial vs. Gravitacional</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </div>
+          <div class="accordion-body">
+            <p>Pela 2ª Lei de Newton, a força resultante sobre um corpo é o produto de sua <strong>massa inercial</strong> ($m_i$) pela aceleração ($a$):</p>
+            <div class="katex-display">$$F_{\text{res}} = m_i \cdot a$$</div>
+            <p>Por outro lado, a força com que a gravidade atrai um corpo depende de sua <strong>massa gravitacional</strong> ($m_g$) e do campo gravitacional local ($g$):</p>
+            <div class="katex-display">$$F_g = m_g \cdot g$$</div>
+            <p>No vácuo, a única força atuante é a gravitacional ($F_{\text{res}} = F_g$). Igualando as duas expressões:</p>
+            <div class="katex-display">$$m_i \cdot a = m_g \cdot g \implies a = \left(\frac{m_g}{m_i}\right) g$$</div>
+            <p>Como a física experimental comprova que a massa inercial é exatamente idêntica à massa gravitacional com precisão superior a $10^{-15}$ (Princípio da Equivalência Fraca de Einstein), temos $\frac{m_g}{m_i} = 1$, o que resulta em:</p>
+            <div class="katex-display">$$a(t) = g = \text{constante}, \quad \forall \, m$$</div>
+            <p>Assim, a massa do objeto é algebricamente cancelada da equação do movimento!</p>
+          </div>
+        </div>
+
+        <!-- Aerodynamic Drag & Terminal Velocity -->
+        <div class="accordion-item">
+          <div class="accordion-header" onclick="toggleAccordion(this)">
+            <span><i class="fa-solid fa-wind" style="color: #10b981; margin-right: 6px;"></i> Dinâmica de Fluidos: Arrasto Aerodinâmico e Velocidade Terminal</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </div>
+          <div class="accordion-body">
+            <p>Na atmosfera terrestre real, o ar exerce uma força de resistência proporcional ao quadrado da velocidade instantânea (regime de fluxo turbulento de Newton, $\text{Re} \gg 10^3$):</p>
+            <div class="katex-display">$$F_d = \frac{1}{2} \rho C_d A v^2$$</div>
+            <p>Onde $\rho$ é a densidade do fluido, $C_d$ é o coeficiente de arrasto da geometria e $A$ é a área da seção transversal frontal. A equação diferencial que rege a queda na atmosfera é:</p>
+            <div class="katex-display">$$m \frac{dv}{dt} = m g - \frac{1}{2} \rho C_d A v^2$$</div>
+            <p>Isolando a aceleração instantânea $a(t) = \frac{dv}{dt}$:</p>
+            <div class="katex-display">$$a(t) = g - \left(\frac{\rho C_d}{2}\right) \left(\frac{A}{m}\right) v^2$$</div>
+            <p>Observe o fator crucial: $\mathbf{\frac{A}{m}}$ (razão área/massa). Para a pena, $\frac{A}{m} \approx 3.0\text{ m}^2/\text{kg}$ (gigantesco!), enquanto para o trem $\frac{A}{m} \approx 0.0002\text{ m}^2/\text{kg}$ (minúsculo!). Quando $F_d = mg$, a aceleração se anula e o corpo atinge a <strong>Velocidade Terminal ($v_t$)</strong>:</p>
+            <div class="katex-display">$$v_t = \sqrt{\frac{2 m g}{\rho C_d A}}$$</div>
+            <p>A solução analítica exata a partir do repouso é dada pela tangente hiperbólica:</p>
+            <div class="katex-display">$$v(t) = v_t \tanh\left(\frac{g t}{v_t}\right), \quad y(t) = \frac{v_t^2}{g} \ln\left(\cosh\left(\frac{g t}{v_t}\right)\right)$$</div>
+          </div>
+        </div>
+
+        <!-- Apollo 15 Moon Mission -->
+        <div class="accordion-item">
+          <div class="accordion-header" onclick="toggleAccordion(this)">
+            <span><i class="fa-solid fa-moon" style="color: #c084fc; margin-right: 6px;"></i> O Experimento da Apollo 15 na Lua (David Scott, 1971)</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </div>
+          <div class="accordion-body">
+            <div class="historical-quote">
+              "Na minha mão esquerda, seguro uma pena de falcão (30 g); na minha mão direita, um martelo de geólogo de alumínio (1.32 kg). A razão pela qual viemos até aqui hoje é porque um cavalheiro chamado Galileu fez uma descoberta pioneira... e vou soltar os dois aqui e agora..."
+              <br /><br />
+              <em>[O martelo e a pena caem lado a lado no vácuo lunar e atingem o solo simultaneamente sob aplausos do controle da missão em Houston]</em>
+              <br /><br />
+              "...Como vocês puderam ver, o Sr. Galileu estava absolutamente correto em sua teoria!"
+              <div class="historical-quote-author">— Comandante David Scott, Apollo 15 (Hadley Rille, Lua, 2 de agosto de 1971)</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN: Control Panel & Parametric Settings -->
+    <div class="controls-column">
+
+      <!-- Physical Environment & Gravity Card -->
+      <div class="glass-card">
+        <div class="card-header">
+          <div class="card-title">
+            <i class="fa-solid fa-sliders"></i> Parâmetros do Ambiente
+          </div>
+          <span class="badge badge-amber" id="envPresetBadge">TERRA (PADRÃO)</span>
+        </div>
+
+        <div class="control-group">
+          <!-- Height Slider -->
+          <div class="control-row">
+            <div class="control-header">
+              <span class="control-title"><i class="fa-solid fa-arrows-up-down"></i> Altura do Lançamento ($h$)</span>
+              <span class="control-val-tag" id="valHeightTag">40.0 m</span>
+            </div>
+            <input type="range" id="sliderHeight" min="5" max="150" step="1" value="40" oninput="updateHeight(this.value)" />
+          </div>
+
+          <!-- Gravity Slider -->
+          <div class="control-row">
+            <div class="control-header">
+              <span class="control-title"><i class="fa-solid fa-weight-hanging"></i> Gravidade ($g$)</span>
+              <span class="control-val-tag" id="valGravityTag">9.81 m/s²</span>
+            </div>
+            <input type="range" id="sliderGravity" min="0" max="25" step="0.01" value="9.81" oninput="updateGravity(this.value)" />
+          </div>
+
+          <!-- Atmospheric Density Slider (Single view or custom air tuning) -->
+          <div class="control-row">
+            <div class="control-header">
+              <span class="control-title"><i class="fa-solid fa-smog"></i> Densidade do Ar (&rho;)</span>
+              <span class="control-val-tag" id="valAirDensityTag">1.225 kg/m³</span>
+            </div>
+            <input type="range" id="sliderAirDensity" min="0.0" max="2.5" step="0.025" value="1.225" oninput="updateAirDensity(this.value)" />
+          </div>
+
+          <!-- Gravity & Environment Presets -->
+          <div class="control-row">
+            <span class="control-title" style="margin-bottom: 4px;"><i class="fa-solid fa-earth-americas"></i> Presets Planetários & Históricos:</span>
+            <div class="preset-grid">
+              <button class="preset-btn active" id="presetEarth" onclick="applyPreset('earth')">
+                <span class="preset-title">🌍 Terra (1 atm)</span>
+                <span class="preset-desc">g = 9.81 m/s² &bull; &rho; = 1.225 kg/m³</span>
+              </button>
+              <button class="preset-btn" id="presetMoon" onclick="applyPreset('moon')">
+                <span class="preset-title">🌙 Lua (Apollo 15)</span>
+                <span class="preset-desc">g = 1.62 m/s² &bull; &rho; = 0.000 kg/m³</span>
+              </button>
+              <button class="preset-btn" id="presetPisa" onclick="applyPreset('pisa')">
+                <span class="preset-title">🏛️ Torre de Pisa</span>
+                <span class="preset-desc">h = 54 m &bull; g = 9.81 m/s²</span>
+              </button>
+              <button class="preset-btn" id="presetJupiter" onclick="applyPreset('jupiter')">
+                <span class="preset-title">🪐 Júpiter</span>
+                <span class="preset-desc">g = 24.79 m/s² &bull; Gravidade Extrema</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Object Parameters & Aerodynamic Inspector -->
+      <div class="glass-card">
+        <div class="card-header">
+          <div class="card-title">
+            <i class="fa-solid fa-microscope"></i> Propriedades dos Corpos
+          </div>
+          <span class="badge badge-cyan">CONTRASTE EXTREMO</span>
+        </div>
+
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th>Grandeza Física</th>
+              <th>🪶 Pena</th>
+              <th>🚂 Trem de Carga</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Massa ($m$)</td>
+              <td class="val-feather" id="tableFeatherMass">0.005 kg (5 g)</td>
+              <td class="val-train" id="tableTrainMass">50,000 kg (50 t)</td>
+            </tr>
+            <tr>
+              <td>Área Frontal ($A$)</td>
+              <td class="val-feather">0.015 m²</td>
+              <td class="val-train">10.0 m²</td>
+            </tr>
+            <tr>
+              <td>Coef. Arrasto ($C_d$)</td>
+              <td class="val-feather">1.20 (Placa/Haste)</td>
+              <td class="val-train">0.70 (Locomotiva)</td>
+            </tr>
+            <tr>
+              <td>Razão $A/m$</td>
+              <td class="val-feather" style="color: #f87171;">3.00 m²/kg (Alta)</td>
+              <td class="val-train" style="color: #34d399;">0.0002 m²/kg (Baixa)</td>
+            </tr>
+            <tr>
+              <td>Velocidade Terminal ($v_t$)</td>
+              <td class="val-feather" id="tableFeatherVt">2.11 m/s (7.6 km/h)</td>
+              <td class="val-train" id="tableTrainVt">338.2 m/s (1217 km/h)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Custom Mass & Shape Fine Tuning Accordion -->
+        <div class="accordion-item" style="margin-top: 12px;">
+          <div class="accordion-header" onclick="toggleAccordion(this)">
+            <span><i class="fa-solid fa-sliders" style="color: var(--blue-electric); margin-right: 6px;"></i> Ajustar Massas & Coeficientes</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </div>
+          <div class="accordion-body">
+            <div class="control-row" style="margin-bottom: 8px;">
+              <div class="control-header">
+                <span class="control-title">Massa da Pena:</span>
+                <span class="control-val-tag" id="valFeatherMassTag">5.0 g</span>
+              </div>
+              <input type="range" id="sliderFeatherMass" min="1" max="50" step="1" value="5" oninput="updateFeatherMass(this.value)" />
+            </div>
+
+            <div class="control-row" style="margin-bottom: 8px;">
+              <div class="control-header">
+                <span class="control-title">Massa do Trem:</span>
+                <span class="control-val-tag" id="valTrainMassTag">50 t</span>
+              </div>
+              <input type="range" id="sliderTrainMass" min="5" max="100" step="5" value="50" oninput="updateTrainMass(this.value)" />
+            </div>
+
+            <div class="control-row" style="margin-bottom: 8px;">
+              <div class="control-header">
+                <span class="control-title">Coeficiente $C_d$ da Pena:</span>
+                <span class="control-val-tag" id="valFeatherCdTag">1.20</span>
+              </div>
+              <input type="range" id="sliderFeatherCd" min="0.4" max="2.0" step="0.05" value="1.20" oninput="updateFeatherCd(this.value)" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Visual Overlays & HUD Toggles Card -->
+      <div class="glass-card">
+        <div class="card-header">
+          <div class="card-title">
+            <i class="fa-solid fa-eye"></i> Camadas Visuais & Diagnósticos
+          </div>
+        </div>
+
+        <div class="toggles-grid">
+          <!-- Vectors Toggle -->
+          <div class="toggle-card" onclick="toggleOption('vectors')">
+            <span class="toggle-label"><i class="fa-solid fa-arrow-down-long" style="color: var(--emerald-bright);"></i> Vetores Força</span>
+            <label class="switch" onclick="event.stopPropagation()">
+              <input type="checkbox" id="chkVectors" checked onchange="toggleOption('vectors')" />
+              <span class="slider-round"></span>
+            </label>
+          </div>
+
+          <!-- Strobe Toggle -->
+          <div class="toggle-card" onclick="toggleOption('strobe')">
+            <span class="toggle-label"><i class="fa-solid fa-ellipsis-vertical" style="color: var(--cyan-glow);"></i> Estroboscópio</span>
+            <label class="switch" onclick="event.stopPropagation()">
+              <input type="checkbox" id="chkStrobe" checked onchange="toggleOption('strobe')" />
+              <span class="slider-round"></span>
+            </label>
+          </div>
+
+          <!-- Streamlines Toggle -->
+          <div class="toggle-card" onclick="toggleOption('streamlines')">
+            <span class="toggle-label"><i class="fa-solid fa-water" style="color: #38bdf8;"></i> Fluxo do Ar</span>
+            <label class="switch" onclick="event.stopPropagation()">
+              <input type="checkbox" id="chkStreamlines" checked onchange="toggleOption('streamlines')" />
+              <span class="slider-round"></span>
+            </label>
+          </div>
+
+          <!-- Photogate Lasers Toggle -->
+          <div class="toggle-card" onclick="toggleOption('photogates')">
+            <span class="toggle-label"><i class="fa-solid fa-laser" style="color: #f43f5e;"></i> Lasers Ópticos</span>
+            <label class="switch" onclick="event.stopPropagation()">
+              <input type="checkbox" id="chkPhotogates" checked onchange="toggleOption('photogates')" />
+              <span class="slider-round"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Precision Optical Photogates Readout Banner -->
+      <div class="photogate-banner">
+        <div class="photogate-title">
+          <i class="fa-solid fa-stopwatch-20"></i> CRONÔMETROS DOS SENSORES DE IMPACTO
+        </div>
+        <div class="photogate-times">
+          <div class="time-item">
+            <span style="color: var(--feather-gold);"><i class="fa-solid fa-feather"></i> Pena no Ar:</span>
+            <div id="pgFeatherAir" style="font-weight: 700; font-size: 0.95rem; margin-top: 2px;">--.--- s</div>
+          </div>
+          <div class="time-item">
+            <span style="color: var(--blue-electric);"><i class="fa-solid fa-train"></i> Trem no Ar:</span>
+            <div id="pgTrainAir" style="font-weight: 700; font-size: 0.95rem; margin-top: 2px;">--.--- s</div>
+          </div>
+          <div class="time-item" style="border-color: rgba(56, 189, 248, 0.3);">
+            <span style="color: var(--cyan-glow);"><i class="fa-solid fa-feather"></i> Pena no Vácuo:</span>
+            <div id="pgFeatherVac" style="font-weight: 700; font-size: 0.95rem; color: var(--cyan-glow); margin-top: 2px;">--.--- s</div>
+          </div>
+          <div class="time-item" style="border-color: rgba(56, 189, 248, 0.3);">
+            <span style="color: var(--cyan-glow);"><i class="fa-solid fa-train"></i> Trem no Vácuo:</span>
+            <div id="pgTrainVac" style="font-weight: 700; font-size: 0.95rem; color: var(--cyan-glow); margin-top: 2px;">--.--- s</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div>
+      <strong>Laboratório de Física Computacional &bull; Mecânica Clássica & Aerodinâmica</strong>
+      <span style="margin-left: 8px; color: var(--text-dim);">Demonstração Visual do Princípio de Galileu</span>
+    </div>
+    <div style="font-family: var(--font-mono); font-size: 0.72rem;">
+      Engine de Integração: Runge-Kutta de 4ª Ordem (RK4) com Sub-Stepping Temporal
+    </div>
+  </footer>
+
+  <!-- ========================================================================= -->
+  <!-- JAVASCRIPT ENGINE: PHYSICS, NUMERICAL INTEGRATION, AUDIO & RENDERING -->
+  <!-- ========================================================================= -->
+  <script>
+    // --- ESTADO GLOBAL DA SIMULAÇÃO ---
+    const state = {
+      viewMode: 'dual', // 'dual', 'single', 'theory'
+      isRunning: false,
+      isPaused: false,
+      currentTime: 0.0,
+      timeScale: 1.0,
+      soundEnabled: true,
+
+      // Parâmetros Físicos Globais
+      height: 40.0,        // metros
+      gravity: 9.81,       // m/s²
+      airDensity: 1.225,   // kg/m³ (ar padrão ao nível do mar)
+
+      // Configuração dos Corpos
+      feather: {
+        mass: 0.005,       // kg (5 gramas)
+        area: 0.015,       // m²
+        cd: 1.20,          // coeficiente de arrasto aerodinâmico
+        color: '#fde047'
+      },
+      train: {
+        mass: 50000.0,     // kg (50 toneladas)
+        area: 10.0,        // m²
+        cd: 0.70,          // coeficiente de arrasto aerodinâmico
+        color: '#38bdf8'
+      },
+
+      // Camadas Visuais
+      showVectors: true,
+      showStrobe: true,
+      showStreamlines: true,
+      showPhotogates: true,
+
+      // Objetos Dinâmicos em Queda
+      // 1. Pena na Câmara de Ar
+      featherAir: { y: 0, v: 0, a: 0, landTime: null, landed: false, flutterAngle: 0, flutterSpeed: 8 },
+      // 2. Trem na Câmara de Ar
+      trainAir:   { y: 0, v: 0, a: 0, landTime: null, landed: false },
+      // 3. Pena na Câmara de Vácuo
+      featherVac: { y: 0, v: 0, a: 0, landTime: null, landed: false, flutterAngle: 0 },
+      // 4. Trem na Câmara de Vácuo
+      trainVac:   { y: 0, v: 0, a: 0, landTime: null, landed: false },
+
+      // Histórico de Trajetórias Estroboscópicas
+      strobeHistory: [],
+      lastStrobeTime: 0,
+      strobeInterval: 0.25, // segundos
+
+      // Telemetria para Gráficos
+      chartHistory: {
+        t: [],
+        yFeatherAir: [],
+        yTrainAir: [],
+        yVacuum: [],
+        vFeatherAir: [],
+        vTrainAir: [],
+        vVacuum: [],
+        aFeatherAir: [],
+        aTrainAir: [],
+        aVacuum: []
+      },
+
+      // Partículas do Ar e Turbulência
+      particles: []
+    };
+
+    // --- ELEMENTOS DO DOM ---
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    const viewportBox = document.getElementById('viewportBox');
+
+    let chartPosInstance = null;
+    let chartVelInstance = null;
+    let audioCtx = null;
+    let activeChartType = 'y'; // 'y', 'v', 'a'
+
+    // --- INICIALIZAÇÃO ---
+    window.addEventListener('DOMContentLoaded', () => {
+      initAudio();
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+
+      initParticles();
+      initCharts();
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "$$", right: "$$", display: true },
+          { left: "$", right: "$", display: false }
+        ]
+      });
+
+      updateDynamicTelemetry();
+      requestAnimationFrame(animationLoop);
+    });
+
+    // --- GERENCIAMENTO DE ÁUDIO SINTETIZADO (Web Audio API) ---
+    function initAudio() {
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+          audioCtx = new AudioContextClass();
+        }
+      } catch (e) {
+        console.warn('Web Audio API não suportada neste navegador.');
+      }
+    }
+
+    function playTone(freq, type, duration, gainVal = 0.1) {
+      if (!state.soundEnabled || !audioCtx) return;
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(gainVal, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function playImpactSound(isHeavy) {
+      if (!state.soundEnabled || !audioCtx) return;
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+
+      if (isHeavy) {
+        // Impacto pesado do trem: ruído filtrado de baixa frequência + boom grave
+        try {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.35);
+
+          gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.35);
+        } catch (e) {}
+      } else {
+        // Pouso suave da pena
+        playTone(520, 'sine', 0.15, 0.05);
+      }
+    }
+
+    function playLaserBeep() {
+      playTone(880, 'sine', 0.08, 0.06);
+    }
+
+    function playReleaseSound() {
+      playTone(340, 'triangle', 0.1, 0.15);
+    }
+
+    function toggleSound() {
+      state.soundEnabled = !state.soundEnabled;
+      const btn = document.getElementById('soundBtn');
+      if (state.soundEnabled) {
+        btn.classList.add('active');
+        btn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+      } else {
+        btn.classList.remove('active');
+        btn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+      }
+    }
+
+    // --- REDIMENSIONAMENTO DO CANVAS ---
+    function resizeCanvas() {
+      const rect = viewportBox.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.resetTransform();
+      ctx.scale(dpr, dpr);
+    }
+
+    // --- INICIALIZAÇÃO DAS PARTÍCULAS DE AR ---
+    function initParticles() {
+      state.particles = [];
+      const numParticles = 70;
+      for (let i = 0; i < numParticles; i++) {
+        state.particles.push({
+          x: Math.random(),
+          y: Math.random(),
+          radius: Math.random() * 1.5 + 0.8,
+          alpha: Math.random() * 0.4 + 0.1,
+          speedY: Math.random() * 0.05 + 0.02
+        });
+      }
+    }
+
+    // --- CONTROLES DE FLUXO DA SIMULAÇÃO ---
+    function triggerDrop() {
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
+      // Se já estava rodando e finalizou, reseta antes de soltar novamente
+      if (!state.isRunning || areAllLanded()) {
+        resetSimulation();
+      }
+
+      state.isRunning = true;
+      state.isPaused = false;
+      document.getElementById('simStatusBadge').className = 'badge badge-emerald';
+      document.getElementById('simStatusBadge').innerText = 'EM QUEDA LIVRE...';
+      document.getElementById('dropBtnText').innerText = 'REINICIAR QUEDA';
+      playReleaseSound();
+    }
+
+    function togglePause() {
+      if (!state.isRunning) return;
+      state.isPaused = !state.isPaused;
+      const btn = document.getElementById('pauseBtn');
+      const badge = document.getElementById('simStatusBadge');
+      if (state.isPaused) {
+        btn.innerHTML = '<i class="fa-solid fa-play"></i> Retomar';
+        badge.className = 'badge badge-amber';
+        badge.innerText = 'PAUSADO';
+      } else {
+        btn.innerHTML = '<i class="fa-solid fa-pause"></i> Pausar';
+        badge.className = 'badge badge-emerald';
+        badge.innerText = 'EM QUEDA LIVRE...';
+      }
+    }
+
+    function stepSimulation() {
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+      state.isRunning = true;
+      state.isPaused = true;
+      document.getElementById('pauseBtn').innerHTML = '<i class="fa-solid fa-play"></i> Retomar';
+      document.getElementById('simStatusBadge').className = 'badge badge-amber';
+      document.getElementById('simStatusBadge').innerText = 'PASSO A PASSO';
+      integratePhysics(0.05);
+      updateDynamicTelemetry();
+      updateCharts();
+    }
+
+    function resetSimulation() {
+      state.isRunning = false;
+      state.isPaused = false;
+      state.currentTime = 0.0;
+      state.strobeHistory = [];
+      state.lastStrobeTime = 0;
+
+      // Reseta Corpos
+      state.featherAir = { y: 0, v: 0, a: state.gravity, landTime: null, landed: false, flutterAngle: 0, flutterSpeed: 8 };
+      state.trainAir   = { y: 0, v: 0, a: state.gravity, landTime: null, landed: false };
+      state.featherVac = { y: 0, v: 0, a: state.gravity, landTime: null, landed: false, flutterAngle: 0 };
+      state.trainVac   = { y: 0, v: 0, a: state.gravity, landTime: null, landed: false };
+
+      // Reseta Gráficos
+      state.chartHistory = {
+        t: [0],
+        yFeatherAir: [0],
+        yTrainAir: [0],
+        yVacuum: [0],
+        vFeatherAir: [0],
+        vTrainAir: [0],
+        vVacuum: [0],
+        aFeatherAir: [state.gravity],
+        aTrainAir: [state.gravity],
+        aVacuum: [state.gravity]
+      };
+
+      // Reseta Painéis
+      document.getElementById('chronometerDisplay').innerText = '00:00.000 s';
+      document.getElementById('simStatusBadge').className = 'badge badge-cyan';
+      document.getElementById('simStatusBadge').innerText = 'PRONTO PARA O DISPARO';
+      document.getElementById('dropBtnText').innerText = 'SOLTAR OBJETOS';
+      document.getElementById('pauseBtn').innerHTML = '<i class="fa-solid fa-pause"></i> Pausar';
+
+      document.getElementById('pgFeatherAir').innerText = '--.--- s';
+      document.getElementById('pgTrainAir').innerText = '--.--- s';
+      document.getElementById('pgFeatherVac').innerText = '--.--- s';
+      document.getElementById('pgTrainVac').innerText = '--.--- s';
+      document.getElementById('statDeltaTime').innerText = '0.000 s';
+
+      updateDynamicTelemetry();
+      resetChartData();
+    }
+
+    function changeTimeScale(val) {
+      state.timeScale = parseFloat(val);
+      document.getElementById('slowMoBadge').innerText = `VELOCIDADE: ${val}x`;
+    }
+
+    function areAllLanded() {
+      return state.featherAir.landed && state.trainAir.landed && state.featherVac.landed && state.trainVac.landed;
+    }
+
+    // --- MOTOR DE FÍSICA & INTEGRAÇÃO NUMÉRICA (Runge-Kutta 4ª Ordem com Sub-Stepping) ---
+    function calcAcceleration(v, m, cd, area, rho, g) {
+      if (rho <= 0) return g; // Vácuo ideal: apenas a gravidade pura
+      const dragForce = 0.5 * rho * cd * area * v * Math.abs(v);
+      const netForce = (m * g) - dragForce;
+      return netForce / m;
+    }
+
+    function rk4Step(body, m, cd, area, rho, g, dt, h) {
+      if (body.landed) return;
+
+      const y0 = body.y;
+      const v0 = body.v;
+
+      // k1
+      const k1_v = calcAcceleration(v0, m, cd, area, rho, g);
+      const k1_y = v0;
+
+      // k2
+      const v_mid1 = v0 + 0.5 * dt * k1_v;
+      const k2_v = calcAcceleration(v_mid1, m, cd, area, rho, g);
+      const k2_y = v_mid1;
+
+      // k3
+      const v_mid2 = v0 + 0.5 * dt * k2_v;
+      const k3_v = calcAcceleration(v_mid2, m, cd, area, rho, g);
+      const k3_y = v_mid2;
+
+      // k4
+      const v_end = v0 + dt * k3_v;
+      const k4_v = calcAcceleration(v_end, m, cd, area, rho, g);
+      const k4_y = v_end;
+
+      // Atualização do Estado
+      body.v += (dt / 6) * (k1_v + 2 * k2_v + 2 * k3_v + k4_v);
+      body.y += (dt / 6) * (k1_y + 2 * k2_y + 2 * k3_y + k4_y);
+      body.a = calcAcceleration(body.v, m, cd, area, rho, g);
+
+      // Verificação de Impacto no Solo (Fotocélula Laser do Fundo)
+      if (body.y >= h) {
+        body.y = h;
+        body.landed = true;
+        body.landTime = state.currentTime;
+      }
+    }
+
+    function integratePhysics(dt) {
+      const subSteps = 10;
+      const subDt = dt / subSteps;
+      const h = state.height;
+      const g = state.gravity;
+      const rho = state.airDensity;
+
+      for (let s = 0; s < subSteps; s++) {
+        // 1. Pena no Ar
+        const wasFaLanded = state.featherAir.landed;
+        rk4Step(state.featherAir, state.feather.mass, state.feather.cd, state.feather.area, rho, g, subDt, h);
+        if (!wasFaLanded && state.featherAir.landed) {
+          document.getElementById('pgFeatherAir').innerText = `${state.currentTime.toFixed(3)} s`;
+          playImpactSound(false);
+        }
+
+        // 2. Trem no Ar
+        const wasTaLanded = state.trainAir.landed;
+        rk4Step(state.trainAir, state.train.mass, state.train.cd, state.train.area, rho, g, subDt, h);
+        if (!wasTaLanded && state.trainAir.landed) {
+          document.getElementById('pgTrainAir').innerText = `${state.currentTime.toFixed(3)} s`;
+          playImpactSound(true);
+        }
+
+        // 3. Pena no Vácuo (rho = 0)
+        const wasFvLanded = state.featherVac.landed;
+        rk4Step(state.featherVac, state.feather.mass, state.feather.cd, state.feather.area, 0, g, subDt, h);
+        if (!wasFvLanded && state.featherVac.landed) {
+          document.getElementById('pgFeatherVac').innerText = `${state.currentTime.toFixed(3)} s`;
+        }
+
+        // 4. Trem no Vácuo (rho = 0)
+        const wasTvLanded = state.trainVac.landed;
+        rk4Step(state.trainVac, state.train.mass, state.train.cd, state.train.area, 0, g, subDt, h);
+        if (!wasTvLanded && state.trainVac.landed) {
+          document.getElementById('pgTrainVac').innerText = `${state.currentTime.toFixed(3)} s`;
+          // Se ambos no vácuo pousaram ao mesmo tempo
+          if (Math.abs(state.featherVac.landTime - state.trainVac.landTime) < 0.001) {
+            playImpactSound(true);
+          }
+        }
+      }
+
+      state.currentTime += dt;
+
+      // Oscilação / esvoaçar aerodinâmico da pena no ar (balanço suave amortecido pela velocidade)
+      if (!state.featherAir.landed) {
+        state.featherAir.flutterAngle = Math.sin(state.currentTime * state.featherAir.flutterSpeed) * (0.35 * Math.min(1.0, state.featherAir.v / 2.0));
+      } else {
+        state.featherAir.flutterAngle = 0;
+      }
+
+      // Registro Estroboscópico
+      if (state.currentTime - state.lastStrobeTime >= state.strobeInterval) {
+        state.strobeHistory.push({
+          t: state.currentTime,
+          yFa: state.featherAir.y,
+          yTa: state.trainAir.y,
+          yFv: state.featherVac.y,
+          yTv: state.trainVac.y
+        });
+        state.lastStrobeTime = state.currentTime;
+      }
+
+      // Registro de Telemetria nos Gráficos (a cada ~0.05s)
+      state.chartHistory.t.push(state.currentTime);
+      state.chartHistory.yFeatherAir.push(state.featherAir.y);
+      state.chartHistory.yTrainAir.push(state.trainAir.y);
+      state.chartHistory.yVacuum.push(state.trainVac.y);
+
+      state.chartHistory.vFeatherAir.push(state.featherAir.v);
+      state.chartHistory.vTrainAir.push(state.trainAir.v);
+      state.chartHistory.vVacuum.push(state.trainVac.v);
+
+      state.chartHistory.aFeatherAir.push(state.featherAir.a);
+      state.chartHistory.aTrainAir.push(state.trainAir.a);
+      state.chartHistory.aVacuum.push(state.trainVac.a);
+
+      // Limita tamanho do buffer de histórico
+      if (state.chartHistory.t.length > 300) {
+        state.chartHistory.t.shift();
+        state.chartHistory.yFeatherAir.shift();
+        state.chartHistory.yTrainAir.shift();
+        state.chartHistory.yVacuum.shift();
+        state.chartHistory.vFeatherAir.shift();
+        state.chartHistory.vTrainAir.shift();
+        state.chartHistory.vVacuum.shift();
+        state.chartHistory.aFeatherAir.shift();
+        state.chartHistory.aTrainAir.shift();
+        state.chartHistory.aVacuum.shift();
+      }
+
+      // Verifica se todos finalizaram a queda
+      if (areAllLanded()) {
+        state.isRunning = false;
+        document.getElementById('simStatusBadge').className = 'badge badge-emerald';
+        document.getElementById('simStatusBadge').innerText = 'CHEGADA REGISTRADA!';
+        const deltaAir = Math.abs((state.featherAir.landTime || 0) - (state.trainAir.landTime || 0));
+        const deltaVac = Math.abs((state.featherVac.landTime || 0) - (state.trainVac.landTime || 0));
+        document.getElementById('statDeltaTime').innerText = `${deltaAir.toFixed(3)} s (Ar)`;
+        document.getElementById('statDeltaSub').innerText = `No Vácuo: Δt = ${deltaVac.toFixed(4)} s (Simultâneo!)`;
+      }
+    }
+
+    // --- LOOP PRINCIPAL DE ANIMAÇÃO ---
+    let lastTimestamp = 0;
+    function animationLoop(timestamp) {
+      if (!lastTimestamp) lastTimestamp = timestamp;
+      const rawDt = Math.min((timestamp - lastTimestamp) / 1000, 0.1);
+      lastTimestamp = timestamp;
+
+      if (state.isRunning && !state.isPaused) {
+        const dt = rawDt * state.timeScale;
+        integratePhysics(dt);
+        updateDynamicTelemetry();
+        updateCharts();
+      }
+
+      renderScene();
+      requestAnimationFrame(animationLoop);
+    }
+
+    // --- RENDERIZAÇÃO GRÁFICA NO CANVAS ---
+    function renderScene() {
+      const w = viewportBox.clientWidth;
+      const h = viewportBox.clientHeight;
+
+      ctx.clearRect(0, 0, w, h);
+
+      if (state.viewMode === 'dual') {
+        renderDualChambers(w, h);
+      } else {
+        renderSingleChamber(w, h);
+      }
+    }
+
+    function renderDualChambers(w, h) {
+      const halfW = w / 2;
+      const marginX = 24;
+      const topY = 55;
+      const bottomY = h - 45;
+      const chamberH = bottomY - topY;
+
+      // Fundo das Câmaras
+      // Câmara 1: Atmosfera (Ar)
+      const gradAir = ctx.createLinearGradient(0, topY, halfW, bottomY);
+      gradAir.addColorStop(0, 'rgba(15, 23, 42, 0.85)');
+      gradAir.addColorStop(1, 'rgba(30, 41, 59, 0.95)');
+      ctx.fillStyle = gradAir;
+      ctx.fillRect(marginX, topY, halfW - marginX - 10, chamberH);
+
+      // Câmara 2: Vácuo
+      const gradVac = ctx.createLinearGradient(halfW, topY, w, bottomY);
+      gradVac.addColorStop(0, 'rgba(5, 10, 24, 0.95)');
+      gradVac.addColorStop(1, 'rgba(2, 6, 23, 0.98)');
+      ctx.fillStyle = gradVac;
+      ctx.fillRect(halfW + 10, topY, halfW - marginX - 10, chamberH);
+
+      // Bordas e Vidro Tubular
+      drawGlassTube(marginX, topY, halfW - marginX - 10, chamberH, 'rgba(245, 158, 11, 0.35)');
+      drawGlassTube(halfW + 10, topY, halfW - marginX - 10, chamberH, 'rgba(56, 189, 248, 0.35)');
+
+      // Partículas de Ar flutuando na Câmara 1
+      if (state.airDensity > 0.05) {
+        drawAirParticles(marginX, topY, halfW - marginX - 10, chamberH);
+      }
+
+      // Linhas de Escala Métrica e Sensores Laser (Fotogates)
+      drawMetricRuler(marginX, topY, chamberH, state.height);
+      drawMetricRuler(halfW + 10, topY, chamberH, state.height);
+
+      if (state.showPhotogates) {
+        drawPhotogates(marginX, topY, halfW - marginX - 10, chamberH, [0, 0.25, 0.5, 0.75, 1.0]);
+        drawPhotogates(halfW + 10, topY, halfW - marginX - 10, chamberH, [0, 0.25, 0.5, 0.75, 1.0]);
+      }
+
+      // Trajetórias Estroboscópicas
+      if (state.showStrobe && state.strobeHistory.length > 0) {
+        drawStrobeGhostTrails(marginX, halfW - marginX - 10, topY, chamberH);
+      }
+
+      // Posição de Renderização dos Objetos
+      // Câmara 1 (Ar): Pena na esquerda, Trem na direita
+      const c1_xPena = marginX + (halfW - marginX - 10) * 0.28;
+      const c1_xTrem = marginX + (halfW - marginX - 10) * 0.72;
+      const yPenaAirPix = topY + (state.featherAir.y / state.height) * chamberH;
+      const yTremAirPix = topY + (state.trainAir.y / state.height) * chamberH;
+
+      // Câmara 2 (Vácuo): Pena na esquerda, Trem na direita
+      const c2_xPena = halfW + 10 + (halfW - marginX - 10) * 0.28;
+      const c2_xTrem = halfW + 10 + (halfW - marginX - 10) * 0.72;
+      const yPenaVacPix = topY + (state.featherVac.y / state.height) * chamberH;
+      const yTremVacPix = topY + (state.trainVac.y / state.height) * chamberH;
+
+      // Linha de Alinhamento de Galileu no Vácuo (Destaque visual da sincronicidade perfeita)
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
+      ctx.setLineDash([4, 4]);
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(c2_xPena - 20, yPenaVacPix);
+      ctx.lineTo(c2_xTrem + 40, yTremVacPix);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Desenho dos Objetos
+      // 1. Pena no Ar
+      drawFeather(c1_xPena, yPenaAirPix, state.featherAir.flutterAngle, true);
+      // 2. Trem no Ar
+      drawTrain(c1_xTrem, yTremAirPix, state.trainAir.v, true);
+      // 3. Pena no Vácuo
+      drawFeather(c2_xPena, yPenaVacPix, 0, false);
+      // 4. Trem no Vácuo
+      drawTrain(c2_xTrem, yTremVacPix, state.trainVac.v, false);
+
+      // Vetores de Força
+      if (state.showVectors) {
+        drawForceVectors(c1_xPena, yPenaAirPix, state.feather.mass, state.featherAir.v, state.airDensity, state.feather.cd, state.feather.area);
+        drawForceVectors(c1_xTrem, yTremAirPix, state.train.mass, state.trainAir.v, state.airDensity, state.train.cd, state.train.area);
+        drawForceVectors(c2_xPena, yPenaVacPix, state.feather.mass, state.featherVac.v, 0, 0, 0);
+        drawForceVectors(c2_xTrem, yTremVacPix, state.train.mass, state.trainVac.v, 0, 0, 0);
+      }
+    }
+
+    function renderSingleChamber(w, h) {
+      const marginX = 80;
+      const topY = 55;
+      const bottomY = h - 45;
+      const chamberW = w - marginX * 2;
+      const chamberH = bottomY - topY;
+
+      // Fundo Único
+      const grad = ctx.createLinearGradient(0, topY, 0, bottomY);
+      grad.addColorStop(0, '#0a0f1d');
+      grad.addColorStop(1, '#030712');
+      ctx.fillStyle = grad;
+      ctx.fillRect(marginX, topY, chamberW, chamberH);
+
+      drawGlassTube(marginX, topY, chamberW, chamberH, state.airDensity > 0.05 ? 'rgba(245, 158, 11, 0.4)' : 'rgba(56, 189, 248, 0.4)');
+
+      if (state.airDensity > 0.05) {
+        drawAirParticles(marginX, topY, chamberW, chamberH);
+      }
+
+      drawMetricRuler(marginX, topY, chamberH, state.height);
+      if (state.showPhotogates) {
+        drawPhotogates(marginX, topY, chamberW, chamberH, [0, 0.25, 0.5, 0.75, 1.0]);
+      }
+
+      const xPena = marginX + chamberW * 0.35;
+      const xTrem = marginX + chamberW * 0.65;
+      const yPenaPix = topY + (state.featherAir.y / state.height) * chamberH;
+      const yTremPix = topY + (state.trainAir.y / state.height) * chamberH;
+
+      // Linha guia se estiver no vácuo
+      if (state.airDensity <= 0.01) {
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
+        ctx.setLineDash([4, 4]);
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(xPena - 20, yPenaPix);
+        ctx.lineTo(xTrem + 40, yTremPix);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      drawFeather(xPena, yPenaPix, state.featherAir.flutterAngle, state.airDensity > 0.05);
+      drawTrain(xTrem, yTremPix, state.trainAir.v, state.airDensity > 0.05);
+
+      if (state.showVectors) {
+        drawForceVectors(xPena, yPenaPix, state.feather.mass, state.featherAir.v, state.airDensity, state.feather.cd, state.feather.area);
+        drawForceVectors(xTrem, yTremPix, state.train.mass, state.trainAir.v, state.airDensity, state.train.cd, state.train.area);
+      }
+    }
+
+    // --- PROCEDURAL RENDERING: PENA (Feather) ---
+    function drawFeather(x, y, angle, inAir) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(angle);
+
+      // Linhas de fluxo de ar ao redor da pena
+      if (inAir && state.showStreamlines && state.featherAir.v > 0.5) {
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(0, 10, 18, Math.PI, 0, true);
+        ctx.arc(0, -10, 18, Math.PI, 0, true);
+        ctx.stroke();
+      }
+
+      // Haste Central (Rachis)
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(0, -22);
+      ctx.quadraticCurveTo(2, 0, 0, 22);
+      ctx.stroke();
+
+      // Barbas da Pena (Vanes)
+      const grad = ctx.createLinearGradient(-15, -20, 15, 20);
+      grad.addColorStop(0, '#fef08a');
+      grad.addColorStop(0.5, '#f59e0b');
+      grad.addColorStop(1, '#d97706');
+
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(0, -22);
+      ctx.bezierCurveTo(-14, -10, -16, 8, 0, 20);
+      ctx.bezierCurveTo(16, 8, 14, -10, 0, -22);
+      ctx.fill();
+
+      // Detalhe das ranhuras das barbas
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+      ctx.lineWidth = 0.8;
+      for (let i = -16; i <= 16; i += 4) {
+        ctx.beginPath();
+        ctx.moveTo(0, i);
+        ctx.lineTo(-10, i + 3);
+        ctx.moveTo(0, i);
+        ctx.lineTo(10, i + 3);
+        ctx.stroke();
+      }
+
+      // Glow suave ao redor
+      ctx.shadowColor = 'rgba(254, 240, 138, 0.5)';
+      ctx.shadowBlur = 8;
+      ctx.restore();
+    }
+
+    // --- PROCEDURAL RENDERING: TREM DE CARGA / LOCOMOTIVA ---
+    function drawTrain(x, y, v, inAir) {
+      ctx.save();
+      ctx.translate(x, y);
+
+      const trainW = 54;
+      const trainH = 34;
+
+      // Efeito de compressão aerodinâmica do ar / onda de choque na frente do trem
+      if (inAir && state.showStreamlines && v > 5.0) {
+        ctx.strokeStyle = `rgba(56, 189, 248, ${Math.min(0.6, v / 40)})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, trainH / 2 + 8, trainW * 0.65, 0, Math.PI);
+        ctx.stroke();
+      }
+
+      // Chassi Principal do Vagão / Locomotiva
+      const gradBody = ctx.createLinearGradient(-trainW / 2, 0, trainW / 2, 0);
+      gradBody.addColorStop(0, '#1e293b');
+      gradBody.addColorStop(0.3, '#334155');
+      gradBody.addColorStop(0.7, '#475569');
+      gradBody.addColorStop(1, '#1e293b');
+
+      ctx.fillStyle = gradBody;
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(-trainW / 2, -trainH / 2, trainW, trainH, 4);
+      ctx.fill();
+      ctx.stroke();
+
+      // Cabine Superior & Janelas
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(-trainW / 2 + 4, -trainH / 2 + 4, trainW - 8, 10);
+
+      // Janelas Iluminadas
+      ctx.fillStyle = '#38bdf8';
+      ctx.shadowColor = '#00f2fe';
+      ctx.shadowBlur = 6;
+      for (let j = -trainW / 2 + 8; j < trainW / 2 - 10; j += 10) {
+        ctx.fillRect(j, -trainH / 2 + 6, 6, 6);
+      }
+      ctx.shadowBlur = 0;
+
+      // Faixa Industrial de Identificação
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(-trainW / 2, 2, trainW, 4);
+
+      // Rodas e Truques Ferroviários (Bogeys)
+      ctx.fillStyle = '#020617';
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 1.5;
+
+      const wheelRadius = 5;
+      const wheelY = trainH / 2 + 3;
+
+      // Roda 1 e 2 (esquerda)
+      ctx.beginPath();
+      ctx.arc(-trainW / 2 + 8, wheelY, wheelRadius, 0, Math.PI * 2);
+      ctx.arc(-trainW / 2 + 18, wheelY, wheelRadius, 0, Math.PI * 2);
+      // Roda 3 e 4 (direita)
+      ctx.arc(trainW / 2 - 18, wheelY, wheelRadius, 0, Math.PI * 2);
+      ctx.arc(trainW / 2 - 8, wheelY, wheelRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Farol Frontal (Virado para baixo durante a queda vertical)
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowColor = '#ffffff';
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.arc(0, trainH / 2, 4, 0, Math.PI);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // Etiqueta com a Massa
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '9px JetBrains Mono';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${(state.train.mass / 1000).toFixed(0)}t`, 0, trainH / 2 - 3);
+
+      ctx.restore();
+    }
+
+    // --- VETORES DE FORÇA DINÂMICOS ---
+    function drawForceVectors(x, y, m, v, rho, cd, area) {
+      const g = state.gravity;
+      const weight = m * g;
+      const drag = rho > 0 ? 0.5 * rho * cd * area * v * v : 0;
+
+      // Escala visual dos vetores
+      const scaleWeight = 32; // Comprimento fixo para representar o peso
+      const dragRatio = weight > 0 ? Math.min(1.5, drag / weight) : 0;
+      const scaleDrag = scaleWeight * dragRatio;
+
+      ctx.save();
+      ctx.translate(x, y);
+
+      // 1. Vetor Peso (P = mg) para baixo (Verde Esmeralda)
+      drawArrow(0, 0, 0, scaleWeight, '#10b981', 'P = mg');
+
+      // 2. Vetor Arrasto (Fd) para cima (Rosa/Vermelho)
+      if (dragRatio > 0.02) {
+        drawArrow(0, 0, 0, -scaleDrag, '#f43f5e', 'Fd');
+      }
+
+      ctx.restore();
+    }
+
+    function drawArrow(fromX, fromY, toX, toY, color, label) {
+      const headlen = 6;
+      const dx = toX - fromX;
+      const dy = toY - fromY;
+      const angle = Math.atan2(dy, dx);
+
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = 2.5;
+
+      ctx.beginPath();
+      ctx.moveTo(fromX, fromY);
+      ctx.lineTo(toX, toY);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(toX, toY);
+      ctx.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
+      ctx.closePath();
+      ctx.fill();
+
+      // Rótulo
+      if (label) {
+        ctx.font = '10px JetBrains Mono';
+        ctx.fillStyle = color;
+        ctx.textAlign = 'left';
+        ctx.fillText(label, toX + 6, toY + (dy > 0 ? 4 : -4));
+      }
+    }
+
+    // --- ELEMENTOS AMBIENTAIS: TUBOS DE VIDRO, RÉGUA E LASERS ---
+    function drawGlassTube(x, y, w, h, borderColor) {
+      ctx.save();
+      ctx.strokeStyle = borderColor;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, w, h);
+
+      // Reflexo especular do vidro nas laterais
+      const gradHighlight = ctx.createLinearGradient(x, 0, x + 16, 0);
+      gradHighlight.addColorStop(0, 'rgba(255, 255, 255, 0.12)');
+      gradHighlight.addColorStop(1, 'transparent');
+      ctx.fillStyle = gradHighlight;
+      ctx.fillRect(x, y, 16, h);
+
+      // Base e Topo Reforçados
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(x - 4, y - 6, w + 8, 8);
+      ctx.fillRect(x - 4, y + h - 2, w + 8, 10);
+      ctx.strokeStyle = '#475569';
+      ctx.strokeRect(x - 4, y - 6, w + 8, 8);
+      ctx.strokeRect(x - 4, y + h - 2, w + 8, 10);
+
+      ctx.restore();
+    }
+
+    function drawAirParticles(x, y, w, h) {
+      ctx.save();
+      state.particles.forEach(p => {
+        const px = x + p.x * w;
+        const py = y + ((p.y + state.currentTime * p.speedY) % 1.0) * h;
+        ctx.fillStyle = `rgba(186, 230, 253, ${p.alpha})`;
+        ctx.beginPath();
+        ctx.arc(px, py, p.radius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.restore();
+    }
+
+    function drawMetricRuler(x, y, h, maxMeters) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+      ctx.fillStyle = '#64748b';
+      ctx.font = '9px JetBrains Mono';
+      ctx.textAlign = 'right';
+
+      const steps = 4;
+      for (let i = 0; i <= steps; i++) {
+        const frac = i / steps;
+        const currY = y + frac * h;
+        const meters = (frac * maxMeters).toFixed(0);
+
+        ctx.beginPath();
+        ctx.moveTo(x + 2, currY);
+        ctx.lineTo(x + 10, currY);
+        ctx.stroke();
+
+        ctx.fillText(`${meters}m`, x - 4, currY + 3);
+      }
+      ctx.restore();
+    }
+
+    function drawPhotogates(x, y, w, h, checkpoints) {
+      ctx.save();
+      checkpoints.forEach(frac => {
+        const gateY = y + frac * h;
+        // Feixe laser
+        ctx.strokeStyle = frac === 1.0 ? 'rgba(239, 68, 68, 0.6)' : 'rgba(56, 189, 248, 0.25)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([2, 4]);
+        ctx.beginPath();
+        ctx.moveTo(x, gateY);
+        ctx.lineTo(x + w, gateY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Sensor emissor e receptor nas extremidades
+        ctx.fillStyle = frac === 1.0 ? '#ef4444' : '#0284c7';
+        ctx.fillRect(x - 3, gateY - 3, 6, 6);
+        ctx.fillRect(x + w - 3, gateY - 3, 6, 6);
+      });
+      ctx.restore();
+    }
+
+    function drawStrobeGhostTrails(startX, chamberW, topY, chamberH) {
+      ctx.save();
+      state.strobeHistory.forEach((strobe, idx) => {
+        const alpha = Math.min(0.6, 0.15 + (idx / state.strobeHistory.length) * 0.45);
+
+        // Câmara 1 (Ar)
+        const yFaPix = topY + (strobe.yFa / state.height) * chamberH;
+        const yTaPix = topY + (strobe.yTa / state.height) * chamberH;
+        const c1_xPena = startX + chamberW * 0.28;
+        const c1_xTrem = startX + chamberW * 0.72;
+
+        ctx.fillStyle = `rgba(254, 240, 138, ${alpha * 0.5})`;
+        ctx.beginPath();
+        ctx.arc(c1_xPena, yFaPix, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = `rgba(56, 189, 248, ${alpha * 0.5})`;
+        ctx.beginPath();
+        ctx.arc(c1_xTrem, yTaPix, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Câmara 2 (Vácuo)
+        const halfW = canvas.width / (2 * (window.devicePixelRatio || 1));
+        const c2_xPena = halfW + 10 + chamberW * 0.28;
+        const c2_xTrem = halfW + 10 + chamberW * 0.72;
+        const yFvPix = topY + (strobe.yFv / state.height) * chamberH;
+        const yTvPix = topY + (strobe.yTv / state.height) * chamberH;
+
+        ctx.fillStyle = `rgba(0, 242, 254, ${alpha * 0.6})`;
+        ctx.beginPath();
+        ctx.arc(c2_xPena, yFvPix, 4, 0, Math.PI * 2);
+        ctx.arc(c2_xTrem, yTvPix, 5, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.restore();
+    }
+
+    // --- ATUALIZAÇÃO DA TELEMETRIA NO DOM ---
+    function updateDynamicTelemetry() {
+      // Cronômetro Principal
+      const totalSec = state.currentTime;
+      const mins = Math.floor(totalSec / 60);
+      const secs = Math.floor(totalSec % 60);
+      const millis = Math.floor((totalSec % 1) * 1000);
+      document.getElementById('chronometerDisplay').innerText = 
+        `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${String(millis).padStart(3, '0')} s`;
+
+      // Altura e tempo teórico
+      document.getElementById('statHeight').innerText = `${state.height.toFixed(1)} m`;
+      const tVacTheory = Math.sqrt((2 * state.height) / state.gravity);
+      document.getElementById('statTheoryTime').innerText = `${tVacTheory.toFixed(3)} s`;
+
+      // Velocidades em km/h
+      const vFeatherAirKmh = state.featherAir.v * 3.6;
+      const vTrainAirKmh = state.trainAir.v * 3.6;
+      document.getElementById('statFeatherAirVel').innerText = `${vFeatherAirKmh.toFixed(1)} km/h`;
+      document.getElementById('statTrainAirVel').innerText = `${vTrainAirKmh.toFixed(1)} km/h`;
+
+      // Velocidades Terminais Teóricas
+      const vtFeather = Math.sqrt((2 * state.feather.mass * state.gravity) / (state.airDensity * state.feather.cd * state.feather.area));
+      const vtTrain = Math.sqrt((2 * state.train.mass * state.gravity) / (state.airDensity * state.train.cd * state.train.area));
+      document.getElementById('statFeatherVt').innerText = `${(vtFeather * 3.6).toFixed(1)} km/h`;
+      document.getElementById('statTrainVt').innerText = `${(vtTrain * 3.6).toFixed(1)} km/h`;
+      document.getElementById('tableFeatherVt').innerText = `${vtFeather.toFixed(2)} m/s (${(vtFeather * 3.6).toFixed(1)} km/h)`;
+      document.getElementById('tableTrainVt').innerText = `${vtTrain.toFixed(1)} m/s (${(vtTrain * 3.6).toFixed(0)} km/h)`;
+
+      // Diferencial Delta t
+      if (state.featherAir.landed && state.trainAir.landed) {
+        const delta = Math.abs(state.featherAir.landTime - state.trainAir.landTime);
+        document.getElementById('statDeltaTime').innerText = `${delta.toFixed(3)} s (Ar)`;
+      }
+    }
+
+    // --- GRÁFICOS EM TEMPO REAL (Chart.js) ---
+    function initCharts() {
+      const ctxPos = document.getElementById('chartPosition').getContext('2d');
+      const ctxVel = document.getElementById('chartVelocity').getContext('2d');
+
+      const commonOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: { color: '#94a3b8', font: { family: 'JetBrains Mono', size: 10 }, boxWidth: 12 }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+            ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 9 } },
+            title: { display: true, text: 'Tempo (s)', color: '#94a3b8', font: { size: 10 } }
+          },
+          y: {
+            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+            ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 9 } }
+          }
+        }
+      };
+
+      // Gráfico 1: Posição y(t)
+      chartPosInstance = new Chart(ctxPos, {
+        type: 'line',
+        data: {
+          labels: [0],
+          datasets: [
+            { label: '🪶 Pena (Ar)', data: [0], borderColor: '#fde047', borderWidth: 2, pointRadius: 0 },
+            { label: '🚂 Trem (Ar)', data: [0], borderColor: '#38bdf8', borderWidth: 2, pointRadius: 0 },
+            { label: '⭐ Vácuo de Galileu', data: [0], borderColor: '#10b981', borderWidth: 2.5, borderDash: [4, 4], pointRadius: 0 }
+          ]
+        },
+        options: {
+          ...commonOptions,
+          scales: {
+            ...commonOptions.scales,
+            y: { ...commonOptions.scales.y, title: { display: true, text: 'Posição y (m)', color: '#94a3b8' } }
+          }
+        }
+      });
+
+      // Gráfico 2: Velocidade v(t)
+      chartVelInstance = new Chart(ctxVel, {
+        type: 'line',
+        data: {
+          labels: [0],
+          datasets: [
+            { label: '🪶 Pena (Ar)', data: [0], borderColor: '#fde047', borderWidth: 2, pointRadius: 0 },
+            { label: '🚂 Trem (Ar)', data: [0], borderColor: '#38bdf8', borderWidth: 2, pointRadius: 0 },
+            { label: '⭐ Vácuo (v = gt)', data: [0], borderColor: '#10b981', borderWidth: 2.5, borderDash: [4, 4], pointRadius: 0 }
+          ]
+        },
+        options: {
+          ...commonOptions,
+          scales: {
+            ...commonOptions.scales,
+            y: { ...commonOptions.scales.y, title: { display: true, text: 'Velocidade (m/s)', color: '#94a3b8' } }
+          }
+        }
+      });
+    }
+
+    function updateCharts() {
+      if (!chartPosInstance || !chartVelInstance) return;
+
+      const labels = state.chartHistory.t.map(t => t.toFixed(2));
+
+      if (activeChartType === 'y') {
+        chartPosInstance.data.labels = labels;
+        chartPosInstance.data.datasets[0].data = state.chartHistory.yFeatherAir;
+        chartPosInstance.data.datasets[1].data = state.chartHistory.yTrainAir;
+        chartPosInstance.data.datasets[2].data = state.chartHistory.yVacuum;
+        chartPosInstance.update('none');
+      } else if (activeChartType === 'v') {
+        chartPosInstance.data.labels = labels;
+        chartPosInstance.data.datasets[0].data = state.chartHistory.vFeatherAir;
+        chartPosInstance.data.datasets[1].data = state.chartHistory.vTrainAir;
+        chartPosInstance.data.datasets[2].data = state.chartHistory.vVacuum;
+        chartPosInstance.update('none');
+      } else if (activeChartType === 'a') {
+        chartPosInstance.data.labels = labels;
+        chartPosInstance.data.datasets[0].data = state.chartHistory.aFeatherAir;
+        chartPosInstance.data.datasets[1].data = state.chartHistory.aTrainAir;
+        chartPosInstance.data.datasets[2].data = state.chartHistory.aVacuum;
+        chartPosInstance.update('none');
+      }
+
+      // Gráfico da direita permanece com a Velocidade para comparação simultânea
+      chartVelInstance.data.labels = labels;
+      chartVelInstance.data.datasets[0].data = state.chartHistory.vFeatherAir;
+      chartVelInstance.data.datasets[1].data = state.chartHistory.vTrainAir;
+      chartVelInstance.data.datasets[2].data = state.chartHistory.vVacuum;
+      chartVelInstance.update('none');
+    }
+
+    function resetChartData() {
+      if (!chartPosInstance || !chartVelInstance) return;
+      chartPosInstance.data.labels = [0];
+      chartPosInstance.data.datasets.forEach(ds => ds.data = [0]);
+      chartPosInstance.update();
+
+      chartVelInstance.data.labels = [0];
+      chartVelInstance.data.datasets.forEach(ds => ds.data = [0]);
+      chartVelInstance.update();
+    }
+
+    function toggleChartType(type) {
+      activeChartType = type;
+      if (type === 'y') {
+        chartPosInstance.options.scales.y.title.text = 'Posição y (m)';
+        chartPosInstance.data.datasets[0].label = '🪶 Pena (Ar)';
+        chartPosInstance.data.datasets[1].label = '🚂 Trem (Ar)';
+        chartPosInstance.data.datasets[2].label = '⭐ Vácuo de Galileu';
+      } else if (type === 'v') {
+        chartPosInstance.options.scales.y.title.text = 'Velocidade v (m/s)';
+        chartPosInstance.data.datasets[0].label = '🪶 Pena (v → vt)';
+        chartPosInstance.data.datasets[1].label = '🚂 Trem (Ar)';
+        chartPosInstance.data.datasets[2].label = '⭐ Vácuo (v = gt)';
+      } else if (type === 'a') {
+        chartPosInstance.options.scales.y.title.text = 'Aceleração a (m/s²)';
+        chartPosInstance.data.datasets[0].label = '🪶 Pena (a → 0)';
+        chartPosInstance.data.datasets[1].label = '🚂 Trem (Ar)';
+        chartPosInstance.data.datasets[2].label = '⭐ Vácuo (a = g)';
+      }
+      updateCharts();
+    }
+
+    // --- CONTROLES DE INTERFACE & SLIDERS ---
+    function updateHeight(val) {
+      state.height = parseFloat(val);
+      document.getElementById('valHeightTag').innerText = `${state.height.toFixed(1)} m`;
+      resetSimulation();
+    }
+
+    function updateGravity(val) {
+      state.gravity = parseFloat(val);
+      document.getElementById('valGravityTag').innerText = `${state.gravity.toFixed(2)} m/s²`;
+      resetSimulation();
+    }
+
+    function updateAirDensity(val) {
+      state.airDensity = parseFloat(val);
+      document.getElementById('valAirDensityTag').innerText = `${state.airDensity.toFixed(3)} kg/m³`;
+      document.getElementById('hudAirDensity').innerText = state.airDensity.toFixed(3);
+      resetSimulation();
+    }
+
+    function updateFeatherMass(val) {
+      const grams = parseFloat(val);
+      state.feather.mass = grams / 1000.0;
+      document.getElementById('valFeatherMassTag').innerText = `${grams.toFixed(1)} g`;
+      document.getElementById('tableFeatherMass').innerText = `${state.feather.mass.toFixed(3)} kg (${grams.toFixed(0)} g)`;
+      resetSimulation();
+    }
+
+    function updateTrainMass(val) {
+      const tons = parseFloat(val);
+      state.train.mass = tons * 1000.0;
+      document.getElementById('valTrainMassTag').innerText = `${tons.toFixed(0)} t`;
+      document.getElementById('tableTrainMass').innerText = `${state.train.mass.toLocaleString('pt-BR')} kg (${tons.toFixed(0)} t)`;
+      resetSimulation();
+    }
+
+    function updateFeatherCd(val) {
+      state.feather.cd = parseFloat(val);
+      document.getElementById('valFeatherCdTag').innerText = state.feather.cd.toFixed(2);
+      resetSimulation();
+    }
+
+    // --- PRESETS HISTÓRICOS E PLANETÁRIOS ---
+    function applyPreset(preset) {
+      document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+
+      if (preset === 'earth') {
+        document.getElementById('presetEarth').classList.add('active');
+        document.getElementById('envPresetBadge').innerText = 'TERRA (1 ATM)';
+        document.getElementById('sliderGravity').value = 9.81;
+        document.getElementById('sliderAirDensity').value = 1.225;
+        document.getElementById('sliderHeight').value = 40;
+        state.gravity = 9.81;
+        state.airDensity = 1.225;
+        state.height = 40;
+      } else if (preset === 'moon') {
+        document.getElementById('presetMoon').classList.add('active');
+        document.getElementById('envPresetBadge').innerText = 'LUA (APOLLO 15)';
+        document.getElementById('sliderGravity').value = 1.62;
+        document.getElementById('sliderAirDensity').value = 0.0;
+        document.getElementById('sliderHeight').value = 20;
+        state.gravity = 1.62;
+        state.airDensity = 0.0;
+        state.height = 20;
+      } else if (preset === 'pisa') {
+        document.getElementById('presetPisa').classList.add('active');
+        document.getElementById('envPresetBadge').innerText = 'TORRE DE PISA (54m)';
+        document.getElementById('sliderGravity').value = 9.81;
+        document.getElementById('sliderAirDensity').value = 1.225;
+        document.getElementById('sliderHeight').value = 54;
+        state.gravity = 9.81;
+        state.airDensity = 1.225;
+        state.height = 54;
+      } else if (preset === 'jupiter') {
+        document.getElementById('presetJupiter').classList.add('active');
+        document.getElementById('envPresetBadge').innerText = 'JÚPITER (24.79 m/s²)';
+        document.getElementById('sliderGravity').value = 24.79;
+        document.getElementById('sliderAirDensity').value = 1.8;
+        document.getElementById('sliderHeight').value = 50;
+        state.gravity = 24.79;
+        state.airDensity = 1.8;
+        state.height = 50;
+      }
+
+      document.getElementById('valGravityTag').innerText = `${state.gravity.toFixed(2)} m/s²`;
+      document.getElementById('valAirDensityTag').innerText = `${state.airDensity.toFixed(3)} kg/m³`;
+      document.getElementById('valHeightTag').innerText = `${state.height.toFixed(1)} m`;
+      document.getElementById('hudAirDensity').innerText = state.airDensity.toFixed(3);
+
+      resetSimulation();
+    }
+
+    // --- TOGGLES DE CAMADAS VISUAIS ---
+    function toggleOption(opt) {
+      if (opt === 'vectors') {
+        state.showVectors = !state.showVectors;
+        document.getElementById('chkVectors').checked = state.showVectors;
+      } else if (opt === 'strobe') {
+        state.showStrobe = !state.showStrobe;
+        document.getElementById('chkStrobe').checked = state.showStrobe;
+      } else if (opt === 'streamlines') {
+        state.showStreamlines = !state.showStreamlines;
+        document.getElementById('chkStreamlines').checked = state.showStreamlines;
+      } else if (opt === 'photogates') {
+        state.showPhotogates = !state.showPhotogates;
+        document.getElementById('chkPhotogates').checked = state.showPhotogates;
+      }
+    }
+
+    // --- MODO DE VISUALIZAÇÃO (Abas de topo) ---
+    function setSimulationView(mode) {
+      state.viewMode = mode;
+      document.querySelectorAll('.view-tab-btn').forEach(btn => btn.classList.remove('active'));
+
+      const dualHud = document.getElementById('dualHud');
+      const chartsCard = document.getElementById('chartsCard');
+      const theoryCard = document.getElementById('theoryCard');
+
+      if (mode === 'dual') {
+        document.getElementById('tabDual').classList.add('active');
+        dualHud.style.display = 'flex';
+        chartsCard.style.display = 'block';
+      } else if (mode === 'single') {
+        document.getElementById('tabSingle').classList.add('active');
+        dualHud.style.display = 'none';
+        chartsCard.style.display = 'block';
+      } else if (mode === 'theory') {
+        document.getElementById('tabTheory').classList.add('active');
+        theoryCard.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+
+    // --- ACCORDION HANDLER ---
+    function toggleAccordion(elem) {
+      const body = elem.nextElementSibling;
+      const isOpen = body.classList.contains('open');
+      document.querySelectorAll('.accordion-body').forEach(b => b.classList.remove('open'));
+      if (!isOpen) {
+        body.classList.add('open');
+      }
+    }
+
+    // --- FULLSCREEN HANDLER ---
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+        document.getElementById('fsBtn').innerHTML = '<i class="fa-solid fa-compress"></i>';
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+          document.getElementById('fsBtn').innerHTML = '<i class="fa-solid fa-expand"></i>';
+        }
+      }
+    }
+  </script>
+</body>
+</html>
