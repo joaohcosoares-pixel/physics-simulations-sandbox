@@ -1,0 +1,3225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulação Interativa de Indutância</title>
+    <style>
+        :root {
+            --bg-deep: #060913;
+            --bg-surface: #0b1329;
+            --bg-card: rgba(15, 23, 42, 0.88);
+            --bg-card-hover: rgba(26, 38, 68, 0.95);
+            --bg-glass: rgba(15, 23, 42, 0.7);
+            
+            --border-glow: rgba(56, 189, 248, 0.3);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-accent: rgba(99, 102, 241, 0.4);
+
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+
+            --cyan: #00f2fe;
+            --cyan-dim: #0284c7;
+            --amber: #fbbf24;
+            --amber-dim: #d97706;
+            --emerald: #10b981;
+            --emerald-bright: #34d399;
+            --rose: #f43f5e;
+            --violet: #a855f7;
+            --blue: #3b82f6;
+
+            --font-main: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', 'Roboto Mono', Menlo, Consolas, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-deep);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 10%, rgba(14, 165, 233, 0.07) 0%, transparent 45%),
+                radial-gradient(circle at 85% 80%, rgba(168, 85, 247, 0.07) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.6) 0%, transparent 100%);
+            background-attachment: fixed;
+        }
+
+        /* Top Header */
+        header {
+            background: rgba(11, 19, 41, 0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 10px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .header-logo {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, #0284c7, #6366f1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-mono);
+            font-weight: 800;
+            font-size: 20px;
+            box-shadow: 0 0 16px rgba(14, 165, 233, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header-title h1 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-badge {
+            font-size: 0.68rem;
+            padding: 2px 8px;
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--cyan);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            border-radius: 999px;
+            font-family: var(--font-mono);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .header-title p {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+            border: 1px solid var(--border-subtle);
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--font-main);
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.25);
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #0284c7, #2563eb);
+            border-color: #38bdf8;
+            color: #ffffff;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0369a1, #1d4ed8);
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.55);
+        }
+
+        .btn-danger {
+            background: rgba(244, 63, 94, 0.15);
+            color: #fda4af;
+            border-color: rgba(244, 63, 94, 0.4);
+        }
+
+        .btn-danger:hover {
+            background: rgba(244, 63, 94, 0.28);
+            border-color: rgba(244, 63, 94, 0.6);
+        }
+
+        .btn-success {
+            background: rgba(16, 185, 129, 0.15);
+            color: #6ee7b7;
+            border-color: rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-success:hover {
+            background: rgba(16, 185, 129, 0.28);
+            border-color: rgba(16, 185, 129, 0.6);
+        }
+
+        .btn.active {
+            background: rgba(56, 189, 248, 0.2);
+            border-color: var(--cyan);
+            color: var(--cyan);
+            box-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
+        }
+
+        /* Layout Container */
+        .workspace {
+            flex: 1;
+            padding: 16px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            max-width: 1720px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Top Visualization Grid */
+        .vis-grid {
+            display: grid;
+            grid-template-columns: 1.15fr 1fr;
+            gap: 18px;
+        }
+
+        @media (max-width: 1200px) {
+            .vis-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.36);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .card-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #f1f5f9;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-title-icon {
+            color: var(--cyan);
+            font-size: 1.1rem;
+        }
+
+        .card-meta {
+            font-size: 0.75rem;
+            font-family: var(--font-mono);
+            color: var(--text-secondary);
+        }
+
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #030712;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
+        /* Didactic Coach Box */
+        .coach-box {
+            margin-top: 12px;
+            padding: 14px 16px;
+            background: rgba(15, 23, 42, 0.75);
+            border: 1px solid var(--border-glow);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            position: relative;
+            box-shadow: inset 0 0 20px rgba(0, 242, 254, 0.03);
+        }
+
+        .coach-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .coach-badge-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .coach-state-pill {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-family: var(--font-mono);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .state-charging {
+            background: rgba(0, 242, 254, 0.15);
+            color: var(--cyan);
+            border: 1px solid rgba(0, 242, 254, 0.4);
+        }
+
+        .state-steady {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--emerald-bright);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+        }
+
+        .state-discharging {
+            background: rgba(251, 191, 36, 0.15);
+            color: var(--amber);
+            border: 1px solid rgba(251, 191, 36, 0.4);
+        }
+
+        .state-kick {
+            background: rgba(244, 63, 94, 0.2);
+            color: #fda4af;
+            border: 1px solid rgba(244, 63, 94, 0.5);
+            animation: pulse-border 1.5s infinite;
+        }
+
+        .state-off {
+            background: rgba(148, 163, 184, 0.1);
+            color: var(--text-secondary);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+        }
+
+        @keyframes pulse-border {
+            0%, 100% { border-color: rgba(244, 63, 94, 0.4); }
+            50% { border-color: rgba(244, 63, 94, 0.9); }
+        }
+
+        .coach-title {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .coach-text {
+            font-size: 0.82rem;
+            line-height: 1.45;
+            color: #cbd5e1;
+        }
+
+        .coach-equation {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--amber);
+            background: rgba(0, 0, 0, 0.35);
+            padding: 3px 8px;
+            border-radius: 6px;
+            display: inline-block;
+            margin-top: 4px;
+            border: 1px solid rgba(251, 191, 36, 0.25);
+        }
+
+        /* Solenoid Disclaimer */
+        .disclaimer-banner {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+            padding: 4px 8px;
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .disclaimer-banner strong {
+            color: var(--text-secondary);
+        }
+
+        /* Telemetry Dashboard */
+        .telemetry-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .telemetry-card {
+            background: rgba(11, 17, 33, 0.8);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 9px 12px;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.2s ease;
+        }
+
+        .telemetry-card:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(15, 23, 42, 0.9);
+        }
+
+        .tel-label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .tel-symbol {
+            font-family: var(--font-mono);
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .tel-val {
+            font-family: var(--font-mono);
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: #ffffff;
+            margin-top: 3px;
+        }
+
+        .tel-unit {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-left: 2px;
+        }
+
+        .val-cyan { color: var(--cyan); }
+        .val-amber { color: var(--amber); }
+        .val-emerald { color: var(--emerald-bright); }
+        .val-rose { color: var(--rose); }
+        .val-violet { color: var(--violet); }
+
+        /* Power & Conservation Bar */
+        .power-bar-wrapper {
+            margin-top: 12px;
+            padding: 10px 14px;
+            background: rgba(11, 19, 41, 0.7);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .power-bar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+        }
+
+        .power-bar-legend {
+            display: flex;
+            gap: 14px;
+            font-size: 0.72rem;
+            font-family: var(--font-mono);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .dot-source { background: var(--cyan); }
+        .dot-joule { background: var(--emerald); }
+        .dot-inductor { background: var(--amber); }
+
+        .power-bar-track {
+            height: 8px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 4px;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .power-seg-joule {
+            background: var(--emerald);
+            height: 100%;
+            transition: width 0.1s linear;
+        }
+
+        .power-seg-inductor {
+            background: var(--amber);
+            height: 100%;
+            transition: width 0.1s linear;
+        }
+
+        .power-balance-error {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--emerald-bright);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Synchronized Graphs Grid */
+        .graphs-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .graphs-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .graphs-legend-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .graph-tag {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            font-family: var(--font-mono);
+            padding: 3px 8px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .tag-line {
+            width: 12px;
+            height: 3px;
+            border-radius: 2px;
+        }
+
+        /* Bottom Section: Tabs */
+        .bottom-tabs-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .tabs-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 10px;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid transparent;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.84rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            font-family: var(--font-main);
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .tab-btn.active {
+            color: var(--cyan);
+            background: rgba(56, 189, 248, 0.12);
+            border-color: rgba(56, 189, 248, 0.35);
+        }
+
+        .tab-pane {
+            display: none;
+            flex-direction: column;
+            gap: 16px;
+            animation: fadeIn 0.25s ease;
+        }
+
+        .tab-pane.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Slider Controls Grid */
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 14px;
+        }
+
+        .control-group {
+            background: rgba(11, 17, 33, 0.85);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-label-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .control-name {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #f8fafc;
+        }
+
+        .control-readout {
+            font-family: var(--font-mono);
+            font-size: 0.84rem;
+            font-weight: 700;
+            color: var(--cyan);
+            background: rgba(0, 242, 254, 0.08);
+            padding: 2px 7px;
+            border-radius: 5px;
+            border: 1px solid rgba(0, 242, 254, 0.2);
+        }
+
+        .control-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #1e293b;
+            outline: none;
+            transition: background 0.15s;
+        }
+
+        .control-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--cyan);
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 242, 254, 0.6);
+            transition: transform 0.1s;
+        }
+
+        .control-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .control-hint {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .core-preset-buttons {
+            display: flex;
+            gap: 6px;
+            margin-top: 4px;
+            flex-wrap: wrap;
+        }
+
+        .btn-chip {
+            font-size: 0.72rem;
+            padding: 3px 8px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-chip:hover, .btn-chip.active {
+            background: rgba(56, 189, 248, 0.18);
+            border-color: var(--cyan);
+            color: #ffffff;
+        }
+
+        /* Preset Experiments Grid */
+        .experiments-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 12px;
+        }
+
+        .exp-card {
+            background: rgba(11, 19, 41, 0.75);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .exp-card:hover {
+            border-color: rgba(56, 189, 248, 0.4);
+            transform: translateY(-2px);
+            background: rgba(15, 23, 42, 0.95);
+        }
+
+        .exp-title {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .exp-tag {
+            font-size: 0.68rem;
+            font-family: var(--font-mono);
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(99, 102, 241, 0.2);
+            color: #a5b4fc;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+
+        .exp-desc {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+            flex: 1;
+        }
+
+        .exp-math {
+            font-family: var(--font-mono);
+            font-size: 0.76rem;
+            color: var(--amber);
+            background: rgba(0, 0, 0, 0.3);
+            padding: 4px 8px;
+            border-radius: 5px;
+            border: 1px solid rgba(251, 191, 36, 0.2);
+        }
+
+        /* Theory & Dimensional Analysis Styling */
+        .theory-content {
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: #cbd5e1;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .theory-box {
+            background: rgba(11, 17, 33, 0.8);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 14px 16px;
+        }
+
+        .theory-box h3 {
+            font-size: 0.95rem;
+            color: #ffffff;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .math-block {
+            background: #040817;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-left: 3px solid var(--cyan);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-family: var(--font-mono);
+            font-size: 0.84rem;
+            color: #f1f5f9;
+            margin: 8px 0;
+            overflow-x: auto;
+        }
+
+        .flow-chain {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            margin: 10px 0;
+        }
+
+        .chain-step {
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 6px;
+            background: rgba(56, 189, 248, 0.12);
+            color: var(--cyan);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+        }
+
+        .chain-arrow {
+            color: var(--text-muted);
+            font-weight: 800;
+        }
+
+        /* Equations Overlay Modal / Panel */
+        .equations-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .eq-card {
+            background: rgba(3, 7, 18, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 10px 12px;
+            transition: all 0.25s ease;
+        }
+
+        .eq-card.active-eq {
+            border-color: var(--amber);
+            background: rgba(251, 191, 36, 0.08);
+            box-shadow: 0 0 14px rgba(251, 191, 36, 0.25);
+        }
+
+        .eq-title {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .eq-formula {
+            font-family: var(--font-mono);
+            font-size: 0.86rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        /* Validation Test Suite UI */
+        .test-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .test-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            background: rgba(11, 17, 33, 0.8);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            font-family: var(--font-mono);
+            font-size: 0.82rem;
+        }
+
+        .test-badge {
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.74rem;
+        }
+
+        .test-pass {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--emerald-bright);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+        }
+
+        .test-fail {
+            background: rgba(244, 63, 94, 0.2);
+            color: var(--rose);
+            border: 1px solid rgba(244, 63, 94, 0.4);
+        }
+
+        /* System Comparison UI */
+        .compare-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 800px) {
+            .compare-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .system-col {
+            background: rgba(11, 19, 41, 0.8);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .system-header {
+            font-size: 0.92rem;
+            font-weight: 700;
+            padding-bottom: 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Footer */
+        footer {
+            margin-top: auto;
+            border-top: 1px solid var(--border-subtle);
+            background: rgba(6, 9, 19, 0.95);
+            padding: 12px 24px;
+            font-size: 0.76rem;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        footer a {
+            color: var(--cyan);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <div class="header-brand">
+            <div class="header-logo">&Epsilon;<sub>L</sub></div>
+            <div class="header-title">
+                <h1>
+                    Simulação Interativa e Rigorosa de Indutância
+                    <span class="header-badge">Griffiths Cap. 7</span>
+                </h1>
+                <p>Eletrodinâmica Clássica &bull; Lei de Faraday-Lenz &bull; Circuito RL &bull; Balanço Energético</p>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <button id="btnPlayPause" class="btn btn-primary" title="Iniciar / Pausar a Simulação">
+                <span id="playIcon">⏸</span> <span id="playText">Pausar</span>
+            </button>
+            <button id="btnStep" class="btn" title="Avançar um passo de tempo (quando pausado)">
+                ⏭ Passo
+            </button>
+            <button id="btnReset" class="btn btn-danger" title="Reiniciar experimento">
+                ↺ Reset
+            </button>
+            <div style="display: flex; align-items: center; gap: 6px; margin-left: 8px;">
+                <span style="font-size: 0.75rem; color: var(--text-secondary);">Velocidade:</span>
+                <select id="selSpeed" class="btn" style="padding: 6px 10px; background: rgba(11,19,41,0.9);">
+                    <option value="0.1">0.1x (Lento)</option>
+                    <option value="0.5">0.5x</option>
+                    <option value="1.0" selected>1.0x (Normal)</option>
+                    <option value="2.0">2.0x</option>
+                    <option value="5.0">5.0x (Rápido)</option>
+                    <option value="auto">Auto-Escala (&tau;)</option>
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="workspace">
+
+        <!-- Top Dual-Stage Visualization Grid -->
+        <section class="vis-grid">
+            
+            <!-- Left Card: Circuit RL Interactive Schematic -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="card-title-icon">⚡</span>
+                        Circuito RL Dinâmico
+                    </div>
+                    <div class="card-meta" id="circuitStateBadge">Estado: Energização (Carga)</div>
+                </div>
+
+                <div class="canvas-container">
+                    <canvas id="circuitCanvas" width="760" height="340"></canvas>
+                </div>
+
+                <!-- Circuit Switch Quick Selector -->
+                <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
+                    <button id="btnSwitchCharge" class="btn btn-success active" style="flex: 1;">
+                        ⚡ Ligar Fonte (Carga)
+                    </button>
+                    <button id="btnSwitchDischarge" class="btn" style="flex: 1;">
+                        🔄 Descarga (Loop RL)
+                    </button>
+                    <button id="btnSwitchOpen" class="btn btn-danger" style="flex: 1;">
+                        💥 Interromper (Kick Indutivo)
+                    </button>
+                </div>
+
+                <!-- Dynamic Didactic Coach ("O que está acontecendo agora?") -->
+                <div class="coach-box" id="didacticCoach">
+                    <div class="coach-header">
+                        <div class="coach-badge-row">
+                            <span class="coach-state-pill state-charging" id="coachStatePill">
+                                <span style="font-size: 10px;">●</span> CORRENTE AUMENTANDO (dI/dt &gt; 0)
+                            </span>
+                        </div>
+                        <span style="font-size: 0.72rem; color: var(--text-muted);" id="coachTimeDisplay">t = 0.000 s</span>
+                    </div>
+                    <div class="coach-title" id="coachTitle">Crescimento da Corrente e Oposição de Lenz</div>
+                    <div class="coach-text" id="coachText">
+                        A corrente está aumentando. O fluxo magnético através da bobina também cresce. Pela lei de Faraday-Lenz, surge uma FEM induzida &Epsilon;<sub>L</sub> &lt; 0 cuja polaridade se opõe ao aumento da corrente.
+                    </div>
+                    <div>
+                        <span class="coach-equation" id="coachEq">&Epsilon;<sub>L</sub> = -L (dI/dt) = -3.24 V &lt; 0</span>
+                    </div>
+                </div>
+
+                <!-- Power & Energy Conservation Bar -->
+                <div class="power-bar-wrapper">
+                    <div class="power-bar-header">
+                        <span style="font-weight: 700; color: #ffffff;">Balanço de Potência Instantânea: V &middot; I = R I&sup2; + L I (dI/dt)</span>
+                        <div class="power-balance-error" id="powerErrorDisplay">
+                            Erro: &Delta;P = 0.0000 W (Conservação Exata)
+                        </div>
+                    </div>
+                    <div class="power-bar-track">
+                        <div class="power-seg-joule" id="powerSegJoule" style="width: 40%;" title="Dissipação Joule no Resistor (P_R)"></div>
+                        <div class="power-seg-inductor" id="powerSegInductor" style="width: 60%;" title="Potência Armazenada no Campo Magnético (P_L)"></div>
+                    </div>
+                    <div class="power-bar-legend">
+                        <div class="legend-item">
+                            <div class="legend-dot dot-source"></div>
+                            <span>P<sub>fonte</sub> = <strong id="valPsource">0.00 W</strong></span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot dot-joule"></div>
+                            <span>P<sub>R</sub> (Calor) = <strong id="valPJoule">0.00 W</strong></span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot dot-inductor"></div>
+                            <span>P<sub>L</sub> (Campo) = <strong id="valPInductor">0.00 W</strong></span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Card: Physical Solenoid Field & Flux Visualization -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="card-title-icon">🧲</span>
+                        O Solenoide e Campo Magnético &mathbf;B
+                    </div>
+                    <div class="card-meta">Aproximação Quase-Estática | Griffiths Cap. 7</div>
+                </div>
+
+                <div class="canvas-container">
+                    <canvas id="solenoidCanvas" width="760" height="340"></canvas>
+                </div>
+
+                <div class="disclaimer-banner">
+                    <span style="color: var(--amber);">ⓘ</span>
+                    <span><strong>Nota Epistemológica:</strong> As linhas representam qualitativamente o campo magnético; sua densidade visual é apenas uma representação da magnitude de B.</span>
+                </div>
+
+                <!-- Instantaneous Telemetry Dashboard -->
+                <div class="telemetry-grid">
+                    <div class="telemetry-card">
+                        <div class="tel-label">
+                            <span>Autoindutância</span>
+                            <span class="tel-symbol">L</span>
+                        </div>
+                        <div class="tel-val val-cyan" id="telL">0.000 <span class="tel-unit">mH</span></div>
+                    </div>
+
+                    <div class="telemetry-card">
+                        <div class="tel-label">
+                            <span>Corrente</span>
+                            <span class="tel-symbol">I(t)</span>
+                        </div>
+                        <div class="tel-val val-emerald" id="telI">0.000 <span class="tel-unit">A</span></div>
+                    </div>
+
+                    <div class="telemetry-card">
+                        <div class="tel-label">
+                            <span>Taxa de Variação</span>
+                            <span class="tel-symbol">dI/dt</span>
+                        </div>
+                        <div class="tel-val" id="teldIdt">0.000 <span class="tel-unit">A/s</span></div>
+                    </div>
+
+                    <div class="telemetry-card">
+                        <div class="tel-label">
+                            <span>FEM Induzida</span>
+                            <span class="tel-symbol">&Epsilon;<sub>L</sub></span>
+                        </div>
+                        <div class="tel-val val-rose" id="telEMF">0.000 <span class="tel-unit">V</span></div>
+                    </div>
+
+                    <div class="telemetry-card">
+                        <div class="tel-label">
+                            <span>Campo Interno</span>
+                            <span class="tel-symbol">B(t)</span>
+                        </div>
+                        <div class="tel-val val-amber" id="telB">0.000 <span class="tel-unit">mT</span></div>
+                    </div>
+
+                    <div class="telemetry-card">
+                        <div class="tel-label">
+                            <span>Fluxo / Espira</span>
+                            <span class="tel-symbol">&Phi;<sub>B</sub></span>
+                        </div>
+                        <div class="tel-val" id="telPhi">0.000 <span class="tel-unit">&mu;Wb</span></div>
+                    </div>
+
+                    <div class="telemetry-card">
+                        <div class="tel-label">
+                            <span>Fluxo Concatenado</span>
+                            <span class="tel-symbol">N&Phi;<sub>B</sub></span>
+                        </div>
+                        <div class="tel-val" id="telNPhi">0.000 <span class="tel-unit">mWb&middot;esp</span></div>
+                    </div>
+
+                    <div class="telemetry-card">
+                        <div class="tel-label">
+                            <span>Const. de Tempo</span>
+                            <span class="tel-symbol">&tau; = L/R</span>
+                        </div>
+                        <div class="tel-val" id="telTau">0.000 <span class="tel-unit">ms</span></div>
+                    </div>
+
+                    <div class="telemetry-card">
+                        <div class="tel-label">
+                            <span>Energia Magnética</span>
+                            <span class="tel-symbol">U<sub>B</sub></span>
+                        </div>
+                        <div class="tel-val val-violet" id="telU">0.000 <span class="tel-unit">mJ</span></div>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- Synchronized Real-Time Graphs (4 Eixos Sincronizados) -->
+        <section class="graphs-card">
+            <div class="graphs-toolbar">
+                <div class="card-title">
+                    <span class="card-title-icon">📈</span>
+                    Gráficos em Tempo Real Sincronizados (4 Eixos Físicos &bull; Griffiths Cap. 7)
+                </div>
+                <div class="graphs-legend-row">
+                    <div class="graph-tag">
+                        <div class="tag-line" style="background: var(--cyan);"></div>
+                        <span>1. Corrente I(t) [A]</span>
+                    </div>
+                    <div class="graph-tag">
+                        <div class="tag-line" style="background: var(--rose);"></div>
+                        <span>2. FEM Induzida &Epsilon;<sub>L</sub>(t) [V]</span>
+                    </div>
+                    <div class="graph-tag">
+                        <div class="tag-line" style="background: var(--amber);"></div>
+                        <span>3. Campo B(t) [mT]</span>
+                    </div>
+                    <div class="graph-tag">
+                        <div class="tag-line" style="background: var(--violet);"></div>
+                        <span>4. Energia U<sub>B</sub>(t) [mJ]</span>
+                    </div>
+                    <button id="btnClearGraphs" class="btn" style="padding: 4px 8px; font-size: 0.72rem;">Limpar Histórico</button>
+                </div>
+            </div>
+
+            <div class="canvas-container">
+                <canvas id="graphsCanvas" width="1540" height="340"></canvas>
+            </div>
+        </section>
+
+        <!-- Interactive Tabs & Controls -->
+        <section class="bottom-tabs-card">
+            <div class="tabs-header">
+                <button class="tab-btn active" data-tab="tab-params">⚙️ Variáveis e Geometria</button>
+                <button class="tab-btn" data-tab="tab-experiments">🧪 Experimentos Pré-Definidos</button>
+                <button class="tab-btn" data-tab="tab-lenz">⚖️ Lei de Lenz &amp; Oposição</button>
+                <button class="tab-btn" data-tab="tab-dependency">📐 Do que Depende a Indutância?</button>
+                <button class="tab-btn" data-tab="tab-compare">⚖️ Comparador A vs B (&ldquo;Inércia&rdquo;)</button>
+                <button class="tab-btn" data-tab="tab-theory">📖 Dedução Teórica &amp; Griffiths</button>
+                <button class="tab-btn" data-tab="tab-dimensional">📏 Análise Dimensional</button>
+                <button class="tab-btn" data-tab="tab-equations">Σ Modo Equações</button>
+                <button class="tab-btn" data-tab="tab-validation">✅ Auditoria &amp; Testes</button>
+            </div>
+
+            <!-- Tab 1: Parameters -->
+            <div id="tab-params" class="tab-pane active">
+                <div class="controls-grid">
+                    
+                    <!-- Voltage V -->
+                    <div class="control-group">
+                        <div class="control-label-row">
+                            <span class="control-name">Tensão da Fonte DC (V)</span>
+                            <span class="control-readout" id="valVDisplay">12.0 V</span>
+                        </div>
+                        <input type="range" id="sliderV" class="control-slider" min="1" max="50" step="0.5" value="12">
+                        <div class="control-hint">
+                            <span>1.0 V</span>
+                            <span>Força Eletromotriz Externa</span>
+                            <span>50.0 V</span>
+                        </div>
+                    </div>
+
+                    <!-- Resistance R -->
+                    <div class="control-group">
+                        <div class="control-label-row">
+                            <span class="control-name">Resistência do Circuito (R)</span>
+                            <span class="control-readout" id="valRDisplay">10.0 &Omega;</span>
+                        </div>
+                        <input type="range" id="sliderR" class="control-slider" min="0.5" max="50" step="0.5" value="10">
+                        <div class="control-hint">
+                            <span>0.5 &Omega;</span>
+                            <span>Dissipação Joule / Define &tau;</span>
+                            <span>50.0 &Omega;</span>
+                        </div>
+                    </div>
+
+                    <!-- Turns N -->
+                    <div class="control-group">
+                        <div class="control-label-row">
+                            <span class="control-name">Número de Espiras (N)</span>
+                            <span class="control-readout" id="valNDisplay">600 espiras</span>
+                        </div>
+                        <input type="range" id="sliderN" class="control-slider" min="50" max="2000" step="10" value="600">
+                        <div class="control-hint">
+                            <span>50 espiras</span>
+                            <span>Escala com N&sup2; na Indutância</span>
+                            <span>2000 espiras</span>
+                        </div>
+                    </div>
+
+                    <!-- Length l -->
+                    <div class="control-group">
+                        <div class="control-label-row">
+                            <span class="control-name">Comprimento do Solenoide (&ell;)</span>
+                            <span class="control-readout" id="valLDisplay">0.20 m (20 cm)</span>
+                        </div>
+                        <input type="range" id="sliderLength" class="control-slider" min="0.05" max="0.60" step="0.01" value="0.20">
+                        <div class="control-hint">
+                            <span>0.05 m</span>
+                            <span>Solenoide Longo (&ell; &gg; r)</span>
+                            <span>0.60 m</span>
+                        </div>
+                    </div>
+
+                    <!-- Radius r -> Area A -->
+                    <div class="control-group">
+                        <div class="control-label-row">
+                            <span class="control-name">Raio da Seção Reta (r) &rarr; Área A</span>
+                            <span class="control-readout" id="valRsolDisplay">2.5 cm (A = 19.6 cm&sup2;)</span>
+                        </div>
+                        <input type="range" id="sliderRsol" class="control-slider" min="0.005" max="0.050" step="0.001" value="0.025">
+                        <div class="control-hint">
+                            <span>0.5 cm</span>
+                            <span>A = &pi; r&sup2;</span>
+                            <span>5.0 cm</span>
+                        </div>
+                    </div>
+
+                    <!-- Relative Permeability mu_r -->
+                    <div class="control-group">
+                        <div class="control-label-row">
+                            <span class="control-name">Permeabilidade Relativa (&mu;<sub>r</sub>)</span>
+                            <span class="control-readout" id="valMurDisplay">1.0 (Vácuo/Ar)</span>
+                        </div>
+                        <input type="range" id="sliderMur" class="control-slider" min="1" max="1500" step="1" value="1">
+                        <div class="core-preset-buttons">
+                            <button class="btn-chip active" data-mur="1">Vácuo/Ar (1)</button>
+                            <button class="btn-chip" data-mur="100">Ferrite (100)</button>
+                            <button class="btn-chip" data-mur="500">Ferro Doce (500)</button>
+                            <button class="btn-chip" data-mur="1200">Permalloy (1200)</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Tab 2: Experiments -->
+            <div id="tab-experiments" class="tab-pane">
+                <div class="experiments-grid">
+                    
+                    <!-- Exp A -->
+                    <div class="exp-card">
+                        <div class="exp-title">
+                            <span>Experimento A — Dobrar as Espiras</span>
+                            <span class="exp-tag">N &rarr; 2N</span>
+                        </div>
+                        <p class="exp-desc">
+                            Demonstra que a indutância depende quadraticamente do número de espiras. Ao duplicar N mantendo o comprimento e a área constantes, cada espira produz o dobro de campo magnético e há o dobro de espiras concatenando o fluxo.
+                        </p>
+                        <div class="exp-math">L(2N) = &mu; (2N)&sup2; A / &ell; = 4 &middot; L(N)</div>
+                        <button class="btn btn-primary" id="btnRunExpA" style="margin-top: 6px;">Executar Experimento A</button>
+                    </div>
+
+                    <!-- Exp B -->
+                    <div class="exp-card">
+                        <div class="exp-title">
+                            <span>Experimento B — Dobrar a Resistência</span>
+                            <span class="exp-tag">R &rarr; 2R</span>
+                        </div>
+                        <p class="exp-desc">
+                            Aumenta a resistência do circuito. Como &tau; = L / R, a constante de tempo é cortada pela metade, fazendo a corrente atingir seu novo regime estacionário (I<sub>&infin;</sub> = V / 2R) na metade do tempo.
+                        </p>
+                        <div class="exp-math">&tau;&apos; = L / (2R) = &tau; / 2 &emsp;|&emsp; I<sub>&infin;</sub> = V / (2R)</div>
+                        <button class="btn btn-primary" id="btnRunExpB" style="margin-top: 6px;">Executar Experimento B</button>
+                    </div>
+
+                    <!-- Exp C -->
+                    <div class="exp-card">
+                        <div class="exp-title">
+                            <span>Experimento C — Aumentar a Indutância</span>
+                            <span class="exp-tag">L &uparrow;&uparrow;</span>
+                        </div>
+                        <p class="exp-desc">
+                            Insere um núcleo de ferrite com alta permeabilidade (&mu;<sub>r</sub> &gt; 1). A autoindutância cresce enormemente, aumentando a &ldquo;inércia eletromagnética&rdquo;: a taxa inicial de subida da corrente (dI/dt) diminui e a corrente demora muito mais para se estabelecer.
+                        </p>
+                        <div class="exp-math">L = &mu;<sub>0</sub>&mu;<sub>r</sub> N&sup2; A / &ell; &emsp;&rArr;&emsp; &tau; &uparrow;&uparrow;</div>
+                        <button class="btn btn-primary" id="btnRunExpC" style="margin-top: 6px;">Executar Experimento C</button>
+                    </div>
+
+                    <!-- Exp D -->
+                    <div class="exp-card">
+                        <div class="exp-title">
+                            <span>Experimento D — Regime Estacionário DC</span>
+                            <span class="exp-tag">t &gg; &tau;</span>
+                        </div>
+                        <p class="exp-desc">
+                            Avança a simulação até que a corrente atinja o valor assintótico I<sub>&infin;</sub> = V / R. Quando dI/dt &rarr; 0, o fluxo magnético não mais varia, e portanto a FEM autoinduzida &Epsilon;<sub>L</sub> &rarr; 0. Em corrente contínua estável, o indutor ideal comporta-se como um fio de resistência nula!
+                        </p>
+                        <div class="exp-math">dI/dt = 0 &emsp;&rArr;&emsp; &Epsilon;<sub>L</sub> = -L(0) = 0 V &emsp;|&emsp; V<sub>L</sub> = 0</div>
+                        <button class="btn btn-primary" id="btnRunExpD" style="margin-top: 6px;">Executar Experimento D</button>
+                    </div>
+
+                    <!-- Exp E -->
+                    <div class="exp-card">
+                        <div class="exp-title">
+                            <span>Experimento E — Interrupção Brusca</span>
+                            <span class="exp-tag">Kick Indutivo</span>
+                        </div>
+                        <p class="exp-desc">
+                            Abre a chave bruscamente com corrente estabelecida. A tentativa de anular a corrente instantaneamente resulta em uma enorme taxa negativa dI/dt &ll; 0. Pela Lei de Faraday-Lenz, o indutor responde com um pulso violento de tensão positiva (&Epsilon;<sub>L</sub> &gg; V), rompendo o dielétrico do ar e gerando uma centelha elétrica (arco).
+                        </p>
+                        <div class="exp-math">|&Epsilon;<sub>L</sub>| = L |dI/dt| &gg; V<sub>fonte</sub> &emsp;(Arco / Flyback)</div>
+                        <button class="btn btn-danger" id="btnRunExpE" style="margin-top: 6px;">Executar Experimento E</button>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Tab 3: Lenz Law -->
+            <div id="tab-lenz" class="tab-pane">
+                <div class="theory-content">
+                    <div class="theory-box">
+                        <h3>⚖️ A Lei de Lenz e a Oposição à Variação da Corrente</h3>
+                        <p>
+                            Um dos erros conceituais mais comuns em eletromagnetismo elementar é afirmar que <em>&ldquo;o indutor se opõe à corrente&rdquo;</em>. Isso é <strong>falso</strong>. Se o indutor se opusesse à corrente, a corrente não poderia fluir e um circuito RL jamais atingiria o regime estacionário I = V / R com queda de tensão nula no indutor.
+                        </p>
+                        <p style="margin-top: 8px;">
+                            A afirmação rigorosa é:
+                        </p>
+                        <div class="math-block" style="border-left-color: var(--amber); font-size: 0.92rem;">
+                            &ldquo;O indutor não se opõe à corrente; ele se opõe estritamente à VARIAÇÃO da corrente (dI/dt).&rdquo;
+                        </div>
+                        <p style="margin-top: 8px;">
+                            Examinemos os dois regimes fundamentais:
+                        </p>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 12px;">
+                            <div style="background: rgba(0, 242, 254, 0.06); border: 1px solid rgba(0, 242, 254, 0.25); border-radius: 8px; padding: 12px;">
+                                <h4 style="color: var(--cyan); margin-bottom: 6px;">1. Corrente Aumentando (dI/dt &gt; 0)</h4>
+                                <p style="font-size: 0.8rem; line-height: 1.5;">
+                                    O campo magnético e o fluxo concatenado estão crescendo. A derivada temporal d(N&Phi;<sub>B</sub>)/dt é positiva. Pela Lei de Faraday-Lenz:
+                                </p>
+                                <div class="math-block" style="font-size: 0.8rem;">&Epsilon;<sub>L</sub> = -L (dI/dt) &lt; 0</div>
+                                <p style="font-size: 0.8rem; line-height: 1.5;">
+                                    A FEM induzida possui polaridade oposta ao sentido de circulação imposto pela bateria, criando um campo elétrico induzido que freia a taxa de aceleração das cargas.
+                                </p>
+                            </div>
+
+                            <div style="background: rgba(251, 191, 36, 0.06); border: 1px solid rgba(251, 191, 36, 0.25); border-radius: 8px; padding: 12px;">
+                                <h4 style="color: var(--amber); margin-bottom: 6px;">2. Corrente Diminuindo (dI/dt &lt; 0)</h4>
+                                <p style="font-size: 0.8rem; line-height: 1.5;">
+                                    O campo magnético está colapsando. A derivada temporal da corrente é negativa. Pela Lei de Faraday-Lenz:
+                                </p>
+                                <div class="math-block" style="font-size: 0.8rem;">&Epsilon;<sub>L</sub> = -L (dI/dt) &gt; 0</div>
+                                <p style="font-size: 0.8rem; line-height: 1.5;">
+                                    A FEM induzida <strong>inverte sua polaridade</strong> e atua agora <em>no mesmo sentido</em> em que a corrente já circulava, atuando como uma fonte geradora para tentar sustentar a corrente e retardar seu desaparecimento!
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 4: Dependency -->
+            <div id="tab-dependency" class="tab-pane">
+                <div class="theory-content">
+                    <div class="theory-box">
+                        <h3>📐 Do que Depende a Autoindutância? Geometria vs. Dinâmica</h3>
+                        <p>
+                            No modelo linear da Eletrodinâmica Clássica (onde a relação constitutiva do meio &mathbf;B = &mu; &mathbf;H é linear e não há saturação ou histerese ferromagnética), a indutância L é uma <strong>propriedade puramente geométrica e material</strong> do arranjo físico de condutores.
+                        </p>
+                        
+                        <div class="math-block" style="font-size: 1rem; text-align: center;">
+                            L = &mu;<sub>0</sub> &mu;<sub>r</sub> &middot; \frac{N&sup2; &middot; A}{&ell;}
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 14px;">
+                            <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
+                                <strong style="color: var(--cyan);">L &prop; N&sup2; (Quadrática)</strong>
+                                <p style="font-size: 0.78rem; margin-top: 4px; color: var(--text-secondary);">
+                                    Dobrar N quadruplica L. O primeiro fator de N vem da intensidade do campo gerado (B &prop; N), e o segundo fator vem do número de espiras que concatenam esse mesmo fluxo (N&Phi;<sub>B</sub>).
+                                </p>
+                            </div>
+
+                            <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
+                                <strong style="color: var(--emerald-bright);">L &prop; A (Direta)</strong>
+                                <p style="font-size: 0.78rem; margin-top: 4px; color: var(--text-secondary);">
+                                    A indutância cresce proporcionalmente à área da seção transversal A = &pi; r&sup2;. Maior área intercepta maior fluxo magnético &Phi; = B &middot; A para a mesma densidade de campo.
+                                </p>
+                            </div>
+
+                            <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
+                                <strong style="color: var(--amber);">L &prop; 1 / &ell; (Inversa)</strong>
+                                <p style="font-size: 0.78rem; margin-top: 4px; color: var(--text-secondary);">
+                                    Esticar o solenoide para um comprimento maior (mantendo N fixo) reduz a densidade de espiras n = N/&ell;, diminuindo o campo magnético interno por ampère e, logo, reduzindo a indutância.
+                                </p>
+                            </div>
+
+                            <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
+                                <strong style="color: var(--violet);">L &prop; &mu;<sub>r</sub> (Meio Material)</strong>
+                                <p style="font-size: 0.78rem; margin-top: 4px; color: var(--text-secondary);">
+                                    A inserção de um núcleo ferromagnético ou de ferrite alinha os dipolos atômicos do material, amplificando a densidade de fluxo B em um fator &mu;<sub>r</sub> e multiplicando a indutância pelo mesmo fator.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 14px; padding: 10px 14px; background: rgba(244, 63, 94, 0.08); border: 1px solid rgba(244, 63, 94, 0.3); border-radius: 8px;">
+                            <strong style="color: #fda4af;">Distinção Crítica entre Geometria e Dinâmica:</strong>
+                            <p style="font-size: 0.8rem; margin-top: 4px; color: #fecdd3;">
+                                A corrente instantânea I(t) e a tensão V <strong>NÃO</strong> alteram a indutância L no regime linear. L é uma propriedade intrínseca da geometria da bobina. O que I(t) altera é o estado dinâmico: o campo B(t), o fluxo &Phi;<sub>B</sub>(t) e a energia magnética armazenada U<sub>B</sub> = &frac12; L I&sup2;.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 5: System Comparison (Inertia) -->
+            <div id="tab-compare" class="tab-pane">
+                <div class="theory-content">
+                    <div class="theory-box">
+                        <h3>⚖️ Comparação entre Dois Sistemas: O Conceito de &ldquo;Inércia Eletromagnética&rdquo;</h3>
+                        <p>
+                            A constante de tempo &tau; = L / R mede a escala temporal na qual a corrente responde a uma variação da força eletromotriz externa. Em física teórica, frequentemente traça-se um paralelo pedagógico entre a indutância e a inércia mecânica.
+                        </p>
+
+                        <div class="compare-grid" style="margin-top: 12px;">
+                            <!-- System A -->
+                            <div class="system-col">
+                                <div class="system-header">
+                                    <span style="color: var(--cyan);">Sistema A (Configuração Atual)</span>
+                                    <span class="control-readout" id="compTauA">0.00 ms</span>
+                                </div>
+                                <div style="font-size: 0.82rem; font-family: var(--font-mono); line-height: 1.6;">
+                                    L<sub>A</sub> = <span id="compLA">0.00 mH</span><br>
+                                    R<sub>A</sub> = <span id="compRA">0.00 &Omega;</span><br>
+                                    &tau;<sub>A</sub> = L<sub>A</sub> / R<sub>A</sub> = <span id="compTauValA">0.00 ms</span><br>
+                                    Taxa inicial: (dI/dt)<sub>0</sub> = V / L<sub>A</sub> = <span id="compSlopeA">0.0 A/s</span>
+                                </div>
+                            </div>
+
+                            <!-- System B -->
+                            <div class="system-col">
+                                <div class="system-header">
+                                    <span style="color: var(--amber);">Sistema B (Dobro de Indutância: 2 L<sub>A</sub>)</span>
+                                    <span class="control-readout" id="compTauB" style="color: var(--amber); border-color: rgba(251,191,36,0.3); background: rgba(251,191,36,0.08);">0.00 ms</span>
+                                </div>
+                                <div style="font-size: 0.82rem; font-family: var(--font-mono); line-height: 1.6;">
+                                    L<sub>B</sub> = 2 &middot; L<sub>A</sub> = <span id="compLB">0.00 mH</span><br>
+                                    R<sub>B</sub> = R<sub>A</sub> = <span id="compRB">0.00 &Omega;</span><br>
+                                    &tau;<sub>B</sub> = 2 &middot; &tau;<sub>A</sub> = <span id="compTauValB">0.00 ms</span><br>
+                                    Taxa inicial: (dI/dt)<sub>0</sub> = V / (2 L<sub>A</sub>) = <span id="compSlopeB">0.0 A/s</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 14px; padding: 12px 14px; background: rgba(0, 0, 0, 0.35); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08);">
+                            <strong style="color: #ffffff;">Rigor e Limites da Analogia Mecânica:</strong>
+                            <p style="font-size: 0.8rem; margin-top: 4px; line-height: 1.5; color: #cbd5e1;">
+                                A equação diferencial do circuito RL: <code>L (dI/dt) + R I = V</code> possui a mesmíssima estrutura formal da 2ª Lei de Newton para uma partícula com atrito viscoso: <code>m (dv/dt) + b v = F<sub>ext</sub></code>.
+                                Sob essa correspondência formal:
+                            </p>
+                            <ul style="margin-left: 20px; font-size: 0.8rem; margin-top: 6px; line-height: 1.6; color: #cbd5e1;">
+                                <li><strong>Indutância L</strong> &harr; Massa inercial <code>m</code> (oposição à variação da velocidade/corrente);</li>
+                                <li><strong>Corrente I</strong> &harr; Velocidade <code>v</code>;</li>
+                                <li><strong>Resistência R</strong> &harr; Coeficiente de atrito viscoso <code>b</code>;</li>
+                                <li><strong>Tensão V</strong> &harr; Força externa <code>F</code>;</li>
+                                <li><strong>Energia Magnética &frac12; L I&sup2;</strong> &harr; Energia cinética &frac12; m v&sup2;.</li>
+                            </ul>
+                            <p style="font-size: 0.78rem; margin-top: 8px; color: var(--amber);">
+                                ⚠️ <em>Advertência Pedagógica:</em> Essa equivalência é um <strong>isomorfismo matemático</strong>, e NÃO uma identidade mecânica literal. A massa dos elétrons reais é irrelevante para a indutância macroscópica; a inércia em um circuito elétrico é produzida pelo <strong>campo elétrico induzido não-eletrostático &minus;&part;&mathbf;A/&part;t</strong> que permeia o espaço quando o campo magnético varia, conforme derivado por Maxwell e Griffiths!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 6: Theoretical Derivation -->
+            <div id="tab-theory" class="tab-pane">
+                <div class="theory-content">
+                    <div class="theory-box">
+                        <h3>📖 A Cadeia de Dedução da Indutância — Griffiths Cap. 7</h3>
+                        <p>
+                            Apresentamos a derivação passo a passo da autoindutância a partir das equações fundamentais do eletromagnetismo:
+                        </p>
+
+                        <div class="flow-chain">
+                            <span class="chain-step">1. Corrente I</span>
+                            <span class="chain-arrow">&rarr;</span>
+                            <span class="chain-step">2. Campo B = &mu; n I</span>
+                            <span class="chain-arrow">&rarr;</span>
+                            <span class="chain-step">3. Fluxo &Phi;<sub>B</sub> = B A</span>
+                            <span class="chain-arrow">&rarr;</span>
+                            <span class="chain-step">4. Fluxo Concatenado N&Phi;<sub>B</sub></span>
+                            <span class="chain-arrow">&rarr;</span>
+                            <span class="chain-step">5. Indutância L = N&Phi;<sub>B</sub> / I</span>
+                            <span class="chain-arrow">&rarr;</span>
+                            <span class="chain-step">6. FEM &Epsilon;<sub>L</sub> = -L dI/dt</span>
+                            <span class="chain-arrow">&rarr;</span>
+                            <span class="chain-step">7. Energia U<sub>B</sub> = &frac12; L I&sup2;</span>
+                        </div>
+
+                        <div class="math-block">
+                            <strong>Passo 1 — Campo Magnético Interno (Lei Circuital de Ampère):</strong><br>
+                            B = &mu;<sub>0</sub> &mu;<sub>r</sub> n I = &mu;<sub>0</sub> &mu;<sub>r</sub> \left( \frac{N}{\ell} \right) I
+                        </div>
+
+                        <div class="math-block">
+                            <strong>Passo 2 — Fluxo Magnético Através de Uma Espira:</strong><br>
+                            &Phi;<sub>B</sub> = \int_{\text{espira}} &mathbf;B &middot; d&mathbf;a = B &middot; A = \mu_0 \mu_r \left( \frac{N}{\ell} \right) I &middot; A
+                        </div>
+
+                        <div class="math-block">
+                            <strong>Passo 3 — Fluxo Concatenado com as N Espiras:</strong><br>
+                            \lambda = N \Phi_B = N \left[ \mu_0 \mu_r \left( \frac{N}{\ell} \right) I A \right] = \mu_0 \mu_r \frac{N^2 A}{\ell} I
+                        </div>
+
+                        <div class="math-block">
+                            <strong>Passo 4 — Definição Geral de Autoindutância:</strong><br>
+                            L \equiv \frac{N \Phi_B}{I} = \mu_0 \mu_r \frac{N^2 A}{\ell}
+                        </div>
+
+                        <div class="math-block">
+                            <strong>Passo 5 — Lei de Faraday e Força Eletromotriz Autoinduzida:</strong><br>
+                            \mathcal{E}_L = -\frac{d(N \Phi_B)}{dt} = -\frac{d(L I)}{dt} = -L \frac{dI}{dt} \quad (\text{para } L \text{ constante})
+                        </div>
+
+                        <div class="math-block">
+                            <strong>Passo 6 — Equivalência Microscópica da Energia no Campo Magnético:</strong><br>
+                            u_B = \frac{1}{2\mu} B^2 = \frac{1}{2\mu} \left( \mu \frac{N}{\ell} I \right)^2 = \frac{1}{2} \mu \frac{N^2}{\ell^2} I^2<br>
+                            U_B = \int_{\text{volume}} u_B \, d\tau = u_B &middot; (A \ell) = \frac{1}{2} \left( \mu \frac{N^2 A}{\ell} \right) I^2 = \frac{1}{2} L I^2
+                        </div>
+
+                        <div style="margin-top: 10px; padding: 10px 14px; background: rgba(14, 165, 233, 0.08); border-left: 3px solid var(--cyan); border-radius: 6px;">
+                            <strong>Hipóteses e Limitações do Modelo Adotado:</strong>
+                            <ul style="margin-left: 20px; font-size: 0.8rem; margin-top: 4px; line-height: 1.5; color: #cbd5e1;">
+                                <li><strong>Solenoide suficientemente longo (&ell; &gg; r):</strong> o campo interno é assumido uniforme e o campo exterior de dispersão (fringe fields) é desprezado. Em bobinas reais finitas, há dispersão magnética nas bordas, reduzindo ligeiramente a indutância efetiva (fator de correção de Nagaoka).</li>
+                                <li><strong>Aproximação quase-estática:</strong> as variações temporais são lentas o bastante para que os efeitos de tempo de retardo relativístico e radiação eletromagnética sejam completamente desprezíveis (&omega; &ll; c / &ell;).</li>
+                                <li><strong>Efeitos capacitivos parasitas desprezados:</strong> entre espiras adjacentes há pequenas capacitâncias distribuídas. Em frequências extremamente elevadas, a bobina apresenta ressonância própria.</li>
+                                <li><strong>Meio linear:</strong> permeabilidade &mu; constante, sem histerese ou saturação do material.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 7: Dimensional Analysis -->
+            <div id="tab-dimensional" class="tab-pane">
+                <div class="theory-content">
+                    <div class="theory-box">
+                        <h3>📏 Verificação Dimensional e Unidades SI</h3>
+                        <p>
+                            Demonstração rigorosa da consistência dimensional de todas as grandezas intervenientes no Sistema Internacional de Unidades (SI):
+                        </p>
+
+                        <div class="math-block">
+                            <strong>1. Definição do Henry (H):</strong><br>
+                            [L] = \left[ \frac{N \Phi_B}{I} \right] = \frac{\text{Wb}}{\text{A}} = \frac{\text{T} \cdot \text{m}^2}{\text{A}}
+                        </div>
+
+                        <div class="math-block">
+                            <strong>2. Conexão com Tensão e Tempo:</strong><br>
+                            Como \, \mathcal{E} = -\frac{d\Phi}{dt}, \text{ temos que } 1 \text{ Wb} = 1 \text{ V} \cdot \text{s}.<br>
+                            Logo: \quad [L] = \frac{\text{V} \cdot \text{s}}{\text{A}} = \Omega \cdot \text{s} \equiv \text{H (Henry)}.
+                        </div>
+
+                        <div class="math-block">
+                            <strong>3. Verificação da Fórmula Construtiva do Solenoide:</strong><br>
+                            L = \mu_0 \frac{N^2 A}{\ell} \implies [\mu_0] = \frac{\text{H}}{\text{m}} = \frac{\text{N}}{\text{A}^2} = \frac{\text{T} \cdot \text{m}}{\text{A}}.<br>
+                            [L] = [\mu_0] \frac{[N^2] [A]}{[\ell]} = \left( \frac{\text{H}}{\text{m}} \right) \frac{1 \cdot \text{m}^2}{\text{m}} = \text{H}. \quad \checkmark
+                        </div>
+
+                        <div class="math-block">
+                            <strong>4. Dimensão da Força Eletromotriz Induzida:</strong><br>
+                            [\mathcal{E}_L] = [L] \left[ \frac{dI}{dt} \right] = \left( \frac{\text{V} \cdot \text{s}}{\text{A}} \right) \left( \frac{\text{A}}{\text{s}} \right) = \text{V (Volt)}. \quad \checkmark
+                        </div>
+
+                        <div class="math-block">
+                            <strong>5. Constante de Tempo do Circuito RL:</strong><br>
+                            [\tau] = \left[ \frac{L}{R} \right] = \frac{\Omega \cdot \text{s}}{\Omega} = \text{s (Segundo)}. \quad \checkmark
+                        </div>
+
+                        <div class="math-block">
+                            <strong>6. Energia Magnética:</strong><br>
+                            [U_B] = [L] [I]^2 = (\Omega \cdot \text{s}) \cdot \text{A}^2 = (\text{V} \cdot \text{A}) \cdot \text{s} = \text{W} \cdot \text{s} = \text{J (Joule)}. \quad \checkmark
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 8: Equations Mode -->
+            <div id="tab-equations" class="tab-pane">
+                <div class="theory-content">
+                    <div class="theory-box">
+                        <h3>Σ Modo Equações Dinâmicas</h3>
+                        <p>
+                            As equações abaixo governam o estado físico da simulação a cada instante. Os cartões são destacados dinamicamente conforme a equação atua no fenômeno observado:
+                        </p>
+
+                        <div class="equations-panel">
+                            <div class="eq-card" id="cardEqAmpere">
+                                <div class="eq-title">Campo Magnético Axial</div>
+                                <div class="eq-formula">B(t) = &mu;<sub>0</sub>&mu;<sub>r</sub> (N / &ell;) I(t)</div>
+                            </div>
+
+                            <div class="eq-card" id="cardEqFlux">
+                                <div class="eq-title">Fluxo por Espira</div>
+                                <div class="eq-formula">&Phi;<sub>B</sub>(t) = B(t) &middot; A</div>
+                            </div>
+
+                            <div class="eq-card" id="cardEqInductance">
+                                <div class="eq-title">Autoindutância Geométrica</div>
+                                <div class="eq-formula">L = &mu;<sub>0</sub>&mu;<sub>r</sub> N&sup2; A / &ell;</div>
+                            </div>
+
+                            <div class="eq-card" id="cardEqFaraday">
+                                <div class="eq-title">Lei de Faraday-Lenz</div>
+                                <div class="eq-formula">&Epsilon;<sub>L</sub>(t) = -L (dI/dt)</div>
+                            </div>
+
+                            <div class="eq-card" id="cardEqLoop">
+                                <div class="eq-title">Malha do Circuito RL</div>
+                                <div class="eq-formula">V - R I - L (dI/dt) = 0</div>
+                            </div>
+
+                            <div class="eq-card" id="cardEqTau">
+                                <div class="eq-title">Constante de Tempo</div>
+                                <div class="eq-formula">&tau; = L / R</div>
+                            </div>
+
+                            <div class="eq-card" id="cardEqEnergy">
+                                <div class="eq-title">Energia do Campo Magnético</div>
+                                <div class="eq-formula">U<sub>B</sub>(t) = &frac12; L I(t)&sup2;</div>
+                            </div>
+
+                            <div class="eq-card" id="cardEqPower">
+                                <div class="eq-title">Balanço de Potência</div>
+                                <div class="eq-formula">V I = R I&sup2; + L I (dI/dt)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 9: Validation Test Suite -->
+            <div id="tab-validation" class="tab-pane">
+                <div class="theory-content">
+                    <div class="theory-box">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <h3>✅ Auditoria Numérica Interna e Testes de Sanidade</h3>
+                            <button id="btnRerunTests" class="btn btn-primary" style="padding: 4px 10px; font-size: 0.75rem;">
+                                Reexecutar Testes de Validação
+                            </button>
+                        </div>
+                        <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 12px;">
+                            Estes testes matemáticos e físicos são executados automaticamente no console do navegador e verificam rigorosamente os limites e equações físicas:
+                        </p>
+
+                        <div class="test-list" id="testResultsList">
+                            <!-- Injected by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div>
+            Desenvolvido segundo o nível de rigor de <strong>David J. Griffiths — Introduction to Electrodynamics (4ª Ed., Cap. 7)</strong>.
+        </div>
+        <div>
+            Licença MIT &bull; Simulação Científica Interativa para Ensino Superior de Física
+        </div>
+    </footer>
+
+    <!-- JavaScript Physics Engine & Renderer -->
+    <script>
+        /**
+         * SIMULAÇÃO INTERATIVA E RIGOROSA DE INDUTÂNCIA (GRIFFITHS CAP. 7)
+         * Arquitetura: Modelo Físico Desacoplado | Renderizadores Canvas 2D | Validação Numérica
+         */
+
+        // ==========================================
+        // 1. CONSTANTES FÍSICAS E MATEMÁTICAS
+        // ==========================================
+        const MU0 = 4 * Math.PI * 1e-7; // Permeabilidade do vácuo [H/m ou N/A^2]
+        const EPSILON_TOL = 1e-8;       // Tolerância para validações numéricas de ponto flutuante
+
+        // ==========================================
+        // 2. ESTADO FÍSICO DO EXPERIMENTO
+        // ==========================================
+        const state = {
+            // Parâmetros do Circuito
+            V: 12.0,            // Tensão da fonte DC [V]
+            R: 10.0,            // Resistência do circuito [Ohm]
+            
+            // Parâmetros Geométricos do Solenoide
+            N: 600,             // Número de espiras [adimensional]
+            length: 0.20,       // Comprimento do solenoide [m] (20 cm)
+            radius: 0.025,      // Raio da seção reta [m] (2.5 cm)
+            muR: 1.0,           // Permeabilidade relativa do núcleo [adimensional]
+
+            // Modo do Circuito: 'CHARGING', 'DISCHARGING', 'ARC_OPEN', 'OFF'
+            circuitMode: 'CHARGING',
+
+            // Condições Iniciais do Segmento Analítico
+            tSegmentStart: 0.0, // Tempo físico em que o modo atual começou [s]
+            iSegmentStart: 0.0, // Corrente no instante tSegmentStart [A]
+
+            // Grandezas Dinâmicas Instantâneas (calculadas a cada tick físico)
+            t: 0.0,             // Tempo físico acumulado [s]
+            I: 0.0,             // Corrente instantânea [A]
+            dIdt: 0.0,          // Derivada temporal da corrente [A/s]
+            B: 0.0,             // Campo magnético interno [T]
+            phiB: 0.0,          // Fluxo por espira [Wb]
+            NphiB: 0.0,         // Fluxo concatenado [Wb*espira]
+            emfL: 0.0,          // FEM de autoindução [V]
+            VL: 0.0,            // Diferença de potencial no indutor: V_L = -emfL [V]
+            tau: 0.0,           // Constante de tempo L/R [s]
+            L: 0.0,             // Autoindutância [H]
+            UB: 0.0,            // Energia magnética armazenada [J]
+            Psource: 0.0,       // Potência fornecida pela bateria [W]
+            PJoule: 0.0,        // Potência dissipada no resistor [W]
+            PL: 0.0,            // Potência armazenada/liberada no campo [W]
+            powerError: 0.0,    // Erro do balanço energético |P_fonte - P_R - P_L| [W]
+
+            // Parâmetros Específicos para Abertura Brusca (Experimento E / Arco Elétrico)
+            arcResistance: 250.0, // Alta resistência transitória da centelha [Ohm]
+            isArcActive: false,
+
+            // Controle da Simulação
+            isRunning: true,
+            speedMultiplier: 1.0,
+            autoScaleSpeed: false,
+            timeScaleFactor: 1.0 // Fator aplicado ao dt do relógio para obter dt físico
+        };
+
+        // Buffers de Histórico para Gráficos
+        const graphHistory = {
+            maxPoints: 800,
+            times: [],
+            currents: [],
+            emfs: [],
+            fields: [],
+            energies: []
+        };
+
+        // Animação de Cargas e Ondas
+        const animationVisuals = {
+            chargeOffset: 0.0,
+            sparkParticles: []
+        };
+
+        // ==========================================
+        // 3. MODELO FÍSICO TEÓRICO (FUNÇÕES PURAS)
+        // ==========================================
+
+        /**
+         * Calcula a autoindutância do solenoide ideal
+         * L = mu_0 * mu_r * N^2 * A / length
+         */
+        function calculateInductance(N, length, radius, muR) {
+            const area = Math.PI * radius * radius;
+            return (MU0 * muR * N * N * area) / length;
+        }
+
+        /**
+         * Calcula a constante de tempo do circuito RL
+         * tau = L / R
+         */
+        function calculateTimeConstant(L, R) {
+            if (R <= 0) return Infinity;
+            return L / R;
+        }
+
+        /**
+         * Calcula a solução analítica exata da corrente I(t)
+         * para um circuito RL linear com condições iniciais (t0, I0)
+         */
+        function calculateCurrent(t, t0, I0, V, R, L, mode, arcResistance) {
+            const dt = Math.max(0, t - t0);
+
+            if (mode === 'CHARGING') {
+                const tau = L / R;
+                const I_inf = V / R;
+                return I_inf + (I0 - I_inf) * Math.exp(-dt / tau);
+            } 
+            else if (mode === 'DISCHARGING') {
+                const tau = L / R;
+                return I0 * Math.exp(-dt / tau);
+            } 
+            else if (mode === 'ARC_OPEN') {
+                const R_eff = arcResistance;
+                const tau_arc = L / R_eff;
+                const current = I0 * Math.exp(-dt / tau_arc);
+                return current;
+            } 
+            else { // 'OFF'
+                return 0.0;
+            }
+        }
+
+        /**
+         * Calcula a derivada analítica temporal da corrente dI/dt
+         */
+        function calculateCurrentDerivative(t, t0, I0, V, R, L, mode, arcResistance, currentI) {
+            if (mode === 'CHARGING') {
+                return (V - R * currentI) / L;
+            } 
+            else if (mode === 'DISCHARGING') {
+                return (-R * currentI) / L;
+            } 
+            else if (mode === 'ARC_OPEN') {
+                return (-arcResistance * currentI) / L;
+            } 
+            else { // 'OFF'
+                return 0.0;
+            }
+        }
+
+        /**
+         * Campo magnético axial interno no solenoide ideal
+         * B = mu_0 * mu_r * (N / length) * I
+         */
+        function calculateMagneticField(N, length, muR, I) {
+            return MU0 * muR * (N / length) * I;
+        }
+
+        /**
+         * Fluxo magnético através de uma única espira
+         * Phi_B = B * A
+         */
+        function calculateFlux(B, radius) {
+            const area = Math.PI * radius * radius;
+            return B * area;
+        }
+
+        /**
+         * Força eletromotriz autoinduzida (Lei de Faraday-Lenz)
+         * EMF_L = - L * (dI/dt)
+         */
+        function calculateInducedEMF(L, dIdt) {
+            return -L * dIdt;
+        }
+
+        /**
+         * Energia armazenada no campo magnético
+         * U_B = (1/2) * L * I^2
+         */
+        function calculateMagneticEnergy(L, I) {
+            return 0.5 * L * I * I;
+        }
+
+        /**
+         * Balanço de potências instantâneas
+         * P_fonte = V * I (em carga)
+         * P_R = R * I^2
+         * P_L = L * I * (dI/dt)
+         */
+        function calculatePowerBalance(V, R, L, I, dIdt, mode) {
+            const Psource = (mode === 'CHARGING') ? (V * I) : 0.0;
+            const PJoule = R * I * I;
+            const PL = L * I * dIdt;
+            const powerError = Math.abs(Psource - PJoule - PL);
+            return { Psource, PJoule, PL, powerError };
+        }
+
+        // ==========================================
+        // 4. ATUALIZAÇÃO DA SIMULAÇÃO (updateSimulation)
+        // ==========================================
+        function updateSimulation(dtReal) {
+            // Atualiza L e tau com base nos parâmetros atuais
+            state.L = calculateInductance(state.N, state.length, state.radius, state.muR);
+            state.tau = calculateTimeConstant(state.L, state.R);
+
+            // Ajuste da escala temporal
+            let effectiveSpeed = state.speedMultiplier;
+            if (state.autoScaleSpeed) {
+                // Em auto-escala, queremos que 1 tau demore ~ 2.5 segundos de visualização na tela
+                effectiveSpeed = state.tau / 2.5;
+            }
+
+            const dtPhys = dtReal * effectiveSpeed;
+            state.t += dtPhys;
+
+            // Se em ARC_OPEN e a corrente caiu abaixo de limiar desprezível (10^-5 A), extingue a centelha
+            if (state.circuitMode === 'ARC_OPEN') {
+                const cur = calculateCurrent(state.t, state.tSegmentStart, state.iSegmentStart, state.V, state.R, state.L, state.circuitMode, state.arcResistance);
+                if (Math.abs(cur) < 1e-5) {
+                    state.circuitMode = 'OFF';
+                    state.tSegmentStart = state.t;
+                    state.iSegmentStart = 0.0;
+                    state.isArcActive = false;
+                } else {
+                    state.isArcActive = true;
+                }
+            } else {
+                state.isArcActive = false;
+            }
+
+            // Calcula grandezas dinâmicas instantâneas
+            state.I = calculateCurrent(state.t, state.tSegmentStart, state.iSegmentStart, state.V, state.R, state.L, state.circuitMode, state.arcResistance);
+            if (Math.abs(state.I) < 1e-12) state.I = 0.0;
+
+            state.dIdt = calculateCurrentDerivative(state.t, state.tSegmentStart, state.iSegmentStart, state.V, state.R, state.L, state.circuitMode, state.arcResistance, state.I);
+            if (Math.abs(state.dIdt) < 1e-12) state.dIdt = 0.0;
+
+            state.B = calculateMagneticField(state.N, state.length, state.muR, state.I);
+            state.phiB = calculateFlux(state.B, state.radius);
+            state.NphiB = state.N * state.phiB;
+            state.emfL = calculateInducedEMF(state.L, state.dIdt);
+            state.VL = -state.emfL; // Tensão terminal V_L = L dI/dt
+            state.UB = calculateMagneticEnergy(state.L, state.I);
+
+            const power = calculatePowerBalance(state.V, state.R, state.L, state.I, state.dIdt, state.circuitMode);
+            state.Psource = power.Psource;
+            state.PJoule = power.PJoule;
+            state.PL = power.PL;
+            state.powerError = power.powerError;
+
+            // Deslocamento de animação das cargas do circuito proporcional a I
+            animationVisuals.chargeOffset = (animationVisuals.chargeOffset + state.I * dtReal * 24.0) % 1000.0;
+
+            // Registro histórico para gráficos
+            recordGraphPoint();
+        }
+
+        function recordGraphPoint() {
+            // Adiciona ponto a intervalos regulares
+            const hist = graphHistory;
+            hist.times.push(state.t);
+            hist.currents.push(state.I);
+            hist.emfs.push(state.emfL);
+            hist.fields.push(state.B * 1000); // mT
+            hist.energies.push(state.UB * 1000); // mJ
+
+            if (hist.times.length > hist.maxPoints) {
+                hist.times.shift();
+                hist.currents.shift();
+                hist.emfs.shift();
+                hist.fields.shift();
+                hist.energies.shift();
+            }
+        }
+
+        // ==========================================
+        // 5. TROCA DE ESTADOS E PRESETS DO CIRCUITO
+        // ==========================================
+        function setCircuitMode(newMode) {
+            if (state.circuitMode === newMode && newMode !== 'ARC_OPEN') return;
+
+            // Captura o estado contínuo de corrente atual antes da troca
+            state.iSegmentStart = state.I;
+            state.tSegmentStart = state.t;
+            state.circuitMode = newMode;
+
+            // Atualiza UI dos botões de chave
+            document.getElementById('btnSwitchCharge').classList.toggle('active', newMode === 'CHARGING');
+            document.getElementById('btnSwitchDischarge').classList.toggle('active', newMode === 'DISCHARGING');
+            document.getElementById('btnSwitchOpen').classList.toggle('active', newMode === 'ARC_OPEN' || newMode === 'OFF');
+
+            const badge = document.getElementById('circuitStateBadge');
+            if (newMode === 'CHARGING') {
+                badge.innerText = 'Estado: Energização (Carga RL)';
+                badge.style.color = 'var(--cyan)';
+            } else if (newMode === 'DISCHARGING') {
+                badge.innerText = 'Estado: Descarga no Resistor';
+                badge.style.color = 'var(--amber)';
+            } else if (newMode === 'ARC_OPEN') {
+                badge.innerText = 'Estado: Interrupção (Arco / Centelha)';
+                badge.style.color = 'var(--rose)';
+            } else {
+                badge.innerText = 'Estado: Circuito Aberto (Repouso)';
+                badge.style.color = 'var(--text-secondary)';
+            }
+        }
+
+        function resetSimulation() {
+            state.t = 0.0;
+            state.tSegmentStart = 0.0;
+            state.iSegmentStart = 0.0;
+            state.I = 0.0;
+            state.dIdt = 0.0;
+            state.B = 0.0;
+            state.phiB = 0.0;
+            state.NphiB = 0.0;
+            state.emfL = 0.0;
+            state.UB = 0.0;
+            state.Psource = 0.0;
+            state.PJoule = 0.0;
+            state.PL = 0.0;
+            state.powerError = 0.0;
+            state.isArcActive = false;
+            animationVisuals.sparkParticles = [];
+
+            graphHistory.times = [];
+            graphHistory.currents = [];
+            graphHistory.emfs = [];
+            graphHistory.fields = [];
+            graphHistory.energies = [];
+
+            setCircuitMode('CHARGING');
+        }
+
+        // ==========================================
+        // 6. RENDERIZADORES CANVAS 2D
+        // ==========================================
+
+        /**
+         * Renderizador do Esquema Interativo do Circuito RL
+         */
+        const circuitCanvas = document.getElementById('circuitCanvas');
+        const ctxCircuit = circuitCanvas.getContext('2d');
+
+        function renderCircuitCanvas() {
+            const w = circuitCanvas.width;
+            const h = circuitCanvas.height;
+            ctxCircuit.clearRect(0, 0, w, h);
+
+            // Fundo escuro com grid sutil de laboratório
+            ctxCircuit.fillStyle = '#050a18';
+            ctxCircuit.fillRect(0, 0, w, h);
+
+            ctxCircuit.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+            ctxCircuit.lineWidth = 1;
+            const gridSize = 25;
+            for (let x = 0; x < w; x += gridSize) {
+                ctxCircuit.beginPath();
+                ctxCircuit.moveTo(x, 0);
+                ctxCircuit.lineTo(x, h);
+                ctxCircuit.stroke();
+            }
+            for (let y = 0; y < h; y += gridSize) {
+                ctxCircuit.beginPath();
+                ctxCircuit.moveTo(0, y);
+                ctxCircuit.lineTo(w, y);
+                ctxCircuit.stroke();
+            }
+
+            // Coordenadas do Laço Retangular do Circuito
+            const xLeft = 100;
+            const xRight = 660;
+            const yTop = 60;
+            const yBottom = 280;
+            const xMid = (xLeft + xRight) / 2;
+
+            // 1. Desenho dos Fios Condutores
+            ctxCircuit.strokeStyle = 'rgba(148, 163, 184, 0.35)';
+            ctxCircuit.lineWidth = 4;
+            ctxCircuit.lineCap = 'round';
+            ctxCircuit.lineJoin = 'round';
+
+            // Fio inferior (Retorno para a bateria)
+            ctxCircuit.beginPath();
+            ctxCircuit.moveTo(xLeft, yBottom);
+            ctxCircuit.lineTo(xRight, yBottom);
+            ctxCircuit.stroke();
+
+            // Fio lateral direito (subida para o indutor/resistor)
+            ctxCircuit.beginPath();
+            ctxCircuit.moveTo(xRight, yBottom);
+            ctxCircuit.lineTo(xRight, yTop);
+            ctxCircuit.stroke();
+
+            // Ramo Superior com a Chave Seletora SPDT
+            const swPivotX = 280;
+            const swContactFonteX = 230; // Contato com a bateria
+            const swContactDescX = 330;  // Contato com freewheel/descarga
+
+            // Fio da bateria até contato 1
+            ctxCircuit.beginPath();
+            ctxCircuit.moveTo(xLeft, yTop);
+            ctxCircuit.lineTo(swContactFonteX, yTop);
+            ctxCircuit.stroke();
+
+            // Fio do contato da chave até resistor e indutor
+            ctxCircuit.beginPath();
+            ctxCircuit.moveTo(swPivotX + 30, yTop);
+            ctxCircuit.lineTo(xRight, yTop);
+            ctxCircuit.stroke();
+
+            // Ramo central de descarga (freewheeling loop)
+            ctxCircuit.beginPath();
+            ctxCircuit.moveTo(swContactDescX, yTop);
+            ctxCircuit.lineTo(swContactDescX, yBottom);
+            ctxCircuit.stroke();
+
+            // 2. Componente: Bateria DC (V) no ramo esquerdo
+            const batY = (yTop + yBottom) / 2;
+            ctxCircuit.beginPath();
+            ctxCircuit.moveTo(xLeft, yTop);
+            ctxCircuit.lineTo(xLeft, batY - 24);
+            ctxCircuit.moveTo(xLeft, batY + 24);
+            ctxCircuit.lineTo(xLeft, yBottom);
+            ctxCircuit.stroke();
+
+            // Placas da bateria
+            ctxCircuit.strokeStyle = '#38bdf8';
+            ctxCircuit.lineWidth = 5;
+            // Placa positiva (longa)
+            ctxCircuit.beginPath();
+            ctxCircuit.moveTo(xLeft - 22, batY - 10);
+            ctxCircuit.lineTo(xLeft + 22, batY - 10);
+            ctxCircuit.stroke();
+            // Placa negativa (curta)
+            ctxCircuit.lineWidth = 3;
+            ctxCircuit.strokeStyle = '#64748b';
+            ctxCircuit.beginPath();
+            ctxCircuit.moveTo(xLeft - 12, batY + 10);
+            ctxCircuit.lineTo(xLeft + 12, batY + 10);
+            ctxCircuit.stroke();
+
+            // Rótulo da bateria
+            ctxCircuit.fillStyle = '#ffffff';
+            ctxCircuit.font = 'bold 13px system-ui';
+            ctxCircuit.textAlign = 'right';
+            ctxCircuit.fillText(`+ ${state.V.toFixed(1)} V`, xLeft - 30, batY - 6);
+            ctxCircuit.fillStyle = '#64748b';
+            ctxCircuit.fillText(`- (0V)`, xLeft - 30, batY + 14);
+
+            // 3. Componente: Chave Seletora (Switch SPDT)
+            ctxCircuit.fillStyle = '#f8fafc';
+            ctxCircuit.beginPath();
+            ctxCircuit.arc(swContactFonteX, yTop, 4, 0, 2 * Math.PI);
+            ctxCircuit.arc(swPivotX + 30, yTop, 4, 0, 2 * Math.PI);
+            ctxCircuit.arc(swContactDescX, yTop + 24, 4, 0, 2 * Math.PI);
+            ctxCircuit.fill();
+
+            // Desenha a lâmina da chave conforme o modo
+            ctxCircuit.strokeStyle = '#fbbf24';
+            ctxCircuit.lineWidth = 4;
+            ctxCircuit.beginPath();
+            ctxCircuit.moveTo(swPivotX + 30, yTop);
+
+            if (state.circuitMode === 'CHARGING') {
+                ctxCircuit.lineTo(swContactFonteX, yTop); // Conectado à bateria
+            } else if (state.circuitMode === 'DISCHARGING') {
+                ctxCircuit.lineTo(swContactDescX, yTop + 24); // Conectado à descarga
+            } else {
+                // Aberto (no ar)
+                ctxCircuit.lineTo(swContactFonteX + 18, yTop - 26);
+            }
+            ctxCircuit.stroke();
+
+            // Rótulo da Chave
+            ctxCircuit.fillStyle = '#94a3b8';
+            ctxCircuit.font = '11px system-ui';
+            ctxCircuit.textAlign = 'center';
+            ctxCircuit.fillText('Chave S', swPivotX, yTop - 34);
+
+            // Centelha / Arco Elétrico Visual se ARC_OPEN ativo
+            if (state.isArcActive) {
+                ctxCircuit.strokeStyle = '#f43f5e';
+                ctxCircuit.lineWidth = 3;
+                ctxCircuit.beginPath();
+                ctxCircuit.moveTo(swPivotX + 30, yTop);
+                // zigue-zague de centelha
+                const sparkMidX = (swPivotX + 30 + swContactFonteX) / 2 + (Math.random() - 0.5) * 16;
+                const sparkMidY = yTop + (Math.random() - 0.5) * 16;
+                ctxCircuit.lineTo(sparkMidX, sparkMidY);
+                ctxCircuit.lineTo(swContactFonteX, yTop);
+                ctxCircuit.stroke();
+
+                // Brilho de centelha
+                ctxCircuit.fillStyle = 'rgba(244, 63, 94, 0.4)';
+                ctxCircuit.beginPath();
+                ctxCircuit.arc(sparkMidX, sparkMidY, 14, 0, 2 * Math.PI);
+                ctxCircuit.fill();
+
+                ctxCircuit.fillStyle = '#fda4af';
+                ctxCircuit.font = 'bold 11px var(--font-mono)';
+                ctxCircuit.fillText('⚡ ARCO ELÉTRICO!', swPivotX, yTop + 20);
+            }
+
+            // 4. Componente: Resistor R no ramo superior direito
+            const resX = 460;
+            const resY = yTop;
+            const resW = 70;
+            const resH = 20;
+
+            ctxCircuit.fillStyle = '#1e293b';
+            ctxCircuit.strokeStyle = '#34d399';
+            ctxCircuit.lineWidth = 2.5;
+            ctxCircuit.beginPath();
+            ctxCircuit.roundRect(resX - resW / 2, resY - resH / 2, resW, resH, 4);
+            ctxCircuit.fill();
+            ctxCircuit.stroke();
+
+            // Faixas decorativas de resistor
+            ctxCircuit.fillStyle = '#f59e0b';
+            ctxCircuit.fillRect(resX - 20, resY - 8, 4, 16);
+            ctxCircuit.fillStyle = '#10b981';
+            ctxCircuit.fillRect(resX - 8, resY - 8, 4, 16);
+            ctxCircuit.fillStyle = '#3b82f6';
+            ctxCircuit.fillRect(resX + 4, resY - 8, 4, 16);
+
+            // Rótulos do Resistor
+            ctxCircuit.fillStyle = '#f8fafc';
+            ctxCircuit.font = 'bold 12px system-ui';
+            ctxCircuit.textAlign = 'center';
+            ctxCircuit.fillText(`R = ${state.R.toFixed(1)} Ω`, resX, resY - 16);
+            ctxCircuit.fillStyle = '#34d399';
+            ctxCircuit.font = '11px var(--font-mono)';
+            const vR = state.R * state.I;
+            ctxCircuit.fillText(`V_R = ${vR.toFixed(2)} V`, resX, resY + 28);
+
+            // 5. Componente: Solenoide Indutor L no ramo lateral direito
+            const indX = xRight;
+            const indY = (yTop + yBottom) / 2;
+            const indH = 80;
+
+            // Apaga linha sob o indutor
+            ctxCircuit.fillStyle = '#050a18';
+            ctxCircuit.fillRect(indX - 16, indY - indH / 2, 32, indH);
+
+            // Desenha espiras do indutor
+            ctxCircuit.strokeStyle = '#00f2fe';
+            ctxCircuit.lineWidth = 3.5;
+            const numLoops = 4;
+            const loopStep = indH / numLoops;
+            for (let i = 0; i < numLoops; i++) {
+                const yLoopTop = indY - indH / 2 + i * loopStep;
+                const yLoopBot = yLoopTop + loopStep;
+                ctxCircuit.beginPath();
+                ctxCircuit.arc(indX, (yLoopTop + yLoopBot) / 2, loopStep / 2, -Math.PI / 2, Math.PI / 2);
+                ctxCircuit.stroke();
+            }
+
+            // Rótulo do Indutor L e FEM
+            ctxCircuit.fillStyle = '#ffffff';
+            ctxCircuit.font = 'bold 12px system-ui';
+            ctxCircuit.textAlign = 'left';
+            ctxCircuit.fillText(`Indutor L (${(state.L * 1000).toFixed(2)} mH)`, indX + 26, indY - 14);
+
+            // FEM Induzida e Tensão terminal
+            ctxCircuit.fillStyle = '#f43f5e';
+            ctxCircuit.font = 'bold 11px var(--font-mono)';
+            ctxCircuit.fillText(`Ɛ_L = ${state.emfL.toFixed(2)} V`, indX + 26, indY + 6);
+            ctxCircuit.fillStyle = '#38bdf8';
+            ctxCircuit.fillText(`V_L = ${state.VL.toFixed(2)} V`, indX + 26, indY + 24);
+
+            // Indicador visual de polaridade da FEM no indutor (+ e - de Lenz)
+            if (Math.abs(state.dIdt) > 0.05) {
+                ctxCircuit.fillStyle = '#f43f5e';
+                ctxCircuit.font = 'bold 14px var(--font-mono)';
+                ctxCircuit.textAlign = 'center';
+                if (state.dIdt > 0) {
+                    // Opondo ao aumento: terminal superior fica positivo contra a corrente
+                    ctxCircuit.fillText('(+)', indX - 22, indY - indH / 2 + 10);
+                    ctxCircuit.fillText('(-)', indX - 22, indY + indH / 2 - 10);
+                } else {
+                    // Sustentando: terminal superior fica negativo, empurrando corrente
+                    ctxCircuit.fillText('(-)', indX - 22, indY - indH / 2 + 10);
+                    ctxCircuit.fillText('(+)', indX - 22, indY + indH / 2 - 10);
+                }
+            }
+
+            // 6. Cargas Elétricas Móveis (Pontos de Corrente Convencional)
+            if (Math.abs(state.I) > 0.001) {
+                ctxCircuit.fillStyle = '#00f2fe';
+                const chargeSpacing = 40;
+                const pathLength = 2 * (xRight - xLeft) + 2 * (yBottom - yTop);
+                const numCharges = Math.floor(pathLength / chargeSpacing);
+
+                for (let i = 0; i < numCharges; i++) {
+                    const dist = (i * chargeSpacing + animationVisuals.chargeOffset) % pathLength;
+                    const pos = getCircuitPoint(dist, xLeft, xRight, yTop, yBottom, state.circuitMode, swContactDescX);
+                    if (pos) {
+                        ctxCircuit.beginPath();
+                        ctxCircuit.arc(pos.x, pos.y, 3.5, 0, 2 * Math.PI);
+                        ctxCircuit.fill();
+                    }
+                }
+            }
+
+            // 7. Seta de Sentido Positivo Adotado para a Corrente
+            ctxCircuit.fillStyle = 'rgba(56, 189, 248, 0.7)';
+            ctxCircuit.font = 'bold 11px system-ui';
+            ctxCircuit.textAlign = 'center';
+            ctxCircuit.fillText('Sentido Convencional Positivo da Corrente (Horário) →', xMid + 50, yBottom + 20);
+        }
+
+        function getCircuitPoint(dist, x1, x2, y1, y2, mode, xDesc) {
+            const w = x2 - x1;
+            const h = y2 - y1;
+
+            if (mode === 'DISCHARGING') {
+                const wDesc = x2 - xDesc;
+                const loopLen = 2 * wDesc + 2 * h;
+                const d = dist % loopLen;
+                if (d < wDesc) return { x: xDesc + d, y: y1 };
+                if (d < wDesc + h) return { x: x2, y: y1 + (d - wDesc) };
+                if (d < 2 * wDesc + h) return { x: x2 - (d - wDesc - h), y: y2 };
+                return { x: xDesc, y: y2 - (d - 2 * wDesc - h) };
+            }
+
+            if (mode === 'CHARGING') {
+                const loopLen = 2 * w + 2 * h;
+                const d = dist % loopLen;
+                if (d < w) return { x: x1 + d, y: y1 };
+                if (d < w + h) return { x: x2, y: y1 + (d - w) };
+                if (d < 2 * w + h) return { x: x2 - (d - w - h), y: y2 };
+                return { x: x1, y: y2 - (d - 2 * w - h) };
+            }
+
+            return null;
+        }
+
+        /**
+         * Renderizador Físico Detalhado do Solenoide e Campo B (updateSolenoidVisualization)
+         */
+        const solenoidCanvas = document.getElementById('solenoidCanvas');
+        const ctxSolenoid = solenoidCanvas.getContext('2d');
+
+        function updateSolenoidVisualization() {
+            const w = solenoidCanvas.width;
+            const h = solenoidCanvas.height;
+            ctxSolenoid.clearRect(0, 0, w, h);
+
+            // Fundo escuro com grid
+            ctxSolenoid.fillStyle = '#030713';
+            ctxSolenoid.fillRect(0, 0, w, h);
+
+            // Dimensões do Solenoide na Tela
+            const cx = w / 2;
+            const cy = h / 2 - 10;
+            const solLenPx = 480;
+            const solRadiusPx = 70;
+            const xStart = cx - solLenPx / 2;
+            const xEnd = cx + solLenPx / 2;
+            const yTop = cy - solRadiusPx;
+            const yBot = cy + solRadiusPx;
+
+            // 1. Núcleo Material do Solenoide
+            ctxSolenoid.save();
+            if (state.muR > 1.0) {
+                const coreGrad = ctxSolenoid.createLinearGradient(0, yTop, 0, yBot);
+                coreGrad.addColorStop(0, '#1e293b');
+                coreGrad.addColorStop(0.5, '#334155');
+                coreGrad.addColorStop(1, '#0f172a');
+                ctxSolenoid.fillStyle = coreGrad;
+                ctxSolenoid.fillRect(xStart - 10, yTop + 6, solLenPx + 20, 2 * solRadiusPx - 12);
+
+                ctxSolenoid.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                ctxSolenoid.font = '11px var(--font-mono)';
+                ctxSolenoid.textAlign = 'center';
+                ctxSolenoid.fillText(`Núcleo de Alta Permeabilidade (μ_r = ${state.muR.toFixed(0)})`, cx, cy + solRadiusPx - 18);
+            } else {
+                ctxSolenoid.fillStyle = 'rgba(15, 23, 42, 0.4)';
+                ctxSolenoid.fillRect(xStart, yTop + 6, solLenPx, 2 * solRadiusPx - 12);
+            }
+            ctxSolenoid.restore();
+
+            // 2. Linhas de Campo Magnético Interno B
+            const bMag = Math.abs(state.B);
+            const maxFieldVisual = 0.05; // 50 mT como escala de saturação visual
+            const normField = Math.min(1.0, bMag / maxFieldVisual);
+
+            if (bMag > 1e-6) {
+                const numLines = 9;
+                const lineSpacing = (2 * solRadiusPx - 26) / (numLines - 1);
+                const bDir = state.B >= 0 ? 1 : -1;
+
+                ctxSolenoid.save();
+                const fieldAlpha = Math.max(0.2, normField);
+                ctxSolenoid.strokeStyle = `rgba(251, 191, 36, ${fieldAlpha.toFixed(2)})`;
+                ctxSolenoid.lineWidth = 1.5 + normField * 2.0;
+
+                for (let i = 0; i < numLines; i++) {
+                    const yLine = yTop + 13 + i * lineSpacing;
+                    ctxSolenoid.beginPath();
+                    ctxSolenoid.moveTo(xStart - 40, yLine);
+                    ctxSolenoid.lineTo(xEnd + 40, yLine);
+                    ctxSolenoid.stroke();
+
+                    // Setas direcionais ao longo da linha
+                    const numArrows = 4;
+                    for (let a = 1; a <= numArrows; a++) {
+                        const arrowX = xStart + (a / (numArrows + 1)) * solLenPx;
+                        drawArrowHead(ctxSolenoid, arrowX, yLine, bDir, 7 + normField * 3);
+                    }
+                }
+
+                // Dispersão sutil nas extremidades externas
+                ctxSolenoid.strokeStyle = `rgba(251, 191, 36, ${(fieldAlpha * 0.25).toFixed(2)})`;
+                ctxSolenoid.setLineDash([4, 4]);
+                ctxSolenoid.lineWidth = 1.2;
+                ctxSolenoid.beginPath();
+                ctxSolenoid.moveTo(xEnd + 40, cy - 30);
+                ctxSolenoid.bezierCurveTo(xEnd + 90, cy - 130, xStart - 90, cy - 130, xStart - 40, cy - 30);
+                ctxSolenoid.stroke();
+                ctxSolenoid.beginPath();
+                ctxSolenoid.moveTo(xEnd + 40, cy + 30);
+                ctxSolenoid.bezierCurveTo(xEnd + 90, cy + 130, xStart - 90, cy + 130, xStart - 40, cy + 30);
+                ctxSolenoid.stroke();
+                ctxSolenoid.setLineDash([]);
+                ctxSolenoid.restore();
+            }
+
+            // 3. Desenho das Espiras do Solenoide
+            const visualTurns = 18;
+            const turnSpacing = solLenPx / visualTurns;
+
+            for (let i = 0; i <= visualTurns; i++) {
+                const turnX = xStart + i * turnSpacing;
+
+                ctxSolenoid.strokeStyle = 'rgba(217, 119, 6, 0.4)';
+                ctxSolenoid.lineWidth = 4;
+                ctxSolenoid.beginPath();
+                ctxSolenoid.ellipse(turnX, cy, 7, solRadiusPx, 0, Math.PI / 2, 3 * Math.PI / 2);
+                ctxSolenoid.stroke();
+
+                ctxSolenoid.strokeStyle = '#f59e0b';
+                ctxSolenoid.lineWidth = 4.5;
+                ctxSolenoid.beginPath();
+                ctxSolenoid.ellipse(turnX, cy, 7, solRadiusPx, 0, -Math.PI / 2, Math.PI / 2);
+                ctxSolenoid.stroke();
+
+                drawConductorCrossSection(ctxSolenoid, turnX, yTop, state.I >= 0 ? 'IN' : 'OUT');
+                drawConductorCrossSection(ctxSolenoid, turnX, yBot, state.I >= 0 ? 'OUT' : 'IN');
+            }
+
+            // 4. Indicador de FEM Induzida
+            if (Math.abs(state.dIdt) > 0.1) {
+                ctxSolenoid.save();
+                ctxSolenoid.fillStyle = state.emfL < 0 ? '#f43f5e' : '#34d399';
+                ctxSolenoid.font = 'bold 12px var(--font-mono)';
+                ctxSolenoid.textAlign = 'center';
+
+                const labelEMF = state.emfL < 0 
+                    ? `Contra-FEM (Ɛ_L < 0): Campo induzido E_ind opõe-se ao aumento de I` 
+                    : `FEM de Sustentação (Ɛ_L > 0): Campo induzido E_ind mantém a corrente`;
+                ctxSolenoid.fillText(labelEMF, cx, yTop - 30);
+                ctxSolenoid.restore();
+            }
+
+            // 5. Diagrama da Regra da Mão Direita
+            ctxSolenoid.fillStyle = '#ffffff';
+            ctxSolenoid.font = 'bold 12px system-ui';
+            ctxSolenoid.textAlign = 'left';
+            ctxSolenoid.fillText('Regra da Mão Direita:', 20, 24);
+            ctxSolenoid.fillStyle = '#94a3b8';
+            ctxSolenoid.font = '11px system-ui';
+            ctxSolenoid.fillText('Dedos curvados no sentido da corrente nas espiras', 20, 40);
+            ctxSolenoid.fillText('Polegar estendido aponta no sentido do campo B interno', 20, 56);
+
+            // Vetor B Central com Magnitude
+            ctxSolenoid.fillStyle = '#fbbf24';
+            ctxSolenoid.font = 'bold 13px var(--font-mono)';
+            ctxSolenoid.textAlign = 'center';
+            ctxSolenoid.fillText(`Campo Interno B = ${(state.B * 1000).toFixed(2)} mT`, cx, cy - 8);
+            ctxSolenoid.font = '11px var(--font-mono)';
+            ctxSolenoid.fillText(`Fluxo por Espira Φ = ${(state.phiB * 1e6).toFixed(2)} μWb`, cx, cy + 12);
+        }
+
+        function drawConductorCrossSection(ctx, x, y, dir) {
+            ctx.save();
+            ctx.fillStyle = '#1e293b';
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(x, y, 6, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.strokeStyle = '#f8fafc';
+            ctx.fillStyle = '#f8fafc';
+            ctx.lineWidth = 1.5;
+
+            if (dir === 'IN') {
+                ctx.beginPath();
+                ctx.moveTo(x - 3, y - 3);
+                ctx.lineTo(x + 3, y + 3);
+                ctx.moveTo(x + 3, y - 3);
+                ctx.lineTo(x - 3, y + 3);
+                ctx.stroke();
+            } else {
+                ctx.beginPath();
+                ctx.arc(x, y, 2, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+
+        function drawArrowHead(ctx, x, y, dir, size) {
+            ctx.beginPath();
+            if (dir > 0) {
+                ctx.moveTo(x - size, y - size / 1.8);
+                ctx.lineTo(x, y);
+                ctx.lineTo(x - size, y + size / 1.8);
+            } else {
+                ctx.moveTo(x + size, y - size / 1.8);
+                ctx.lineTo(x, y);
+                ctx.lineTo(x + size, y + size / 1.8);
+            }
+            ctx.stroke();
+        }
+
+        /**
+         * Renderizador dos Gráficos Multitraço Sincronizados em 4 Subplots (updateGraphs)
+         */
+        const graphsCanvas = document.getElementById('graphsCanvas');
+        const ctxGraphs = graphsCanvas.getContext('2d');
+
+        function updateGraphs() {
+            const w = graphsCanvas.width;
+            const h = graphsCanvas.height;
+            ctxGraphs.clearRect(0, 0, w, h);
+
+            // Fundo escuro
+            ctxGraphs.fillStyle = '#030713';
+            ctxGraphs.fillRect(0, 0, w, h);
+
+            const hist = graphHistory;
+            const nPoints = hist.times.length;
+            if (nPoints < 2) return;
+
+            const paddingLeft = 65;
+            const paddingRight = 30;
+            const paddingTop = 12;
+            const paddingBottom = 26;
+            const graphW = w - paddingLeft - paddingRight;
+            const totalH = h - paddingTop - paddingBottom;
+
+            // Divide a altura total em 4 subplots sincronizados no mesmo eixo temporal
+            const numTracks = 4;
+            const trackH = totalH / numTracks;
+
+            // Escala temporal compartilhada
+            const tMin = hist.times[0];
+            const tMax = Math.max(tMin + 0.001, hist.times[nPoints - 1]);
+
+            function toX(t) {
+                return paddingLeft + ((t - tMin) / (tMax - tMin)) * graphW;
+            }
+
+            // Definições dos 4 Subplots
+            const tracks = [
+                {
+                    label: 'I(t) [A]',
+                    color: '#00f2fe',
+                    data: hist.currents,
+                    curVal: `${state.I.toFixed(3)} A`,
+                    minY: 0,
+                    maxY: Math.max(0.2, (state.V / state.R) * 1.15),
+                    zeroRatio: 0.9 // Linha de zero perto do fundo
+                },
+                {
+                    label: 'Ɛ_L(t) [V]',
+                    color: '#f43f5e',
+                    data: hist.emfs,
+                    curVal: `${state.emfL.toFixed(2)} V`,
+                    minY: -Math.max(state.V * 1.2, 10),
+                    maxY: Math.max(state.V * 1.2, 10),
+                    zeroRatio: 0.5 // Linha de zero ao centro (permite positivo e negativo)
+                },
+                {
+                    label: 'B(t) [mT]',
+                    color: '#fbbf24',
+                    data: hist.fields,
+                    curVal: `${(state.B * 1000).toFixed(2)} mT`,
+                    minY: 0,
+                    maxY: Math.max(0.1, (calculateMagneticField(state.N, state.length, state.muR, state.V / state.R) * 1000) * 1.15),
+                    zeroRatio: 0.9
+                },
+                {
+                    label: 'U_B(t) [mJ]',
+                    color: '#a855f7',
+                    data: hist.energies,
+                    curVal: `${(state.UB * 1000).toFixed(2)} mJ`,
+                    minY: 0,
+                    maxY: Math.max(0.1, (calculateMagneticEnergy(state.L, state.V / state.R) * 1000) * 1.15),
+                    zeroRatio: 0.9
+                }
+            ];
+
+            // Renderiza cada um dos 4 subplots
+            tracks.forEach((track, trIdx) => {
+                const trTop = paddingTop + trIdx * trackH;
+                const trBot = trTop + trackH;
+                const yZero = trTop + trackH * track.zeroRatio;
+
+                // Fundo alternado sutil e borda do subplot
+                ctxGraphs.fillStyle = trIdx % 2 === 0 ? 'rgba(255,255,255,0.015)' : 'rgba(0,0,0,0.15)';
+                ctxGraphs.fillRect(paddingLeft, trTop, graphW, trackH);
+
+                ctxGraphs.strokeStyle = 'rgba(255, 255, 255, 0.07)';
+                ctxGraphs.lineWidth = 1;
+                ctxGraphs.beginPath();
+                ctxGraphs.moveTo(paddingLeft, trBot);
+                ctxGraphs.lineTo(w - paddingRight, trBot);
+                ctxGraphs.stroke();
+
+                // Linha de zero
+                ctxGraphs.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+                ctxGraphs.beginPath();
+                ctxGraphs.moveTo(paddingLeft, yZero);
+                ctxGraphs.lineTo(w - paddingRight, yZero);
+                ctxGraphs.stroke();
+
+                // Rótulo da grandeza e valor atual
+                ctxGraphs.fillStyle = track.color;
+                ctxGraphs.font = 'bold 10px var(--font-mono)';
+                ctxGraphs.textAlign = 'left';
+                ctxGraphs.fillText(track.label, paddingLeft + 8, trTop + 14);
+
+                ctxGraphs.textAlign = 'right';
+                ctxGraphs.fillText(track.curVal, w - paddingRight - 8, trTop + 14);
+
+                // Escala no eixo Y
+                ctxGraphs.fillStyle = '#64748b';
+                ctxGraphs.font = '9px var(--font-mono)';
+                ctxGraphs.fillText(`${track.maxY.toFixed(1)}`, paddingLeft - 6, trTop + 10);
+                ctxGraphs.fillText('0', paddingLeft - 6, yZero + 3);
+
+                // Desenha a curva
+                ctxGraphs.strokeStyle = track.color;
+                ctxGraphs.lineWidth = 2.0;
+                ctxGraphs.beginPath();
+
+                for (let i = 0; i < nPoints; i++) {
+                    const x = toX(hist.times[i]);
+                    let normVal = 0;
+                    if (track.zeroRatio === 0.5) {
+                        // Bipolar (como FEM)
+                        normVal = hist.emfs[i] / track.maxY;
+                        const y = yZero - normVal * (trackH * 0.45);
+                        if (i === 0) ctxGraphs.moveTo(x, y);
+                        else ctxGraphs.lineTo(x, y);
+                    } else {
+                        // Unipolar positivo
+                        normVal = track.data[i] / track.maxY;
+                        const y = yZero - normVal * (trackH * 0.8);
+                        if (i === 0) ctxGraphs.moveTo(x, y);
+                        else ctxGraphs.lineTo(x, y);
+                    }
+                }
+                ctxGraphs.stroke();
+            });
+
+            // Linha vertical de cursor do tempo atual (sincronizada atravessando todos os 4 gráficos)
+            const curX = toX(state.t);
+            ctxGraphs.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+            ctxGraphs.setLineDash([3, 3]);
+            ctxGraphs.beginPath();
+            ctxGraphs.moveTo(curX, paddingTop);
+            ctxGraphs.lineTo(curX, h - paddingBottom);
+            ctxGraphs.stroke();
+            ctxGraphs.setLineDash([]);
+
+            // Rótulos do Eixo de Tempo Compartilhado na base
+            ctxGraphs.fillStyle = '#94a3b8';
+            ctxGraphs.font = '10px var(--font-mono)';
+            ctxGraphs.textAlign = 'left';
+            ctxGraphs.fillText(`t_início = ${tMin.toFixed(3)} s`, paddingLeft, h - 8);
+            ctxGraphs.textAlign = 'center';
+            ctxGraphs.fillText(`Eixo Temporal Compartilhado t [s]`, (paddingLeft + w - paddingRight) / 2, h - 8);
+            ctxGraphs.textAlign = 'right';
+            ctxGraphs.fillText(`t_atual = ${state.t.toFixed(3)} s`, w - paddingRight, h - 8);
+        }
+
+        // ==========================================
+        // 7. ATUALIZAÇÃO DA INTERFACE E DIDACTIC COACH
+        // ==========================================
+        function updateUI() {
+            // Atualiza Painel de Telemetria
+            document.getElementById('telL').innerHTML = `${(state.L * 1000).toFixed(3)} <span class="tel-unit">mH</span>`;
+            document.getElementById('telI').innerHTML = `${state.I.toFixed(3)} <span class="tel-unit">A</span>`;
+            document.getElementById('teldIdt').innerHTML = `${state.dIdt.toFixed(2)} <span class="tel-unit">A/s</span>`;
+            document.getElementById('telEMF').innerHTML = `${state.emfL.toFixed(3)} <span class="tel-unit">V</span>`;
+            document.getElementById('telB').innerHTML = `${(state.B * 1000).toFixed(3)} <span class="tel-unit">mT</span>`;
+            document.getElementById('telPhi').innerHTML = `${(state.phiB * 1e6).toFixed(3)} <span class="tel-unit">μWb</span>`;
+            document.getElementById('telNPhi').innerHTML = `${(state.NphiB * 1000).toFixed(3)} <span class="tel-unit">mWb·esp</span>`;
+            document.getElementById('telTau').innerHTML = `${(state.tau * 1000).toFixed(3)} <span class="tel-unit">ms</span>`;
+            document.getElementById('telU').innerHTML = `${(state.UB * 1000).toFixed(3)} <span class="tel-unit">mJ</span>`;
+
+            // Atualiza Balanço de Potência
+            document.getElementById('valPsource').innerText = `${state.Psource.toFixed(2)} W`;
+            document.getElementById('valPJoule').innerText = `${state.PJoule.toFixed(2)} W`;
+            document.getElementById('valPInductor').innerText = `${state.PL.toFixed(2)} W`;
+            document.getElementById('powerErrorDisplay').innerText = `Erro: ΔP = ${state.powerError.toExponential(4)} W (Conservação Exata)`;
+
+            const totalP = Math.max(0.01, Math.abs(state.PJoule) + Math.abs(state.PL));
+            const joulePct = Math.min(100, Math.max(0, (state.PJoule / totalP) * 100));
+            const indPct = Math.min(100, Math.max(0, (Math.abs(state.PL) / totalP) * 100));
+            document.getElementById('powerSegJoule').style.width = `${joulePct}%`;
+            document.getElementById('powerSegInductor').style.width = `${indPct}%`;
+
+            // Atualiza Didactic Coach ("O que está acontecendo agora?")
+            updateDidacticCoach();
+
+            // Atualiza Destaque Dinâmico no Modo Equações
+            updateEquationsHighlight();
+
+            // Atualiza Comparador A vs B
+            updateComparisonTab();
+        }
+
+        function updateDidacticCoach() {
+            const pill = document.getElementById('coachStatePill');
+            const title = document.getElementById('coachTitle');
+            const text = document.getElementById('coachText');
+            const eq = document.getElementById('coachEq');
+            const timeDisp = document.getElementById('coachTimeDisplay');
+
+            timeDisp.innerText = `t = ${state.t.toFixed(4)} s | ${(state.t / state.tau).toFixed(2)} τ`;
+
+            const absDIdt = Math.abs(state.dIdt);
+
+            if (state.circuitMode === 'ARC_OPEN' || state.isArcActive) {
+                pill.className = 'coach-state-pill state-kick';
+                pill.innerHTML = '● INTERRUPÇÃO BRUSCA (|dI/dt| ≫ 0)';
+                title.innerText = 'Kick Indutivo e Formação de Centelha (Arco Elétrico)';
+                text.innerText = 'Ao interromper a chave rapidamente, o circuito tenta anular a corrente. Uma enorme taxa |dI/dt| induz um pico gigantesco de tensão no indutor (|Ɛ_L| ≫ V), suficiente para ionizar o ar e produzir uma descarga elétrica transitória.';
+                eq.innerText = `Ɛ_L = -L(dI/dt) = +${state.emfL.toFixed(1)} V ≫ V_fonte`;
+            }
+            else if (state.dIdt > 0.05) {
+                pill.className = 'coach-state-pill state-charging';
+                pill.innerHTML = '● CORRENTE AUMENTANDO (dI/dt > 0)';
+                title.innerText = 'Crescimento da Corrente e Contra-FEM de Lenz';
+                text.innerText = 'A corrente está aumentando. O fluxo magnético através da bobina também cresce. Pela lei de Faraday-Lenz, surge uma FEM autoinduzida Ɛ_L < 0 cuja polaridade se opõe ao aumento da corrente.';
+                eq.innerText = `Ɛ_L = -L (dI/dt) = ${state.emfL.toFixed(3)} V < 0`;
+            } 
+            else if (absDIdt <= 0.05 && state.I > 0.01) {
+                pill.className = 'coach-state-pill state-steady';
+                pill.innerHTML = '● REGIME ESTACIONÁRIO DC (dI/dt ≈ 0)';
+                title.innerText = 'Regime Permanente Estacionário: Indutor Comporta-se como Curto-Circuito';
+                text.innerText = 'A corrente atingiu o regime estacionário assintótico I = V / R. O fluxo magnético deixou de variar significativamente e, portanto, a FEM autoinduzida tende a zero (V_L → 0). O indutor ideal comporta-se como um condutor perfeito.';
+                eq.innerText = `dI/dt ≈ 0  ⟹  Ɛ_L ≈ 0.00 V  |  I_∞ = V/R = ${(state.V / state.R).toFixed(3)} A`;
+            } 
+            else if (state.dIdt < -0.05) {
+                pill.className = 'coach-state-pill state-discharging';
+                pill.innerHTML = '● CORRENTE DIMINUINDO (dI/dt < 0)';
+                title.innerText = 'Decaimento da Corrente: Indutor Fornece Energia';
+                text.innerText = 'A corrente está diminuindo. O campo magnético está colapsando. A FEM autoinduzida inverte sua polaridade (Ɛ_L > 0) para tentar sustentar a corrente no mesmo sentido original, devolvendo a energia do campo magnético ao resistor.';
+                eq.innerText = `Ɛ_L = -L (dI/dt) = +${state.emfL.toFixed(3)} V > 0`;
+            } 
+            else {
+                pill.className = 'coach-state-pill state-off';
+                pill.innerHTML = '● CIRCUITO EM REPOUSO (I = 0)';
+                title.innerText = 'Sem Corrente e Sem Campo Magnético';
+                text.innerText = 'O circuito está desligado e sem corrente armazenada. B = 0, Φ = 0 e energia magnética U_B = 0.';
+                eq.innerText = 'I = 0  ⟹  B = 0  |  U_B = 0 J';
+            }
+        }
+
+        function updateEquationsHighlight() {
+            const cardFaraday = document.getElementById('cardEqFaraday');
+            const cardLoop = document.getElementById('cardEqLoop');
+            const cardPower = document.getElementById('cardEqPower');
+            const cardEnergy = document.getElementById('cardEqEnergy');
+
+            if (Math.abs(state.dIdt) > 0.05) {
+                cardFaraday.classList.add('active-eq');
+                cardLoop.classList.add('active-eq');
+                cardPower.classList.add('active-eq');
+            } else {
+                cardFaraday.classList.remove('active-eq');
+                cardLoop.classList.remove('active-eq');
+                cardPower.classList.remove('active-eq');
+            }
+
+            if (state.UB > 1e-6) {
+                cardEnergy.classList.add('active-eq');
+            } else {
+                cardEnergy.classList.remove('active-eq');
+            }
+        }
+
+        function updateComparisonTab() {
+            const lA = state.L * 1000; // mH
+            const rA = state.R;
+            const tauA = state.tau * 1000; // ms
+            const slopeA = state.V / state.L; // A/s
+
+            document.getElementById('compLA').innerText = `${lA.toFixed(3)} mH`;
+            document.getElementById('compRA').innerText = `${rA.toFixed(1)} Ω`;
+            document.getElementById('compTauA').innerText = `${tauA.toFixed(3)} ms`;
+            document.getElementById('compTauValA').innerText = `${tauA.toFixed(3)} ms`;
+            document.getElementById('compSlopeA').innerText = `${slopeA.toFixed(1)} A/s`;
+
+            const lB = lA * 2;
+            const tauB = tauA * 2;
+            const slopeB = slopeA / 2;
+
+            document.getElementById('compLB').innerText = `${lB.toFixed(3)} mH`;
+            document.getElementById('compRB').innerText = `${rA.toFixed(1)} Ω`;
+            document.getElementById('compTauB').innerText = `${tauB.toFixed(3)} ms`;
+            document.getElementById('compTauValB').innerText = `${tauB.toFixed(3)} ms`;
+            document.getElementById('compSlopeB').innerText = `${slopeB.toFixed(1)} A/s`;
+        }
+
+        // ==========================================
+        // 8. SUITE DE VALIDAÇÃO FÍSICA E NUMÉRICA
+        // ==========================================
+        function runPhysicsValidation() {
+            const results = [];
+
+            // Teste 1: Fórmula da Indutância L = mu0 * muR * N^2 * A / l
+            const testN = 500;
+            const testLength = 0.20;
+            const testRadius = 0.025;
+            const testMuR = 1.0;
+            const testArea = Math.PI * testRadius * testRadius;
+            const expectedL = (MU0 * testMuR * testN * testN * testArea) / testLength;
+            const calcL = calculateInductance(testN, testLength, testRadius, testMuR);
+            const errL = Math.abs(calcL - expectedL) / expectedL;
+            const passL = errL < EPSILON_TOL;
+            results.push({
+                name: 'Fórmula Construtiva da Indutância (L = μ₀ N² A / ℓ)',
+                pass: passL,
+                detail: `Esperado: ${expectedL.toExponential(6)} H | Obtido: ${calcL.toExponential(6)} H | Erro Relativo: ${errL.toExponential(2)}`
+            });
+            console.log(passL ? '[PASS] Inductance formula' : `[FAIL] Inductance formula (err: ${errL})`);
+
+            // Teste 2: Escala Quadrática com N (N -> 2N => L -> 4L)
+            const calcL2N = calculateInductance(testN * 2, testLength, testRadius, testMuR);
+            const ratioN = calcL2N / calcL;
+            const passRatioN = Math.abs(ratioN - 4.0) < EPSILON_TOL;
+            results.push({
+                name: 'Dependência Geométrica Quadrática com N (L ∝ N²)',
+                pass: passRatioN,
+                detail: `Razão L(2N)/L(N) = ${ratioN.toFixed(8)} (Teórico exato = 4.00000000)`
+            });
+
+            // Teste 3: Constante de Tempo RL e Pontos Notáveis
+            const testR = 10.0;
+            const testV = 12.0;
+            const testTau = expectedL / testR;
+            const I_tau = calculateCurrent(testTau, 0, 0, testV, testR, expectedL, 'CHARGING', 250);
+            const I_inf = testV / testR;
+            const ratioTau = I_tau / I_inf;
+            const expectedRatioTau = 1 - Math.exp(-1); // ~ 0.6321205588
+            const passTau = Math.abs(ratioTau - expectedRatioTau) < EPSILON_TOL;
+            results.push({
+                name: 'Constante de Tempo RL na Energização: I(τ) = (1 - e⁻¹) V/R',
+                pass: passTau,
+                detail: `I(τ)/I_∞ = ${ratioTau.toFixed(8)} | Teórico = ${expectedRatioTau.toFixed(8)} (≈ 63.21%)`
+            });
+            console.log(passTau ? '[PASS] RL time constant' : `[FAIL] RL time constant (err: ${Math.abs(ratioTau - expectedRatioTau)})`);
+
+            // Teste 4: Descarga no Resistor em t = tau
+            const I_discharge_tau = calculateCurrent(testTau, 0, I_inf, testV, testR, expectedL, 'DISCHARGING', 250);
+            const ratioDischarge = I_discharge_tau / I_inf;
+            const expectedDischarge = Math.exp(-1); // ~ 0.3678794412
+            const passDischarge = Math.abs(ratioDischarge - expectedDischarge) < EPSILON_TOL;
+            results.push({
+                name: 'Descarga no Resistor em t = τ: I(τ) = I₀ e⁻¹',
+                pass: passDischarge,
+                detail: `I(τ)/I₀ = ${ratioDischarge.toFixed(8)} | Teórico = ${expectedDischarge.toFixed(8)} (≈ 36.79%)`
+            });
+
+            // Teste 5: Sinal da Lei de Lenz / Faraday
+            const dIdt_pos = 5.0; // Corrente crescendo
+            const emf_pos = calculateInducedEMF(expectedL, dIdt_pos);
+            const passLenzGrow = emf_pos < 0; // Deve ser estritamente negativa
+
+            const dIdt_neg = -5.0; // Corrente decrescendo
+            const emf_neg = calculateInducedEMF(expectedL, dIdt_neg);
+            const passLenzDecay = emf_neg > 0; // Deve ser estritamente positiva
+
+            const passFaradaySign = passLenzGrow && passLenzDecay;
+            results.push({
+                name: 'Sinal da Lei de Faraday-Lenz (Ɛ_L = -L dI/dt)',
+                pass: passFaradaySign,
+                detail: `dI/dt > 0 ⟹ Ɛ_L < 0 (${emf_pos.toFixed(4)} V) | dI/dt < 0 ⟹ Ɛ_L > 0 (+${emf_neg.toFixed(4)} V)`
+            });
+            console.log(passFaradaySign ? '[PASS] Faraday/Lenz sign' : '[FAIL] Faraday/Lenz sign');
+
+            // Teste 6: Energia Magnética e Equivalência de Griffiths
+            const testI = 2.0; // A
+            const macroUB = calculateMagneticEnergy(expectedL, testI);
+            const testB = calculateMagneticField(testN, testLength, testMuR, testI);
+            const volume = testArea * testLength;
+            const energyDensity = (testB * testB) / (2 * MU0 * testMuR);
+            const microUB = energyDensity * volume;
+            const errUB = Math.abs(macroUB - microUB) / macroUB;
+            const passUB = errUB < EPSILON_TOL;
+            results.push({
+                name: 'Equivalência da Energia Magnética: ½ L I² ≡ ∫ (B² / 2μ) dτ',
+                pass: passUB,
+                detail: `Macroscópica (½ L I²): ${macroUB.toExponential(8)} J | Microscópica (u_B · Vol): ${microUB.toExponential(8)} J`
+            });
+            console.log(passUB ? '[PASS] Magnetic energy' : `[FAIL] Magnetic energy (err: ${errUB})`);
+
+            // Teste 7: Conservação Instantânea da Potência
+            const curTest = 0.5 * I_inf;
+            const dIdtTest = (testV - testR * curTest) / expectedL;
+            const pb = calculatePowerBalance(testV, testR, expectedL, curTest, dIdtTest, 'CHARGING');
+            const passPB = pb.powerError < 1e-12;
+            results.push({
+                name: 'Conservação da Potência Instantânea: V·I = R·I² + L·I·(dI/dt)',
+                pass: passPB,
+                detail: `P_fonte = ${pb.Psource.toFixed(4)} W | P_R + P_L = ${(pb.PJoule + pb.PL).toFixed(4)} W | Discrepância = ${pb.powerError.toExponential(4)} W`
+            });
+            console.log(passPB ? '[PASS] Power balance' : `[FAIL] Power balance (err: ${pb.powerError})`);
+
+            // Injeta resultados na aba da UI
+            const container = document.getElementById('testResultsList');
+            if (container) {
+                container.innerHTML = '';
+                results.forEach(res => {
+                    const row = document.createElement('div');
+                    row.className = 'test-row';
+                    row.innerHTML = `
+                        <div>
+                            <div style="font-weight: 700; color: #ffffff;">${res.name}</div>
+                            <div style="font-size: 0.74rem; color: var(--text-secondary); margin-top: 3px;">${res.detail}</div>
+                        </div>
+                        <span class="test-badge ${res.pass ? 'test-pass' : 'test-fail'}">
+                            ${res.pass ? 'PASS' : 'FAIL'}
+                        </span>
+                    `;
+                    container.appendChild(row);
+                });
+            }
+
+            return results;
+        }
+
+        // ==========================================
+        // 9. LOOP PRINCIPAL DE ANIMAÇÃO
+        // ==========================================
+        let lastTimestamp = performance.now();
+
+        function simulationLoop(timestamp) {
+            const dtReal = Math.min(0.05, (timestamp - lastTimestamp) / 1000);
+            lastTimestamp = timestamp;
+
+            if (state.isRunning) {
+                updateSimulation(dtReal);
+            }
+
+            // Renderiza todas as visualizações em Canvas
+            renderCircuitCanvas();
+            updateSolenoidVisualization();
+            updateGraphs();
+
+            // Atualiza telemetria e textos
+            updateUI();
+
+            requestAnimationFrame(simulationLoop);
+        }
+
+        // ==========================================
+        // 10. INTERAÇÃO E EVENT LISTENERS
+        // ==========================================
+        function setupEventListeners() {
+            // Play / Pause
+            const btnPlayPause = document.getElementById('btnPlayPause');
+            btnPlayPause.addEventListener('click', () => {
+                state.isRunning = !state.isRunning;
+                document.getElementById('playIcon').innerText = state.isRunning ? '⏸' : '▶';
+                document.getElementById('playText').innerText = state.isRunning ? 'Pausar' : 'Continuar';
+            });
+
+            // Passo de Tempo
+            document.getElementById('btnStep').addEventListener('click', () => {
+                state.isRunning = false;
+                document.getElementById('playIcon').innerText = '▶';
+                document.getElementById('playText').innerText = 'Continuar';
+                updateSimulation(0.02);
+            });
+
+            // Reset
+            document.getElementById('btnReset').addEventListener('click', () => {
+                resetSimulation();
+            });
+
+            // Velocidade da Simulação
+            const selSpeed = document.getElementById('selSpeed');
+            selSpeed.addEventListener('change', () => {
+                if (selSpeed.value === 'auto') {
+                    state.autoScaleSpeed = true;
+                } else {
+                    state.autoScaleSpeed = false;
+                    state.speedMultiplier = parseFloat(selSpeed.value);
+                }
+            });
+
+            // Chaves do Circuito
+            document.getElementById('btnSwitchCharge').addEventListener('click', () => setCircuitMode('CHARGING'));
+            document.getElementById('btnSwitchDischarge').addEventListener('click', () => setCircuitMode('DISCHARGING'));
+            document.getElementById('btnSwitchOpen').addEventListener('click', () => setCircuitMode('ARC_OPEN'));
+
+            // Limpar Gráficos
+            document.getElementById('btnClearGraphs').addEventListener('click', () => {
+                graphHistory.times = [];
+                graphHistory.currents = [];
+                graphHistory.emfs = [];
+                graphHistory.fields = [];
+                graphHistory.energies = [];
+            });
+
+            // Sliders de Parâmetros
+            const sV = document.getElementById('sliderV');
+            sV.addEventListener('input', () => {
+                state.V = parseFloat(sV.value);
+                document.getElementById('valVDisplay').innerText = `${state.V.toFixed(1)} V`;
+                state.tSegmentStart = state.t;
+                state.iSegmentStart = state.I;
+            });
+
+            const sR = document.getElementById('sliderR');
+            sR.addEventListener('input', () => {
+                state.R = parseFloat(sR.value);
+                document.getElementById('valRDisplay').innerText = `${state.R.toFixed(1)} Ω`;
+                state.tSegmentStart = state.t;
+                state.iSegmentStart = state.I;
+            });
+
+            const sN = document.getElementById('sliderN');
+            sN.addEventListener('input', () => {
+                state.N = parseInt(sN.value);
+                document.getElementById('valNDisplay').innerText = `${state.N} espiras`;
+            });
+
+            const sL = document.getElementById('sliderLength');
+            sL.addEventListener('input', () => {
+                state.length = parseFloat(sL.value);
+                document.getElementById('valLDisplay').innerText = `${state.length.toFixed(2)} m (${(state.length * 100).toFixed(0)} cm)`;
+            });
+
+            const sRsol = document.getElementById('sliderRsol');
+            sRsol.addEventListener('input', () => {
+                state.radius = parseFloat(sRsol.value);
+                const areaCm2 = Math.PI * state.radius * state.radius * 10000;
+                document.getElementById('valRsolDisplay').innerText = `${(state.radius * 100).toFixed(1)} cm (A = ${areaCm2.toFixed(1)} cm²)`;
+            });
+
+            const sMur = document.getElementById('sliderMur');
+            sMur.addEventListener('input', () => {
+                state.muR = parseFloat(sMur.value);
+                document.getElementById('valMurDisplay').innerText = `${state.muR.toFixed(1)}`;
+                updateCoreChipButtons(state.muR);
+            });
+
+            // Botões de Presets de Núcleo
+            document.querySelectorAll('.btn-chip').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const murVal = parseFloat(btn.getAttribute('data-mur'));
+                    state.muR = murVal;
+                    sMur.value = murVal;
+                    document.getElementById('valMurDisplay').innerText = `${murVal.toFixed(1)}`;
+                    updateCoreChipButtons(murVal);
+                });
+            });
+
+            function updateCoreChipButtons(currentMur) {
+                document.querySelectorAll('.btn-chip').forEach(b => {
+                    const bVal = parseFloat(b.getAttribute('data-mur'));
+                    b.classList.toggle('active', Math.abs(bVal - currentMur) < 1.0);
+                });
+            }
+
+            // Abas Inferiores
+            document.querySelectorAll('.tab-btn').forEach(tabBtn => {
+                tabBtn.addEventListener('click', () => {
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+
+                    tabBtn.classList.add('active');
+                    const targetId = tabBtn.getAttribute('data-tab');
+                    const targetPane = document.getElementById(targetId);
+                    if (targetPane) targetPane.classList.add('active');
+                });
+            });
+
+            // Botões de Experimentos Pré-Definidos
+            document.getElementById('btnRunExpA').addEventListener('click', () => {
+                resetSimulation();
+                state.N = 1200; // Dobra espiras
+                sN.value = 1200;
+                document.getElementById('valNDisplay').innerText = '1200 espiras';
+                setCircuitMode('CHARGING');
+            });
+
+            document.getElementById('btnRunExpB').addEventListener('click', () => {
+                resetSimulation();
+                state.R = 20.0; // Dobra resistência
+                sR.value = 20.0;
+                document.getElementById('valRDisplay').innerText = '20.0 Ω';
+                setCircuitMode('CHARGING');
+            });
+
+            document.getElementById('btnRunExpC').addEventListener('click', () => {
+                resetSimulation();
+                state.muR = 300.0; // Núcleo de alta permeabilidade
+                sMur.value = 300.0;
+                document.getElementById('valMurDisplay').innerText = '300.0 (Ferrite)';
+                updateCoreChipButtons(300.0);
+                setCircuitMode('CHARGING');
+            });
+
+            document.getElementById('btnRunExpD').addEventListener('click', () => {
+                // Avança simulação analiticamente para t = 6 tau
+                state.t = state.tSegmentStart + 6.0 * state.tau;
+                setCircuitMode('CHARGING');
+            });
+
+            document.getElementById('btnRunExpE').addEventListener('click', () => {
+                // Garante que haja corrente antes de abrir
+                if (state.I < 0.2) {
+                    state.I = state.V / state.R;
+                }
+                setCircuitMode('ARC_OPEN');
+            });
+
+            // Reexecutar Testes de Validação
+            document.getElementById('btnRerunTests').addEventListener('click', () => {
+                runPhysicsValidation();
+            });
+        }
+
+        // ==========================================
+        // 11. INICIALIZAÇÃO
+        // ==========================================
+        window.addEventListener('DOMContentLoaded', () => {
+            setupEventListeners();
+            resetSimulation();
+
+            // Executa testes automáticos no startup
+            runPhysicsValidation();
+
+            // Dispara loop de animação
+            requestAnimationFrame(simulationLoop);
+        });
+
+    </script>
+</body>
+</html>
