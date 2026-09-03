@@ -301,3 +301,51 @@ From a software engineering and numerical analysis perspective, the simulation c
 - **Synchronized Real-Time Oscilloscope**: Interactive Chart.js module streaming live curves of position $y(t)$, velocity $v(t)$, and acceleration $a(t)$ across all 4 body-environment permutations.
 - **Synthesized Web Audio API**: Procedurally synthesizes mechanical latch release clicks, velocity-modulated aerodynamic rush/friction, optical photogate beeps, low-frequency train ground impact booms, and soft feather landings without external audio files.
 - **Comprehensive Didactic Engine**: Integrated KaTeX mathematical derivations, historical context (Galileo's thought experiment and Apollo 15 Lunar drop), and parametric environment presets (Earth, Moon, Tower of Pisa, Jupiter).
+
+---
+
+## Statistical Mechanics: Phase Space, Density Function, and Gibbs Ensembles
+
+**Reference File:** `mecanica_estatistica_espaco_fase.html`
+
+### Logical Description
+This single-file interactive application models and visualizes the core conceptual foundation of Classical Statistical Mechanics for a one-dimensional Simple Harmonic Oscillator (SHO). The computational architecture bridges microscopic Hamiltonian trajectories with macroscopic thermodynamic ensembles. The simulation provides real-time exploration of 2D canonical phase space $(q, p)$, continuous probability density heatmaps $\rho(q, p)$, exact symplectic time evolution obeying Hamilton's equations of motion, and a direct visual demonstration of Liouville's Theorem (phase-flow incompressibility and volume conservation).
+
+### Physico-Mathematical Modeling
+The mechanical state of a single one-dimensional harmonic oscillator ($m=1, k=1$) is represented by a single point (microstate) in the two-dimensional phase space spanned by generalized coordinate $q$ and conjugate momentum $p$. The system Hamiltonian is:
+
+$$H(q, p) = \frac{p^2}{2m} + \frac{1}{2} k q^2 = \frac{1}{2}(p^2 + q^2)$$
+
+The canonical equations of motion govern the temporal trajectories:
+
+$$\dot{q} = \frac{\partial H}{\partial p} = p, \quad \dot{p} = -\frac{\partial H}{\partial q} = -q$$
+
+The phase-space velocity field is $\vec{v} = (\dot{q}, \dot{p}) = (p, -q)$. Because the velocity field has identically zero divergence:
+
+$$\nabla \cdot \vec{v} = \frac{\partial \dot{q}}{\partial q} + \frac{\partial \dot{p}}{\partial p} = \frac{\partial^2 H}{\partial q \partial p} - \frac{\partial^2 H}{\partial p \partial q} = 0$$
+
+The phase flow acts as an **incompressible fluid**. By Liouville's Theorem, the total convective time derivative of the phase-space probability density function $\rho(q, p)$ along system orbits vanishes:
+
+$$\frac{d\rho}{dt} = \frac{\partial \rho}{\partial t} + \{\rho, H\} = 0$$
+
+Furthermore, any arbitrary domain volume (phase area) $\Delta\Gamma = \iint_{\Omega(t)} dq dp$ remains strictly invariant over time ($\frac{d\Delta\Gamma}{dt} = 0$).
+
+#### Ensembles:
+1. **Microcanonical Ensemble ($N, V, E$ fixed)**:
+   Describes an isolated system with constant total energy $E_0$. By the fundamental postulate of equal a priori probabilities, microstates are uniformly distributed over the constant energy hypersphere (a circle of radius $R = \sqrt{2E_0}$ in 2D):
+   $$\rho_{\text{micro}}(q, p) = \frac{1}{\Omega(E_0)} \delta(H(q, p) - E_0)$$
+   The density heatmap exhibits a luminous narrow annular shell concentrated at $R = \sqrt{2E_0}$ and vanishes everywhere else.
+
+2. **Canonical Ensemble ($N, V, T$ fixed)**:
+   Describes a system in thermal equilibrium with a heat reservoir at temperature $T$ ($\beta = 1/k_B T$, setting $k_B = 1$). Microstates are distributed according to the Boltzmann-Gibbs distribution:
+   $$\rho_{\text{can}}(q, p) = \frac{1}{Z} e^{-\beta H(q, p)} = \frac{1}{2\pi T} \exp\left(-\frac{q^2 + p^2}{2T}\right)$$
+   This represents an isotropic bivariate Gaussian cloud in phase space with variance $\sigma_q^2 = \sigma_p^2 = T$, yielding an average energy $\langle H \rangle = k_B T = T$ (consistent with the Classical Equipartition Theorem).
+
+### Code Dynamics
+- **Single-File Vanilla Web Architecture**: Pure HTML5, modern Dark Mode CSS3, and Vanilla JavaScript Canvas API with zero external dependencies.
+- **Symplectic Time Integrator**: Utilizes the exact $2 \times 2$ symplectic rotation matrix $R(\omega \cdot dt)$ with $\det(R) = 1$, guaranteeing absolute energy conservation and zero numerical area drift.
+- **High-Performance Heatmap Pipeline**: Evaluates the continuous probability density function $\rho(q, p)$ over an offscreen typed array buffer with a scientific thermal colormap (cold deep-blue $\to$ cyan $\to$ green $\to$ amber $\to$ fiery red $\to$ incandescent white peak) and blits via bilinear hardware scaling.
+- **Liouville Phase-Droplet Tracker**: Allows spawning and interactive positioning of a localized test cluster of microstates with a continuous geometric boundary ellipse; computes and tracks the invariant enclosed phase area $\Delta\Gamma$ in real time.
+- **Real-Time Thermodynamic Telemetry & Histogram**: Dynamically samples active microstates, calculates sample mean $\langle H \rangle$ vs theoretical expectation $\langle H \rangle_{\text{theo}}$, energy variance $\Delta H$, and renders a live energy probability distribution histogram $P(E)$ overlaid against the analytical distribution curve.
+- **Pedagogical Intuitive Panel**: Provides an accessible, didactic breakdown explaining the bridge between microstates and macrostates, geometric phase space orbits, and phase fluid incompressibility.
+
