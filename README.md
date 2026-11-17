@@ -349,3 +349,132 @@ Furthermore, any arbitrary domain volume (phase area) $\Delta\Gamma = \iint_{\Om
 - **Real-Time Thermodynamic Telemetry & Histogram**: Dynamically samples active microstates, calculates sample mean $\langle H \rangle$ vs theoretical expectation $\langle H \rangle_{\text{theo}}$, energy variance $\Delta H$, and renders a live energy probability distribution histogram $P(E)$ overlaid against the analytical distribution curve.
 - **Pedagogical Intuitive Panel**: Provides an accessible, didactic breakdown explaining the bridge between microstates and macrostates, geometric phase space orbits, and phase fluid incompressibility.
 
+---
+
+## Classical Electrodynamics: Poynting Vector and Plane Wave Propagation
+
+**Reference File:** `poynting_vector_simulation.html` (also available as `index.html`)
+
+### Logical Description
+This single-file interactive application provides a high-fidelity 3D computational visualization of energy transport in electromagnetic radiation, focusing on the Poynting Vector ($\mathbf{S}$) and its strict orthogonal triad with the Electric Field ($\mathbf{E}$) and Magnetic Field ($\mathbf{B}$) in a monochromatic plane wave propagating through free space. The simulation allows users to inspect continuous wave envelopes, spatially distributed vector fields, and instantaneous local field probes at arbitrary coordinates $x_0$, validating conservation of energy, unidirectional power flow, and the cross-product relationship $\mathbf{S} = \frac{1}{\mu_0}(\mathbf{E} \times \mathbf{B})$.
+
+### Physico-Mathematical Modeling
+The theoretical framework is governed by the microscopic Maxwell equations in vacuum ($\rho = 0, \mathbf{J} = \mathbf{0}$):
+
+$$\nabla \cdot \mathbf{E} = 0, \quad \nabla \cdot \mathbf{B} = 0, \quad \nabla \times \mathbf{E} = -\frac{\partial \mathbf{B}}{\partial t}, \quad \nabla \times \mathbf{B} = \mu_0 \varepsilon_0 \frac{\partial \mathbf{E}}{\partial t}$$
+
+Considering the electromagnetic energy density $u = \frac{1}{2}\left( \varepsilon_0 |\mathbf{E}|^2 + \frac{1}{\mu_0} |\mathbf{B}|^2 \right)$, differentiation with respect to time and application of the vector calculus identity $\nabla \cdot (\mathbf{E} \times \mathbf{B}) = \mathbf{B} \cdot (\nabla \times \mathbf{E}) - \mathbf{E} \cdot (\nabla \times \mathbf{B})$ yields Poynting's Theorem in differential form:
+
+$$\frac{\partial u}{\partial t} + \nabla \cdot \mathbf{S} = -\mathbf{J} \cdot \mathbf{E}$$
+
+where the **Poynting Vector** $\mathbf{S} \equiv \frac{1}{\mu_0} (\mathbf{E} \times \mathbf{B})$ denotes the directional energy flux density ($\text{W/m}^2$).
+
+For a linearly polarized monochromatic plane wave propagating along the $+x$ axis ($\hat{\mathbf{k}} = \hat{\mathbf{x}}$):
+
+$$\mathbf{E}(x, t) = E_0 \cos(kx - \omega t) \, \hat{\mathbf{y}}$$
+$$\mathbf{B}(x, t) = B_0 \cos(kx - \omega t) \, \hat{\mathbf{z}} = \frac{E_0}{c} \cos(kx - \omega t) \, \hat{\mathbf{z}}$$
+
+Evaluating the cross product directly reveals the fundamental electrodynamic properties:
+
+$$\mathbf{S}(x, t) = \frac{1}{\mu_0} \mathbf{E} \times \mathbf{B} = \frac{E_0^2}{\mu_0 c} \cos^2(kx - \omega t) \, (\hat{\mathbf{y}} \times \hat{\mathbf{z}}) = c \varepsilon_0 E_0^2 \cos^2(kx - \omega t) \, \hat{\mathbf{x}}$$
+
+1. **Strict Orthogonal Triad**: $\mathbf{E} \cdot \mathbf{B} = 0$, $\mathbf{E} \cdot \mathbf{S} = 0$, and $\mathbf{B} \cdot \mathbf{S} = 0$ everywhere at all times.
+2. **Unidirectional Energy Flow**: Because $\cos^2(kx - \omega t) \ge 0$, $\mathbf{S}$ never reverses direction, pointing relentlessly forward along $+x$ (transport of energy strictly in the direction of wave propagation).
+3. **Double Frequency and Time Average**: The instantaneous power density pulsates at twice the wave frequency ($2\omega$), with time-average intensity:
+   $$\langle \mathbf{S} \rangle = \frac{1}{2} c \varepsilon_0 E_0^2 \, \hat{\mathbf{x}} = \frac{E_0 B_0}{2 \mu_0} \, \hat{\mathbf{x}}$$
+
+### Code Dynamics
+- **Three.js WebGL 3D Pipeline**: Hardware-accelerated rendering utilizing dynamic buffer geometries for continuous transverse wave curves, parametric vector arrow fields, and ground reference grids.
+- **Interactive Probe Station**: A movable point probe along the propagation axis that isolates the local instantaneous triad $(\mathbf{E}, \mathbf{B}, \mathbf{S})$ with real-time numeric dot-product calculation proving exact orthogonality ($\mathbf{E} \cdot \mathbf{B} = 0.000$).
+- **Bidirectional Spherical Camera Controls**: Synchronizes orbital mouse dragging with analytical pitch ($\theta$) and yaw ($\phi$) sliders, preventing coordinate singularities and telemetry jitter.
+- **Real-Time Scientific Telemetry HUD**: Continuously evaluates and displays probe phase $\phi(x_0, t)$, instantaneous field components $E_y$, $B_z$, instantaneous Poynting flux $S_x$, and time-averaged radiation intensity $\langle S \rangle$.
+- **Integrated KaTeX Academic Documentation**: Full in-page theoretical deduction, vector calculus derivation, and standard textbook citations (Griffiths, Jackson, Halliday & Resnick, Feynman) rendered via LaTeX math typography.
+
+---
+
+## Vector Calculus: Gradient, Divergence, and Curl Rigorous Geometric Simulation
+
+**Reference File:** `calculo_vetorial_grad_div_rot.html`
+
+### Logical Description
+This single-file interactive application provides a mathematically rigorous visualization of the fundamental first-order differential operators of 2D vector calculus: the **Gradient** ($\nabla f$), the **Divergence** ($\nabla \cdot \mathbf{F}$), and the **Curl** ($\nabla \times \mathbf{F}$). The application avoids abstract or hand-waving simplifications, rendering exact geometric representations of level curves (isolines), normal boundary flux through infinitesimal 2D test volumes, and rotational paddle-wheel torque dynamics. The user can switch seamlessly between operators, test multiple canonical presets (e.g., saddle points, sources, sinks, shear flows, and irrotational vortices), manipulate position and intensity variables via responsive sliders, and inspect real-time LaTeX telemetry verified against Gauss' Divergence Theorem and Stokes' Circulation Theorem.
+
+### Physico-Mathematical Modeling
+1. **The Gradient ($\nabla f$)**:
+   Given a 2D scalar potential $f(x, y)$, the gradient vector field is defined by:
+   $$\nabla f = \left( \frac{\partial f}{\partial x}, \frac{\partial f}{\partial y} \right)$$
+   - *Strict Orthogonality*: For any regular level curve $f(x, y) = c$, parameterized by $\mathbf{r}(t)$, differentiation yields $\frac{df}{dt} = \nabla f \cdot \frac{d\mathbf{r}}{dt} = \nabla f \cdot \mathbf{T} = 0$. The gradient is strictly perpendicular to the level curves ($\nabla f \perp \mathbf{T}$).
+   - *Direction of Steepest Ascent*: The directional derivative along any unit vector $\hat{\mathbf{u}}$ satisfies $D_{\hat{\mathbf{u}}} f = \nabla f \cdot \hat{\mathbf{u}} = \|\nabla f\| \cos\theta \le \|\nabla f\|$, with equality if and only if $\hat{\mathbf{u}}$ is parallel to $\nabla f$.
+
+2. **The Divergence ($\nabla \cdot \mathbf{F}$)**:
+   For a vector field $\mathbf{F}(x, y) = F_x \hat{\mathbf{i}} + F_y \hat{\mathbf{j}}$, the scalar divergence is defined as:
+   $$\nabla \cdot \mathbf{F} = \frac{\partial F_x}{\partial x} + \frac{\partial F_y}{\partial y}$$
+   - *Gauss-Green Divergence Theorem*: Over a closed circular test region $D$ of radius $R$ centered at $(x_0, y_0)$ with boundary $\partial D$:
+     $$\Phi_{\text{net}} = \oint_{\partial D} \mathbf{F} \cdot \hat{\mathbf{n}} \, ds = \iint_D (\nabla \cdot \mathbf{F}) \, dA \approx (\nabla \cdot \mathbf{F})|_{(x_0, y_0)} \cdot \pi R^2$$
+   - *Physical Source/Sink Classification*: When $\nabla \cdot \mathbf{F} > 0$, net flux emerges outward from the region (source, highlighted in red). When $\nabla \cdot \mathbf{F} < 0$, net flux converges inward (sink, highlighted in blue). When $\nabla \cdot \mathbf{F} = 0$, the flow is solenoidal / incompressible (neutral).
+
+3. **The Curl ($\nabla \times \mathbf{F}$)**:
+   In two dimensions, the out-of-plane scalar vorticity component is:
+   $$(\nabla \times \mathbf{F})_z = \frac{\partial F_y}{\partial x} - \frac{\partial F_x}{\partial y}$$
+   - *Cauchy-Stokes Hydrodynamic Kinematics*: By fluid kinematics, an infinitesimal, freely pivoted paddle wheel immersed in a velocity field $\mathbf{F}$ rotates with an instantaneous angular velocity strictly equal to half the local vorticity:
+     $$\vec{\omega}_{\text{wheel}} = \frac{1}{2} (\nabla \times \mathbf{F})$$
+   - *Stokes' Circulation Theorem*: The line integral of the tangential flow around the wheel perimeter $\partial D$ satisfies:
+     $$\Gamma = \oint_{\partial D} \mathbf{F} \cdot d\mathbf{r} = \iint_D (\nabla \times \mathbf{F})_z \, dA \approx (\nabla \times \mathbf{F})_z|_{(x_0, y_0)} \cdot \pi R_w^2$$
+   - *The Shear Flow Paradox*: Rectilinear flows with transverse shear (e.g., $\mathbf{F} = k y \, \hat{\mathbf{i}}$) possess non-zero curl ($(\nabla \times \mathbf{F})_z = -k$), driving clockwise rotation despite straight streamlines. Conversely, an irrotational vortex ($\mathbf{F} \propto (-y/r^2, x/r^2)$) yields zero rotation outside the origin.
+
+### Code Dynamics
+- **p5.js High-Performance Vector Canvas**: High-DPI 2D rendering pipeline with custom Cartesian coordinate mapping, real-time vector field sampling, smooth particle streamlines, and dynamic grabbing/crosshair cursor feedback.
+- **Marching Squares Contour Generation**: Fast grid evaluation producing exact, continuous piecewise-linear isolines for scalar fields alongside an offscreen bilinear colormap buffer.
+- **Interactive Geometric Probes**:
+  - *Gradient Probe*: Computes exact tangent line $\mathbf{T}$, gradient vector $\nabla f$, $90^\circ$ orthogonality indicator, numerical dot product $\nabla f \cdot \mathbf{T} \equiv 0.000$, and a rotatable directional derivative vector $\hat{\mathbf{u}}$ with real-time maximal variation telemetry.
+  - *Divergence Test Disk*: Draggable circular volume calculating both the numerical perimetric flux integral $\oint \mathbf{F} \cdot \hat{\mathbf{n}} \, ds$ and analytical divergence $(\nabla \cdot \mathbf{F})\pi R^2$, dynamically shaded in red (source), blue (sink), or emerald (solenoidal).
+  - *Paddle Wheel Model*: Drag-and-drop 6-blade paddle wheel whose rotation angle $\theta(t)$ integrates $\omega = \frac{1}{2}(\nabla \times \mathbf{F})_z$ in real time, displaying right-hand rule out-of-plane indicators ($\odot$ for $+z$, $\otimes$ for $-z$) and boundary circulation $\Gamma$.
+- **KaTeX Academic Telemetry HUD**: Live mathematical expressions displaying analytical formulas, instantaneous field values, and theorem verification metrics without DOM thrashing.
+
+---
+
+## Heisenberg Uncertainty Principle: Rigorous Quantum Simulation
+
+**Reference File:** `heisenberg_uncertainty_simulation.html`
+
+### Logical Description
+This single-file interactive application provides a mathematically rigorous, epistemologically sound, and visually intuitive laboratory illustrating the **Heisenberg Uncertainty Principle** ($\Delta x \cdot \Delta p \ge \frac{\hbar}{2}$). Moving beyond the common pop-science misconception that uncertainty is merely an experimental observer perturbation, the simulation demonstrates that uncertainty is a fundamental, ontic wave-mechanical property originating from the non-commutativity of quantum observables ($[\hat{x}, \hat{p}] = i\hbar$) and the Fourier conjugate nature of position and momentum Hilbert representations.
+
+The application features four interconnected, specialized laboratory modes:
+1. **Fourier Duality & Wave Packet Engine ($\psi(x) \leftrightarrow \phi(p)$)**: Dual synchronized high-DPI canvases illustrating the spatial wave packet $\psi(x)$ alongside its continuous Fourier transform in momentum space $\phi(p)$, with direct mouse-drag manipulation, phase-color mapping ($e^{i\theta} \mapsto \text{HSV}$), constituent Fourier harmonic superposition decomposition, and real-time Schrödinger time evolution dispersion.
+2. **Quantum Slit Diffraction & Measurement Collapse**: Simulates electron beam diffraction through an aperture of variable width $a = \Delta x$, implementing stochastic Monte Carlo particle detection at a distant screen to visually demonstrate how spatial confinement directly inflates transversal momentum dispersion ($\Delta p_x \propto \hbar / a$).
+3. **Phase Space & Planck Cell Geometry ($(x, p)$ / Wigner Representation)**: Explores the irreducible minimum phase space cell area ($\pi \hbar \approx h/2$), demonstrating quantum squeezing (where variance reduction in one quadrature forces variance dilation in the conjugate quadrature) and phase space shear dynamics.
+4. **Heisenberg's Gamma-Ray Microscope Gedankenexperiment**: Animates the classic 1927 thought experiment showing why shortening the photon wavelength ($\lambda$) improves optical spatial resolution ($\Delta x \approx \lambda / (2\sin\theta)$) but unavoidably delivers an equal and opposite Compton momentum recoil kick ($\Delta p_x \approx (h/\lambda)\sin\theta$), proving $\Delta x \cdot \Delta p_x \approx h/2$ invariant of wavelength.
+
+### Physico-Mathematical Modeling
+1. **Robertson-Schrödinger Inequality & Non-Commutativity**:
+   For any two Hermitian operators $\hat{A}$ and $\hat{B}$, statistical standard deviations obey:
+   $$\sigma_A \sigma_B \ge \frac{1}{2} \left| \langle [\hat{A}, \hat{B}] \rangle \right|$$
+   Substituting the fundamental canonical commutation relation $[\hat{x}, \hat{p}] = i\hbar \hat{I}$:
+   $$\sigma_x \sigma_p \ge \frac{1}{2} |i\hbar| = \frac{\hbar}{2}$$
+   In simulation natural units ($\hbar = 1$), the absolute quantum floor is $\sigma_x \sigma_p \ge 0.50$.
+
+2. **Fourier Transform Pair & Minimum Wave Packet**:
+   The momentum representation $\phi(p)$ is the Fourier transform of the spatial wave function:
+   $$\phi(p) = \frac{1}{\sqrt{2\pi\hbar}} \int_{-\infty}^{\infty} \psi(x) e^{-i p x / \hbar} dx$$
+   The equality $\sigma_x \sigma_p = \frac{\hbar}{2}$ is saturated exclusively by unchirped Gaussian wave packets:
+   $$\psi(x) = \left( \frac{1}{2\pi \sigma_x^2} \right)^{1/4} \exp\left( -\frac{x^2}{4\sigma_x^2} + \frac{i p_0 x}{\hbar} \right)$$
+   Any quadratic phase modulation (chirp $\alpha x^2$), boundary clipping (slit rectangular packet), or bimodal interference (Schrödinger cat state) yields $\sigma_x \sigma_p > \frac{\hbar}{2}$.
+
+3. **Time-Dependent Schrödinger Wave Packet Dispersion**:
+   Under the free Hamiltonian $\hat{H} = \frac{\hat{p}^2}{2m}$, spatial dispersion evolves as:
+   $$\sigma_x(t) = \sigma_0 \sqrt{1 + \left( \frac{\hbar t}{2m \sigma_0^2} \right)^2}$$
+   States prepared with extreme spatial localization ($\sigma_0 \ll 1$) necessarily possess immense momentum variance ($\sigma_p \gg 1$), resulting in catastrophic kinetic spreading across space over time.
+
+4. **Quantum Diffraction and Slit Measurement**:
+   Spatial transmission through slit $a$ produces transversal momentum probability density:
+   $$P(p_x) \propto \text{sinc}^2\left( \frac{p_x a}{2\hbar} \right)$$
+   The central diffraction envelope width spans $\Delta p_x \approx \frac{2\pi\hbar}{a} = \frac{h}{\Delta x}$, guaranteeing $\Delta x \cdot \Delta p_x \approx h$.
+
+### Code Dynamics
+- **Radix-2 Cooley-Tukey FFT Engine**: Pure JavaScript discrete Fourier transform operating over a 512-point grid with sub-millisecond execution, enabling 60 FPS continuous spectral updates and fftshift centering.
+- **Split-Step Spectral Schrödinger Solver**: Unitary time integration applying diagonal kinetic phase steps $\exp\left(-i \frac{p^2}{2m\hbar} dt\right)$ in momentum space, strictly preserving $L^2$ norm conservation ($\int |\psi|^2 dx \equiv 1.000$).
+- **Multi-Modal High-DPI Canvas Rendering Pipeline**: Device pixel ratio adaptive rendering featuring dynamic glow shaders, HSV complex phase coloring, interactive draggable control handles on position, slit, and phase-space canvases, and animated particle impacts.
+- **Web Audio API Quantum Synthesizer**: Realistic synthetic audio feedback modeling stochastic Poisson arrivals and Geiger counter clicks during single-electron diffraction detection.
+- **Interactive Preset Station & Telemetry**: Instant presets (Gaussian Fundamental, Spatial Localization, Plane Wave, Schrödinger Cat State, Slit Cut, Dispersive Chirp), live Heisenberg saturation gauge, and KaTeX mathematical formulas.
+

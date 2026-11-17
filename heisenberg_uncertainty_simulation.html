@@ -1,0 +1,2872 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laboratório Quântico: Princípio da Incerteza de Heisenberg</title>
+    <!-- KaTeX para renderização matemática rigorosa e elegante -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+    <style>
+        :root {
+            --bg-void: #050811;
+            --bg-panel: rgba(10, 15, 29, 0.94);
+            --bg-card: rgba(16, 24, 46, 0.78);
+            --bg-card-hover: rgba(24, 36, 68, 0.92);
+            --border-subtle: rgba(0, 240, 255, 0.15);
+            --border-glow: rgba(0, 240, 255, 0.45);
+            
+            --neon-cyan: #00f0ff;
+            --neon-magenta: #ff007f;
+            --neon-purple: #b026ff;
+            --neon-amber: #ffb700;
+            --neon-emerald: #00ffa3;
+            --neon-rose: #f43f5e;
+            
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
+            
+            --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', 'Roboto Mono', Consolas, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-void);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Ambient quantum background grid */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(0, 240, 255, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(176, 38, 255, 0.06) 0%, transparent 45%),
+                linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 36px 36px, 36px 36px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Scrollbars */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-void); }
+        ::-webkit-scrollbar-thumb { background: rgba(0, 240, 255, 0.2); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(0, 240, 255, 0.45); }
+
+        /* HEADER */
+        header {
+            height: 52px;
+            min-height: 52px;
+            background: rgba(10, 15, 29, 0.96);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 50;
+            position: relative;
+            backdrop-filter: blur(14px);
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .quantum-badge {
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(176, 38, 255, 0.2));
+            border: 1px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);
+        }
+
+        .header-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            background: linear-gradient(90deg, #ffffff, #a5f3fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-sub {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            border-left: 1px solid var(--border-subtle);
+            padding-left: 10px;
+            margin-left: 6px;
+        }
+
+        /* Nav Tabs in Header */
+        .tab-bar {
+            display: flex;
+            background: rgba(16, 24, 46, 0.6);
+            padding: 3px;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            gap: 4px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(176, 38, 255, 0.15));
+            color: var(--neon-cyan);
+            border: 1px solid rgba(0, 240, 255, 0.4);
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.15);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-icon {
+            background: rgba(16, 24, 46, 0.8);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-muted);
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-icon:hover {
+            color: var(--neon-cyan);
+            border-color: var(--neon-cyan);
+        }
+
+        /* MAIN APP LAYOUT */
+        .app-workspace {
+            display: flex;
+            flex: 1;
+            height: calc(100% - 52px);
+            min-height: 0;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* VIEW CONTAINER */
+        .view-container {
+            flex: 1;
+            height: 100%;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* TELEMETRY / CONTROL SIDEBAR */
+        .sidebar {
+            width: 370px;
+            height: 100%;
+            background: var(--bg-panel);
+            border-left: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            backdrop-filter: blur(12px);
+            flex-shrink: 0;
+            z-index: 20;
+        }
+
+        .sidebar-section {
+            padding: 16px 18px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .section-title {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--neon-cyan);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* GAUGE PRINCIPAL HEISENBERG */
+        .uncertainty-gauge-card {
+            background: linear-gradient(145deg, rgba(16, 24, 48, 0.9), rgba(11, 16, 32, 0.95));
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 14px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .gauge-formula-title {
+            font-size: 0.95rem;
+            text-align: center;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .gauge-meter-wrapper {
+            position: relative;
+            width: 100%;
+            height: 18px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 9px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .gauge-limit-marker {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--neon-emerald);
+            z-index: 5;
+            box-shadow: 0 0 8px var(--neon-emerald);
+        }
+
+        .gauge-bar {
+            height: 100%;
+            width: 50%;
+            background: linear-gradient(90deg, var(--neon-emerald), var(--neon-cyan));
+            transition: width 0.15s ease-out, background 0.2s;
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+        }
+
+        .gauge-stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .stat-box {
+            background: rgba(7, 10, 20, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 8px;
+            border-radius: 6px;
+        }
+
+        .stat-label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+
+        .stat-val {
+            font-family: var(--font-mono);
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+        }
+
+        .stat-val.cyan { color: var(--neon-cyan); }
+        .stat-val.magenta { color: var(--neon-magenta); }
+        .stat-val.emerald { color: var(--neon-emerald); }
+        .stat-val.amber { color: var(--neon-amber); }
+
+        .stat-desc {
+            font-size: 0.62rem;
+            color: var(--text-dim);
+            margin-top: 2px;
+        }
+
+        /* CONTROLES / SLIDERS */
+        .control-group {
+            margin-bottom: 14px;
+        }
+
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .control-label {
+            font-size: 0.76rem;
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .control-value {
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--neon-cyan);
+            background: rgba(0, 240, 255, 0.1);
+            padding: 1px 6px;
+            border-radius: 4px;
+        }
+
+        .range-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            outline: none;
+            transition: background 0.2s;
+        }
+
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--neon-cyan);
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--neon-cyan);
+            border: 2px solid #000;
+            transition: transform 0.1s;
+        }
+
+        .range-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .range-slider.magenta::-webkit-slider-thumb {
+            background: var(--neon-magenta);
+            box-shadow: 0 0 10px var(--neon-magenta);
+        }
+
+        .range-slider.emerald::-webkit-slider-thumb {
+            background: var(--neon-emerald);
+            box-shadow: 0 0 10px var(--neon-emerald);
+        }
+
+        /* PRESETS GRID */
+        .presets-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+
+        .btn-preset {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-muted);
+            padding: 8px 10px;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .btn-preset span:first-child {
+            color: var(--text-main);
+            font-weight: 700;
+        }
+
+        .btn-preset:hover {
+            background: rgba(0, 240, 255, 0.12);
+            border-color: var(--neon-cyan);
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+        .btn-preset.active {
+            background: rgba(0, 240, 255, 0.18);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+        }
+
+        /* FLOATING HUD & PLAYBACK TOOLBAR */
+        .floating-toolbar {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(10, 15, 28, 0.92);
+            backdrop-filter: blur(14px);
+            border: 1px solid var(--border-glow);
+            border-radius: 30px;
+            padding: 6px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 30;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
+        }
+
+        .toolbar-btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .toolbar-btn:hover {
+            background: rgba(0, 240, 255, 0.2);
+            border-color: var(--neon-cyan);
+            color: var(--neon-cyan);
+        }
+
+        .toolbar-btn.primary {
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.3), rgba(176, 38, 255, 0.3));
+            border-color: var(--neon-cyan);
+            color: #fff;
+        }
+
+        .toolbar-divider {
+            width: 1px;
+            height: 20px;
+            background: var(--border-subtle);
+        }
+
+        /* TOGGLE SWITCH */
+        .toggle-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 0;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 36px;
+            height: 20px;
+            display: inline-block;
+        }
+
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            transition: 0.3s;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 3px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+
+        .toggle-switch input:checked + .toggle-slider {
+            background: var(--neon-cyan);
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+        }
+
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(16px);
+            background: #000;
+        }
+
+        /* CANVAS PANES - MODES */
+        .mode-view {
+            display: none;
+            width: 100%;
+            height: 100%;
+            position: relative;
+            flex-direction: column;
+        }
+
+        .mode-view.active {
+            display: flex;
+        }
+
+        /* MODE 1: DUAL WAVE CANVASES */
+        .dual-canvas-grid {
+            display: grid;
+            grid-template-rows: 1fr 1fr;
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .canvas-pane {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-bottom: 1px solid var(--border-subtle);
+            overflow: hidden;
+        }
+
+        .canvas-pane:last-child {
+            border-bottom: none;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+
+        /* HUD OVERLAY INSIDE CANVAS */
+        .canvas-hud-overlay {
+            position: absolute;
+            top: 12px;
+            left: 14px;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            z-index: 10;
+        }
+
+        .canvas-tag {
+            background: rgba(10, 15, 28, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--border-subtle);
+            border-radius: 4px;
+            padding: 3px 8px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            width: fit-content;
+        }
+
+        .canvas-tag-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .canvas-tag-desc {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+            background: rgba(10, 15, 28, 0.7);
+            padding: 2px 6px;
+            border-radius: 3px;
+            max-width: 380px;
+        }
+
+        .canvas-hud-legend {
+            position: absolute;
+            top: 12px;
+            right: 14px;
+            background: rgba(10, 15, 28, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            display: flex;
+            gap: 12px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 3px;
+            border-radius: 2px;
+        }
+
+        /* PHASE COLOR WHEEL HUD */
+        .phase-wheel-hud {
+            position: absolute;
+            bottom: 14px;
+            right: 14px;
+            background: rgba(10, 15, 28, 0.85);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 8px 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .phase-wheel-canvas {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+        }
+
+        /* BOTÃO DE AÇÃO RÁPIDA DENTRO DA SIDEBAR */
+        .btn-action-primary {
+            width: 100%;
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(176, 38, 255, 0.2));
+            border: 1px solid var(--neon-cyan);
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.74rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 8px;
+        }
+        .btn-action-primary:hover {
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.35), rgba(176, 38, 255, 0.35));
+            box-shadow: 0 0 14px rgba(0, 240, 255, 0.3);
+        }
+
+        /* SELEÇÃO ESPECTRAL DE ONDA */
+        .spectrum-btn-group {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            margin-top: 6px;
+        }
+        .btn-spectrum {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-muted);
+            padding: 5px 0;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .btn-spectrum:hover, .btn-spectrum.active {
+            color: #fff;
+            border-color: var(--neon-cyan);
+            background: rgba(0, 240, 255, 0.18);
+        }
+
+        /* MODAL DE TEORIA / AJUDA */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal-content {
+            background: rgba(12, 17, 33, 0.98);
+            border: 1px solid var(--neon-cyan);
+            border-radius: 12px;
+            width: 780px;
+            max-width: 95vw;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 24px;
+            box-shadow: 0 0 50px rgba(0, 240, 255, 0.2);
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 12px;
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.4rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover { color: var(--neon-rose); }
+
+        .theory-p {
+            font-size: 0.88rem;
+            line-height: 1.65;
+            color: var(--text-main);
+            margin-bottom: 14px;
+        }
+
+        .theory-box {
+            background: rgba(0, 240, 255, 0.05);
+            border-left: 3px solid var(--neon-cyan);
+            padding: 12px 16px;
+            border-radius: 0 8px 8px 0;
+            margin: 14px 0;
+            font-size: 0.85rem;
+            line-height: 1.55;
+        }
+
+        .theory-misconception {
+            background: rgba(244, 63, 94, 0.08);
+            border-left: 3px solid var(--neon-rose);
+            padding: 12px 16px;
+            border-radius: 0 8px 8px 0;
+            margin: 14px 0;
+            font-size: 0.85rem;
+            line-height: 1.55;
+        }
+
+        /* Tooltip toast */
+        .toast-msg {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: rgba(10, 15, 28, 0.95);
+            border: 1px solid var(--neon-cyan);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            box-shadow: 0 4px 20px rgba(0, 240, 255, 0.3);
+            pointer-events: none;
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 100;
+        }
+        .toast-msg.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* AUDIO TOGGLE BUTTON */
+        .audio-badge {
+            font-size: 0.68rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: var(--text-muted);
+            border: 1px solid var(--border-subtle);
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.03);
+            transition: all 0.2s;
+        }
+        .audio-badge.active {
+            color: var(--neon-emerald);
+            border-color: var(--neon-emerald);
+        }
+
+        /* Dicas de Interação Direta no Canvas */
+        .drag-hint {
+            position: absolute;
+            bottom: 12px;
+            left: 14px;
+            background: rgba(10, 15, 28, 0.85);
+            border: 1px solid var(--border-subtle);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            color: var(--neon-cyan);
+            pointer-events: none;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- CABEÇALHO SUPERIOR -->
+    <header>
+        <div class="header-brand">
+            <span class="quantum-badge">AGY Quantum Lab</span>
+            <div>
+                <span class="header-title">Relação de Incerteza de Heisenberg</span>
+                <span class="header-sub">$\Delta x \cdot \Delta p \ge \frac{\hbar}{2}$</span>
+            </div>
+        </div>
+
+        <!-- ABAS DE NAVEGAÇÃO -->
+        <nav class="tab-bar">
+            <button class="tab-btn active" data-mode="fourier">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h2l3 7 4-14 4 14 4-7h3"/></svg>
+                Dualidade de Fourier $\psi(x) \leftrightarrow \phi(p)$
+            </button>
+            <button class="tab-btn" data-mode="slit">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="8"/><line x1="12" y1="16" x2="12" y2="21"/></svg>
+                Fenda Quântica & Difração
+            </button>
+            <button class="tab-btn" data-mode="phasespace">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="12" rx="9" ry="5"/></svg>
+                Espaço de Fase & Célula de Planck
+            </button>
+            <button class="tab-btn" data-mode="microscope">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/></svg>
+                Microscópio de Heisenberg
+            </button>
+        </nav>
+
+        <div class="header-actions">
+            <div id="audioToggle" class="audio-badge" title="Som de detecção quântica (Geiger/Pings)">
+                <span>🔊 Som Quântico: Desligado</span>
+            </div>
+            <button id="btnTheory" class="btn-icon" title="Fundamentação Teórica & Epistemologia">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- ÁREA PRINCIPAL -->
+    <main class="app-workspace">
+        
+        <!-- CONTAINER DE VISUALIZAÇÕES -->
+        <div class="view-container">
+
+            <!-- TOAST INFORMATIVO -->
+            <div id="toastMsg" class="toast-msg">Mensagem Quântica</div>
+
+            <!-- MODO 1: DUALIDADE DE FOURIER -->
+            <div id="viewFourier" class="mode-view active">
+                <div class="dual-canvas-grid">
+                    <!-- CANVASES x: ESPAÇO DE POSIÇÃO -->
+                    <div class="canvas-pane">
+                        <canvas id="canvasX"></canvas>
+                        <div class="canvas-hud-overlay">
+                            <div class="canvas-tag">
+                                <span class="canvas-tag-dot" style="background: var(--neon-cyan);"></span>
+                                Espaço das Posições: $\psi(x)$
+                            </div>
+                            <div class="canvas-tag-desc">
+                                Densidade de probabilidade $P(x) = |\psi(x)|^2$ e amplitude quântica complexa. Arraste horizontalmente para ajustar $\sigma_x$.
+                            </div>
+                        </div>
+                        <div class="canvas-hud-legend">
+                            <div class="legend-item"><span class="legend-color" style="background: var(--neon-cyan);"></span>$|\psi(x)|^2$</div>
+                            <div class="legend-item"><span class="legend-color" style="background: #ffffff; opacity:0.6;"></span>$\text{Re}(\psi)$</div>
+                            <div class="legend-item"><span class="legend-color" style="background: var(--neon-purple); opacity:0.6;"></span>$\text{Im}(\psi)$</div>
+                            <div class="legend-item"><span class="legend-color" style="background: var(--neon-amber);"></span>$\Delta x$ (Largura)</div>
+                        </div>
+                        <div class="phase-wheel-hud">
+                            <canvas id="phaseWheel" class="phase-wheel-canvas" width="24" height="24"></canvas>
+                            <span>Fase Quântica $\arg(\psi)$</span>
+                        </div>
+                        <div class="drag-hint">🖱️ Clique e arraste no gráfico para modular $\sigma_x$ e $p_0$</div>
+                    </div>
+
+                    <!-- CANVASES p: ESPAÇO DOS MOMENTOS -->
+                    <div class="canvas-pane">
+                        <canvas id="canvasP"></canvas>
+                        <div class="canvas-hud-overlay">
+                            <div class="canvas-tag">
+                                <span class="canvas-tag-dot" style="background: var(--neon-magenta);"></span>
+                                Espaço dos Momentos (k-space): $\phi(p) = \mathcal{F}\{\psi(x)\}$
+                            </div>
+                            <div class="canvas-tag-desc">
+                                Distribuição de momento $P(p) = |\phi(p)|^2$. Observe: estreitar $\Delta x$ explode $\Delta p$ imediatamente!
+                            </div>
+                        </div>
+                        <div class="canvas-hud-legend">
+                            <div class="legend-item"><span class="legend-color" style="background: var(--neon-magenta);"></span>$|\phi(p)|^2$</div>
+                            <div class="legend-item"><span class="legend-color" style="background: var(--neon-amber);"></span>$\Delta p$ (Dispersão)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODO 2: FENDA QUÂNTICA & DIFRAÇÃO -->
+            <div id="viewSlit" class="mode-view">
+                <canvas id="canvasSlit"></canvas>
+                <div class="canvas-hud-overlay">
+                    <div class="canvas-tag">
+                        <span class="canvas-tag-dot" style="background: var(--neon-emerald);"></span>
+                        Medição Espacial: Colapso por Abertura $\Delta x$
+                    </div>
+                    <div class="canvas-tag-desc">
+                        Cada elétron atinge a tela como partícula pontual, mas o acúmulo coletivo obedece a lei de difração ondulatória $I \propto \text{sinc}^2$. Arraste a fenda verticalmente para ajustar a abertura!
+                    </div>
+                </div>
+                <div class="drag-hint">🖱️ Arraste a abertura da fenda para estreitar ou alargar $\Delta x$</div>
+            </div>
+
+            <!-- MODO 3: ESPAÇO DE FASE & ESTADOS COMPRIMIDOS -->
+            <div id="viewPhaseSpace" class="mode-view">
+                <canvas id="canvasPhaseSpace"></canvas>
+                <div class="canvas-hud-overlay">
+                    <div class="canvas-tag">
+                        <span class="canvas-tag-dot" style="background: var(--neon-amber);"></span>
+                        Espaço de Fase $(x, p)$ & Estados Comprimidos (Squeezed States)
+                    </div>
+                    <div class="canvas-tag-desc">
+                        A incerteza quântica define uma área mínima incompressível de Planck $\pi \hbar \approx h/2$. Comprimir um eixo inevitavelmente estica o outro!
+                    </div>
+                </div>
+                <div class="drag-hint">🖱️ Arraste horizontalmente para comprimir em $X$; verticalmente para comprimir em $P$</div>
+            </div>
+
+            <!-- MODO 4: MICROSCÓPIO DE HEISENBERG -->
+            <div id="viewMicroscope" class="mode-view">
+                <canvas id="canvasMicroscope"></canvas>
+                <div class="canvas-hud-overlay">
+                    <div class="canvas-tag">
+                        <span class="canvas-tag-dot" style="background: var(--neon-cyan);"></span>
+                        Experimento Mental: Microscópio de Raios Gama de Heisenberg (1927)
+                    </div>
+                    <div class="canvas-tag-desc">
+                        Iluminar o elétron com fótons de comprimento $\lambda$. Fótons de alta energia (raios gama) têm excelente resolução espacial $\Delta x$, mas transferem um recuo violento de momento Compton $\Delta p$!
+                    </div>
+                </div>
+                <div class="drag-hint">🖱️ Clique em qualquer ponto para disparar um fóton de sondagem</div>
+            </div>
+
+            <!-- BARRA DE CONTROLE FLUTUANTE (BOTTOM DOCK) -->
+            <div class="floating-toolbar">
+                <button id="btnPlayPause" class="toolbar-btn primary">
+                    <svg id="iconPlay" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    <svg id="iconPause" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                    <span id="labelPlay">Evolução Temporal</span>
+                </button>
+                <button id="btnStep" class="toolbar-btn" title="Avançar 1 passo de tempo Schrödinger">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+                    Passo
+                </button>
+                <button id="btnReset" class="toolbar-btn" title="Resetar estado quântico inicial">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                    Resetar
+                </button>
+                <div class="toolbar-divider"></div>
+                <div style="display: flex; align-items: center; gap: 6px; font-size: 0.72rem; color: var(--text-muted);">
+                    <span>Velocidade $\Delta t$:</span>
+                    <input id="sliderSpeed" type="range" min="0.1" max="2.5" step="0.1" value="1.0" class="range-slider" style="width: 80px;">
+                </div>
+            </div>
+
+        </div>
+
+        <!-- SIDEBAR DE TELEMETRIA E CONTROLES -->
+        <aside class="sidebar">
+
+            <!-- GAUGE DA INEQUAÇÃO DE HEISENBERG -->
+            <div class="sidebar-section">
+                <div class="section-title">
+                    <span>Métrica Fundamental</span>
+                    <span id="badgeBound" class="quantum-badge" style="font-size: 0.6rem;">SATURADO</span>
+                </div>
+
+                <div class="uncertainty-gauge-card">
+                    <div class="gauge-formula-title" id="formulaDisplay">
+                        $\Delta x \cdot \Delta p \ge \frac{\hbar}{2}$
+                    </div>
+
+                    <!-- Gauge Bar -->
+                    <div class="gauge-meter-wrapper" title="Limite inferior de Heisenberg = 0.50 ℏ">
+                        <div class="gauge-limit-marker" title="Limite Fundamental de Heisenberg (0.50 ℏ)"></div>
+                        <div id="gaugeProductBar" class="gauge-bar"></div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--text-dim); font-family: var(--font-mono);">
+                        <span>0.00 (Proibido)</span>
+                        <span style="color: var(--neon-emerald); font-weight: 700;">0.50 $\hbar$ (Mínimo)</span>
+                        <span>$\ge 2.00 \hbar$</span>
+                    </div>
+
+                    <!-- Grelha de Estatísticas Numéricas -->
+                    <div class="gauge-stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-label">Incerteza Espacial ($\Delta x$)</div>
+                            <div id="valDeltaX" class="stat-val cyan">0.500 <span style="font-size:0.65rem; color:var(--text-muted);">u.c.</span></div>
+                            <div class="stat-desc">Desvio padrão da posição</div>
+                        </div>
+
+                        <div class="stat-box">
+                            <div class="stat-label">Incerteza Momento ($\Delta p$)</div>
+                            <div id="valDeltaP" class="stat-val magenta">1.000 <span style="font-size:0.65rem; color:var(--text-muted);">$\hbar/u$</span></div>
+                            <div class="stat-desc">Desvio padrão do momento</div>
+                        </div>
+
+                        <div class="stat-box">
+                            <div class="stat-label">Produto $\Delta x \cdot \Delta p$</div>
+                            <div id="valProduct" class="stat-val emerald">0.500 <span style="font-size:0.65rem; color:var(--text-muted);">$\hbar$</span></div>
+                            <div id="valProductStatus" class="stat-desc" style="color: var(--neon-emerald);">= 0.500 $\hbar$ (Mínimo!)</div>
+                        </div>
+
+                        <div class="stat-box">
+                            <div class="stat-label">Razão / Limite $\frac{\Delta x \Delta p}{\hbar/2}$</div>
+                            <div id="valRatio" class="stat-val amber">1.00 <span style="font-size:0.65rem; color:var(--text-muted);">&times;</span></div>
+                            <div class="stat-desc">Saturação quântica</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONTROLES ESPECÍFICOS DE CADA MODO -->
+
+            <!-- PAINEL DE CONTROLES: MODO 1 (FOURIER) -->
+            <div id="panelFourierControls" class="sidebar-section">
+                <div class="section-title">Controles: Pacote de Ondas</div>
+
+                <!-- Slider 1: Incerteza Espacial Delta x -->
+                <div class="control-group">
+                    <div class="control-header">
+                        <span class="control-label">Largura Espacial ($\sigma_x$)</span>
+                        <span id="dispDeltaX" class="control-value">0.50</span>
+                    </div>
+                    <input id="sliderDeltaX" type="range" min="0.08" max="2.50" step="0.02" value="0.50" class="range-slider">
+                </div>
+
+                <!-- Slider 2: Momento Médio p0 -->
+                <div class="control-group">
+                    <div class="control-header">
+                        <span class="control-label">Momento Médio Central ($p_0$)</span>
+                        <span id="dispP0" class="control-value">0.00</span>
+                    </div>
+                    <input id="sliderP0" type="range" min="-8.0" max="8.0" step="0.2" value="0.0" class="range-slider magenta">
+                </div>
+
+                <!-- Slider 3: Parâmetro de Chirp / Fase Quadrática -->
+                <div class="control-group">
+                    <div class="control-header">
+                        <span class="control-label">Fase Quadrática / Chirp ($\alpha$)</span>
+                        <span id="dispChirp" class="control-value">0.00</span>
+                    </div>
+                    <input id="sliderChirp" type="range" min="-2.0" max="2.0" step="0.1" value="0.0" class="range-slider">
+                </div>
+
+                <!-- Toggles visuais -->
+                <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+                    <div class="toggle-row">
+                        <span>Exibir Ondas Planas Constituintes</span>
+                        <label class="toggle-switch">
+                            <input id="toggleFourierWaves" type="checkbox">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="toggle-row">
+                        <span>Mostrar Intervalo $\pm 1\sigma$ Sombreado</span>
+                        <label class="toggle-switch">
+                            <input id="toggleSigmaBands" type="checkbox" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="toggle-row">
+                        <span>Dispersão Dinâmica em Tempo Real</span>
+                        <label class="toggle-switch">
+                            <input id="toggleDispersion" type="checkbox" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAINEL DE CONTROLES: MODO 2 (FENDA QUÂNTICA) -->
+            <div id="panelSlitControls" class="sidebar-section" style="display: none;">
+                <div class="section-title">Controles: Fenda & Difração</div>
+
+                <div class="control-group">
+                    <div class="control-header">
+                        <span class="control-label">Abertura da Fenda ($a = \Delta x$)</span>
+                        <span id="dispSlitWidth" class="control-value">0.80</span>
+                    </div>
+                    <input id="sliderSlitWidth" type="range" min="0.15" max="2.50" step="0.05" value="0.80" class="range-slider emerald">
+                </div>
+
+                <div class="control-group">
+                    <div class="control-header">
+                        <span class="control-label">Taxa de Disparo (Elétrons/s)</span>
+                        <span id="dispSlitRate" class="control-value">Médio</span>
+                    </div>
+                    <input id="sliderSlitRate" type="range" min="1" max="10" step="1" value="5" class="range-slider">
+                </div>
+
+                <button id="btnClearScreen" class="btn-action-primary">
+                    🧹 Limpar Tela & Reiniciar Histograma
+                </button>
+            </div>
+
+            <!-- PAINEL DE CONTROLES: MODO 3 (ESPAÇO DE FASE) -->
+            <div id="panelPhaseSpaceControls" class="sidebar-section" style="display: none;">
+                <div class="section-title">Controles: Compressão Quântica (Squeezing)</div>
+
+                <div class="control-group">
+                    <div class="control-header">
+                        <span class="control-label">Parâmetro de Squeeze ($r$)</span>
+                        <span id="dispSqueeze" class="control-value">1.00</span>
+                    </div>
+                    <input id="sliderSqueeze" type="range" min="0.2" max="3.0" step="0.05" value="1.0" class="range-slider">
+                    <div style="font-size: 0.65rem; color: var(--text-dim); margin-top: 4px;">
+                        $r < 1$: Comprimido em Posição | $r > 1$: Comprimido em Momento
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <div class="control-header">
+                        <span class="control-label">Rotação de Fase ($\theta$)</span>
+                        <span id="dispPhaseAngle" class="control-value">0°</span>
+                    </div>
+                    <input id="sliderPhaseAngle" type="range" min="0" max="360" step="5" value="0" class="range-slider magenta">
+                </div>
+            </div>
+
+            <!-- PAINEL DE CONTROLES: MODO 4 (MICROSCÓPIO) -->
+            <div id="panelMicroscopeControls" class="sidebar-section" style="display: none;">
+                <div class="section-title">Controles: Microscópio de Heisenberg</div>
+
+                <div class="control-group">
+                    <div class="control-header">
+                        <span class="control-label">Comprimento de Onda ($\lambda$)</span>
+                        <span id="dispLambda" class="control-value">1.20</span>
+                    </div>
+                    <input id="sliderLambda" type="range" min="0.15" max="3.50" step="0.05" value="1.20" class="range-slider">
+                    
+                    <div class="spectrum-btn-group">
+                        <button class="btn-spectrum" data-lambda="3.2">Rádio</button>
+                        <button class="btn-spectrum" data-lambda="1.4">Ótico</button>
+                        <button class="btn-spectrum" data-lambda="0.6">Raio-X</button>
+                        <button class="btn-spectrum" data-lambda="0.18">Gama</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <div class="control-header">
+                        <span class="control-label">Semi-Abertura da Lente ($\theta$)</span>
+                        <span id="dispTheta" class="control-value">35°</span>
+                    </div>
+                    <input id="sliderTheta" type="range" min="10" max="75" step="1" value="35" class="range-slider magenta">
+                </div>
+
+                <button id="btnFirePhoton" class="btn-action-primary">
+                    ⚡ Disparar Fóton de Sondagem
+                </button>
+            </div>
+
+            <!-- PRESETS FÍSICOS NOTÁVEIS -->
+            <div class="sidebar-section">
+                <div class="section-title">Estados Quânticos Notáveis</div>
+                <div class="presets-grid">
+                    <button class="btn-preset active" data-preset="gaussian_min">
+                        <span>Pacote Mínimo</span>
+                        <span>Gaussiano puro ($\Delta x \Delta p = \hbar/2$)</span>
+                    </button>
+                    <button class="btn-preset" data-preset="localized_x">
+                        <span>Hiperlocalizado em X</span>
+                        <span>$\Delta x \to 0 \implies \Delta p \to \infty$</span>
+                    </button>
+                    <button class="btn-preset" data-preset="plane_wave">
+                        <span>Quase Onda Plana</span>
+                        <span>$\Delta p \to 0 \implies \Delta x \to \infty$</span>
+                    </button>
+                    <button class="btn-preset" data-preset="cat_state">
+                        <span>Gato de Schrödinger</span>
+                        <span>Superposição bimodal coerente</span>
+                    </button>
+                    <button class="btn-preset" data-preset="slit_cut">
+                        <span>Pacote Retangular</span>
+                        <span>Corte abrupto (Fenda espacial)</span>
+                    </button>
+                    <button class="btn-preset" data-preset="chirped">
+                        <span>Pacote Dispersivo</span>
+                        <span>Com chirp $(\Delta x \Delta p > \hbar/2)$</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- INSIGHT PEDAGÓGICO RÁPIDO -->
+            <div class="sidebar-section" style="border-bottom: none;">
+                <div class="section-title">A Fisiologia da Incerteza</div>
+                <p style="font-size: 0.74rem; line-height: 1.55; color: var(--text-muted); margin-bottom: 8px;">
+                    Ao contrário da intuição clássica, a incerteza <strong style="color: #fff;">não é imperfeição de medição técnica</strong>. Ela decorre da própria dualidade onda-partícula de De Broglie e da não-comutatividade dos operadores na mecânica quântica:
+                </p>
+                <div style="background: rgba(0, 240, 255, 0.05); border: 1px solid var(--border-subtle); padding: 8px; border-radius: 6px; font-size: 0.75rem; color: var(--neon-cyan); font-family: var(--font-mono); text-align: center;">
+                    $\hat{x} \hat{p} - \hat{p} \hat{x} = [\hat{x}, \hat{p}] = i\hbar \hat{I}$
+                </div>
+                <p style="font-size: 0.7rem; line-height: 1.5; color: var(--text-dim); margin-top: 8px;">
+                    Como os operadores não comutam, não existe nenhum estado físico no universo que possua posição e momento simultaneamente nítidos. É uma propriedade estrutural do espaço de Hilbert!
+                </p>
+            </div>
+
+        </aside>
+
+    </main>
+
+    <!-- MODAL TEÓRICO / EPISTEMOLÓGICO -->
+    <div id="theoryModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span class="quantum-badge">Tratado Físico</span>
+                    O Princípio da Incerteza de Heisenberg
+                </div>
+                <button id="btnCloseTheory" class="modal-close">&times;</button>
+            </div>
+
+            <p class="theory-p">
+                Formulado por <strong>Werner Heisenberg em 1927</strong> e generalizado matematicamente por <strong>Howard Percy Robertson (1929)</strong>, a Relação de Incerteza é uma das colunas basilares da Mecânica Quântica.
+            </p>
+
+            <div class="theory-misconception">
+                <strong style="color: var(--neon-rose); display: block; margin-bottom: 4px;">⚠️ Equívoco Comum: O "Efeito do Observador"</strong>
+                Muitos acreditam popularmente que a incerteza se deve apenas ao fato de o aparelho ou o fóton "empurrar" a partícula ao medi-la. Embora esse efeito experimental exista (veja o <em>Microscópio de Heisenberg</em>), a incerteza quântica é <strong>ontológica e inerente à matéria</strong>: antes de qualquer medição, uma partícula quântica simplesmente <em>não possui</em> posição e momento conjuntamente precisos, exatamente como uma nota musical não possui simultaneamente duração instantânea e frequência pura!
+            </div>
+
+            <div class="theory-box">
+                <strong style="color: var(--neon-cyan); display: block; margin-bottom: 4px;">1. Teorema de Robertson-Schrödinger</strong>
+                Para quaisquer dois observáveis hermitianos $\hat{A}$ e $\hat{B}$, a desigualdade estatística obedece:
+                $$\sigma_A \sigma_B \ge \frac{1}{2} \left| \langle [\hat{A}, \hat{B}] \rangle \right|$$
+                Substituindo o comutador canônico fundamental da mecânica ondulatória $[\hat{x}, \hat{p}] = i\hbar$:
+                $$\sigma_x \sigma_p \ge \frac{1}{2} |i\hbar| = \frac{\hbar}{2}$$
+            </div>
+
+            <div class="theory-box">
+                <strong style="color: var(--neon-magenta); display: block; margin-bottom: 4px;">2. A Dualidade Matemática de Fourier</strong>
+                No formalismo quântico, o estado de momento $\phi(p)$ é a Transformada de Fourier do estado espacial $\psi(x)$:
+                $$\phi(p) = \frac{1}{\sqrt{2\pi\hbar}} \int_{-\infty}^{\infty} \psi(x) e^{-i p x / \hbar} dx$$
+                Do teorema de largura de banda de Fourier (teorema de Gabor-Heisenberg), qualquer função e sua transformada satisfazem $\Delta x \cdot \Delta k \ge 1/2$. Como $p = \hbar k$, decorre imediatamente que $\Delta x \cdot \Delta p \ge \hbar/2$.
+            </div>
+
+            <div class="theory-box">
+                <strong style="color: var(--neon-emerald); display: block; margin-bottom: 4px;">3. O Pacote Gaussiano: O Estado Mínimo</strong>
+                A igualdade estrita $\Delta x \cdot \Delta p = \frac{\hbar}{2}$ é satisfeita exclusivamente por pacotes de onda com envoltória <strong>Gaussiana perfeita</strong> sem chirp de fase:
+                $$\psi(x) = \left( \frac{1}{2\pi \sigma_x^2} \right)^{1/4} \exp\left( -\frac{x^2}{4\sigma_x^2} + \frac{i p_0 x}{\hbar} \right)$$
+                Qualquer outra geometria de onda (retangular, cat state, ou onda chirpada) possui produto $\Delta x \Delta p > \frac{\hbar}{2}$.
+            </div>
+
+            <div class="theory-box">
+                <strong style="color: var(--neon-amber); display: block; margin-bottom: 4px;">4. Dispersão Livre de Schrödinger</strong>
+                Sob o Hamiltoniano livre $\hat{H} = \hat{p}^2 / (2m)$, a largura espacial evolui como:
+                $$\sigma_x(t) = \sigma_0 \sqrt{1 + \left( \frac{\hbar t}{2 m \sigma_0^2} \right)^2}$$
+                Perceba a consequência dramática: se tentarmos preparar uma partícula com confinamento espacial extremo ($\sigma_0 \to 0$), seu momento se torna tão incerto que o pacote explode e se dispersa no espaço a velocidades astronômicas!
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT DA FÍSICA E SIMULAÇÃO -->
+    <script>
+    /**
+     * LABORATÓRIO QUÂNTICO HEISENBERG - NÚCLEO COMPUTACIONAL
+     * Arquitetura de software orientada a física teórica com alta fidelidade visual.
+     */
+
+    // --- CONSTANTES QUÂNTICAS DO SISTEMA ---
+    const HBAR = 1.0;            // Constante reduzida de Planck (unidades naturais de simulação)
+    const HBAR_HALF = HBAR / 2.0; // Limite fundamental de Heisenberg: 0.50
+    const MASS = 1.0;            // Massa da partícula
+    const GRID_SIZE = 512;       // Tamanho da grade de discretização para FFT (potência de 2)
+    const X_RANGE = 18.0;        // Domínio espacial [-X_RANGE/2, X_RANGE/2]
+    const DX = X_RANGE / GRID_SIZE;
+
+    // --- UTILITÁRIOS MATEMÁTICOS & FFT RADIX-2 ---
+    class Complex {
+        constructor(re = 0, im = 0) {
+            this.re = re;
+            this.im = im;
+        }
+        abs2() { return this.re * this.re + this.im * this.im; }
+        abs() { return Math.sqrt(this.abs2()); }
+        phase() { return Math.atan2(this.im, this.re); }
+        mul(c) {
+            return new Complex(this.re * c.re - this.im * c.im, this.re * c.im + this.im * c.re);
+        }
+        add(c) { return new Complex(this.re + c.re, this.im + c.im); }
+        scale(s) { return new Complex(this.re * s, this.im * s); }
+    }
+
+    // Algoritmo FFT Cooley-Tukey Radix-2 de alto desempenho
+    function fftRadix2(re, im, inverse = false) {
+        const n = re.length;
+        let j = 0;
+        for (let i = 0; i < n - 1; i++) {
+            if (i < j) {
+                let tempRe = re[i]; re[i] = re[j]; re[j] = tempRe;
+                let tempIm = im[i]; im[i] = im[j]; im[j] = tempIm;
+            }
+            let k = n >> 1;
+            while (k <= j) {
+                j -= k;
+                k >>= 1;
+            }
+            j += k;
+        }
+
+        const dir = inverse ? 1 : -1;
+        for (let len = 2; len <= n; len <<= 1) {
+            const half = len >> 1;
+            const angle = (dir * 2.0 * Math.PI) / len;
+            const wStepRe = Math.cos(angle);
+            const wStepIm = Math.sin(angle);
+
+            for (let i = 0; i < n; i += len) {
+                let wRe = 1.0;
+                let wIm = 0.0;
+                for (let k = 0; k < half; k++) {
+                    const idxA = i + k;
+                    const idxB = i + k + half;
+
+                    const uRe = re[idxA];
+                    const uIm = im[idxA];
+                    const vRe = re[idxB] * wRe - im[idxB] * wIm;
+                    const vIm = re[idxB] * wIm + im[idxB] * wRe;
+
+                    re[idxA] = uRe + vRe;
+                    im[idxA] = uIm + vIm;
+                    re[idxB] = uRe - vRe;
+                    im[idxB] = uIm - vIm;
+
+                    const nextWRe = wRe * wStepRe - wIm * wStepIm;
+                    const nextWIm = wRe * wStepIm + wIm * wStepRe;
+                    wRe = nextWRe;
+                    wIm = nextWIm;
+                }
+            }
+        }
+
+        if (inverse) {
+            for (let i = 0; i < n; i++) {
+                re[i] /= n;
+                im[i] /= n;
+            }
+        }
+    }
+
+    // --- MOTOR DE ÁUDIO SINTÉTICO QUÂNTICO (WEB AUDIO API) ---
+    class QuantumAudioEngine {
+        constructor() {
+            this.ctx = null;
+            this.enabled = false;
+        }
+        init() {
+            if (!this.ctx) {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (AudioCtx) this.ctx = new AudioCtx();
+            }
+        }
+        playGeigerClick(pitch = 1200) {
+            if (!this.enabled || !this.ctx) return;
+            if (this.ctx.state === 'suspended') this.ctx.resume();
+            
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(pitch, this.ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime + 0.025);
+
+            gain.gain.setValueAtTime(0.04, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.025);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start();
+            osc.stop(this.ctx.currentTime + 0.03);
+        }
+    }
+
+    // --- ESTADO FÍSICO GLOBAL DO SISTEMA ---
+    const quantumState = {
+        mode: 'fourier', // 'fourier', 'slit', 'phasespace', 'microscope'
+        
+        // Parâmetros do Pacote
+        sigmaX: 0.50,
+        p0: 0.0,
+        chirp: 0.0,
+        preset: 'gaussian_min',
+        
+        // Estado Temporal
+        isRunning: false,
+        time: 0.0,
+        dtSpeed: 1.0,
+        
+        // Opções visuais
+        showFourierWaves: false,
+        showSigmaBands: true,
+        enableDispersion: true,
+
+        // Grades discretas
+        xVals: new Float32Array(GRID_SIZE),
+        psiRe: new Float32Array(GRID_SIZE),
+        psiIm: new Float32Array(GRID_SIZE),
+        psiProb: new Float32Array(GRID_SIZE),
+
+        // Espaço dos momentos
+        pVals: new Float32Array(GRID_SIZE),
+        phiRe: new Float32Array(GRID_SIZE),
+        phiIm: new Float32Array(GRID_SIZE),
+        phiProb: new Float32Array(GRID_SIZE),
+
+        // Grandezas observáveis computadas
+        meanX: 0,
+        meanX2: 0,
+        deltaX: 0.5,
+        meanP: 0,
+        meanP2: 0,
+        deltaP: 1.0,
+        product: 0.5,
+        ratio: 1.0,
+
+        // Fenda quântica (Modo 2)
+        slitWidth: 0.8,
+        slitFireRate: 5,
+        electronsFired: 0,
+        screenHits: [],
+        screenBins: new Int32Array(300),
+
+        // Espaço de fase (Modo 3)
+        squeezeFactor: 1.0,
+        phaseAngleDeg: 0,
+
+        // Microscópio de Heisenberg (Modo 4)
+        photonWavelength: 1.2,
+        lensApertureDeg: 35,
+        electronRecoilX: 0,
+        photonFiredTime: 0,
+        photonActive: false
+    };
+
+    // Preenche as coordenadas da malha espacial e de momento
+    for (let i = 0; i < GRID_SIZE; i++) {
+        quantumState.xVals[i] = -X_RANGE / 2.0 + i * DX;
+    }
+    const DP = (2.0 * Math.PI * HBAR) / X_RANGE;
+    for (let i = 0; i < GRID_SIZE; i++) {
+        const shiftedIdx = i < GRID_SIZE / 2 ? i : i - GRID_SIZE;
+        quantumState.pVals[i] = shiftedIdx * DP;
+    }
+
+    const audioEngine = new QuantumAudioEngine();
+
+    // --- ROTINAS DE PREPARAÇÃO DA FUNÇÃO DE ONDA ---
+    function prepareWavePacket() {
+        quantumState.time = 0.0;
+        const x = quantumState.xVals;
+        const sX = Math.max(0.04, quantumState.sigmaX);
+        const p0 = quantumState.p0;
+        const alpha = quantumState.chirp;
+
+        for (let i = 0; i < GRID_SIZE; i++) {
+            const xi = x[i];
+            let envelope = 0;
+            let phase = (p0 * xi) / HBAR + alpha * (xi * xi);
+
+            if (quantumState.preset === 'slit_cut') {
+                const slitHalf = sX * Math.sqrt(3.0);
+                envelope = Math.abs(xi) <= slitHalf ? 1.0 : 0.0;
+            } else if (quantumState.preset === 'cat_state') {
+                const d = 2.5 * sX;
+                const env1 = Math.exp(-Math.pow(xi - d, 2) / (4.0 * sX * sX));
+                const env2 = Math.exp(-Math.pow(xi + d, 2) / (4.0 * sX * sX));
+                envelope = env1 + env2;
+            } else {
+                envelope = Math.exp(-(xi * xi) / (4.0 * sX * sX));
+            }
+
+            quantumState.psiRe[i] = envelope * Math.cos(phase);
+            quantumState.psiIm[i] = envelope * Math.sin(phase);
+        }
+
+        normalizePsi();
+        computeFourierMomentum();
+        computeObservables();
+    }
+
+    function normalizePsi() {
+        let normSq = 0;
+        for (let i = 0; i < GRID_SIZE; i++) {
+            normSq += (quantumState.psiRe[i] * quantumState.psiRe[i] + quantumState.psiIm[i] * quantumState.psiIm[i]) * DX;
+        }
+        if (normSq <= 1e-12) normSq = 1.0;
+        const factor = 1.0 / Math.sqrt(normSq);
+
+        for (let i = 0; i < GRID_SIZE; i++) {
+            quantumState.psiRe[i] *= factor;
+            quantumState.psiIm[i] *= factor;
+            quantumState.psiProb[i] = quantumState.psiRe[i] * quantumState.psiRe[i] + quantumState.psiIm[i] * quantumState.psiIm[i];
+        }
+    }
+
+    function computeFourierMomentum() {
+        const tempRe = new Float32Array(quantumState.psiRe);
+        const tempIm = new Float32Array(quantumState.psiIm);
+        fftRadix2(tempRe, tempIm, false);
+
+        const scale = DX / Math.sqrt(2.0 * Math.PI * HBAR);
+        for (let i = 0; i < GRID_SIZE; i++) {
+            quantumState.phiRe[i] = tempRe[i] * scale;
+            quantumState.phiIm[i] = tempIm[i] * scale;
+            quantumState.phiProb[i] = (quantumState.phiRe[i] * quantumState.phiRe[i] + quantumState.phiIm[i] * quantumState.phiIm[i]);
+        }
+    }
+
+    function computeObservables() {
+        let meanX = 0, meanX2 = 0;
+        for (let i = 0; i < GRID_SIZE; i++) {
+            const xi = quantumState.xVals[i];
+            const prob = quantumState.psiProb[i] * DX;
+            meanX += xi * prob;
+            meanX2 += (xi * xi) * prob;
+        }
+        const varX = Math.max(1e-6, meanX2 - meanX * meanX);
+        const deltaX = Math.sqrt(varX);
+
+        let meanP = 0, meanP2 = 0;
+        for (let i = 0; i < GRID_SIZE; i++) {
+            const pi = quantumState.pVals[i];
+            const prob = quantumState.phiProb[i] * DP;
+            meanP += pi * prob;
+            meanP2 += (pi * pi) * prob;
+        }
+        const varP = Math.max(1e-6, meanP2 - meanP * meanP);
+        const deltaP = Math.sqrt(varP);
+
+        let product = deltaX * deltaP;
+        let ratio = product / HBAR_HALF;
+
+        // Se estiver no modo espaço de fase ou microscópio, sincroniza com parâmetros do modo
+        if (quantumState.mode === 'phasespace') {
+            const s = quantumState.squeezeFactor;
+            const effDeltaX = 0.5 * (1.0 / s);
+            const effDeltaP = 1.0 * s;
+            product = effDeltaX * effDeltaP;
+            ratio = product / HBAR_HALF;
+            quantumState.deltaX = effDeltaX;
+            quantumState.deltaP = effDeltaP;
+        } else if (quantumState.mode === 'slit') {
+            quantumState.deltaX = quantumState.slitWidth;
+            quantumState.deltaP = 1.0 / quantumState.slitWidth;
+            product = quantumState.deltaX * quantumState.deltaP;
+            ratio = product / HBAR_HALF;
+        } else if (quantumState.mode === 'microscope') {
+            const thetaRad = (quantumState.lensApertureDeg * Math.PI) / 180;
+            const resX = quantumState.photonWavelength / (2.0 * Math.sin(thetaRad));
+            const recP = (1.0 / quantumState.photonWavelength) * Math.sin(thetaRad);
+            quantumState.deltaX = resX;
+            quantumState.deltaP = recP;
+            product = resX * recP;
+            ratio = product / HBAR_HALF;
+        } else {
+            quantumState.meanX = meanX;
+            quantumState.meanX2 = meanX2;
+            quantumState.deltaX = deltaX;
+            quantumState.meanP = meanP;
+            quantumState.meanP2 = meanP2;
+            quantumState.deltaP = deltaP;
+        }
+
+        quantumState.product = product;
+        quantumState.ratio = ratio;
+
+        updateTelemetryUI();
+    }
+
+    function updateTelemetryUI() {
+        const valDeltaX = document.getElementById('valDeltaX');
+        const valDeltaP = document.getElementById('valDeltaP');
+        const valProduct = document.getElementById('valProduct');
+        const valRatio = document.getElementById('valRatio');
+        const valProductStatus = document.getElementById('valProductStatus');
+        const gaugeBar = document.getElementById('gaugeProductBar');
+        const badgeBound = document.getElementById('badgeBound');
+
+        valDeltaX.innerHTML = `${quantumState.deltaX.toFixed(3)} <span style="font-size:0.65rem; color:var(--text-muted);">u.c.</span>`;
+        valDeltaP.innerHTML = `${quantumState.deltaP.toFixed(3)} <span style="font-size:0.65rem; color:var(--text-muted);">$\\hbar/u$</span>`;
+        valProduct.innerHTML = `${quantumState.product.toFixed(3)} <span style="font-size:0.65rem; color:var(--text-muted);">$\\hbar$</span>`;
+        valRatio.innerHTML = `${quantumState.ratio.toFixed(2)} <span style="font-size:0.65rem; color:var(--text-muted);">&times;</span>`;
+
+        if (window.renderMathInElement) {
+            renderMathInElement(valDeltaP, { delimiters: [{left: "$", right: "$", display: false}] });
+            renderMathInElement(valProduct, { delimiters: [{left: "$", right: "$", display: false}] });
+        }
+
+        const percent = Math.min(100, Math.max(25, (quantumState.product / 1.0) * 50));
+        gaugeBar.style.width = `${percent}%`;
+
+        if (Math.abs(quantumState.ratio - 1.0) < 0.05) {
+            gaugeBar.style.background = 'linear-gradient(90deg, #00ffa3, #00f0ff)';
+            badgeBound.innerText = 'SATURADO (= 0.50 ℏ)';
+            badgeBound.style.color = '#00ffa3';
+            badgeBound.style.borderColor = '#00ffa3';
+            valProductStatus.innerText = '= 0.500 ℏ (Mínimo Quântico Absoluto)';
+            valProductStatus.style.color = 'var(--neon-emerald)';
+        } else {
+            gaugeBar.style.background = 'linear-gradient(90deg, #00f0ff, #ffb700, #ff007f)';
+            badgeBound.innerText = `EXCEDENTE (${quantumState.ratio.toFixed(1)}×)`;
+            badgeBound.style.color = '#ffb700';
+            badgeBound.style.borderColor = '#ffb700';
+            valProductStatus.innerText = `> 0.500 ℏ (${(quantumState.ratio).toFixed(2)}× acima do piso)`;
+            valProductStatus.style.color = 'var(--neon-amber)';
+        }
+    }
+
+    // --- EVOLUÇÃO TEMPORAL: MÉTODO ESPECTRAL SPLIT-STEP ---
+    function stepSchrodinger(dt) {
+        if (!quantumState.enableDispersion) return;
+
+        const tempRe = new Float32Array(quantumState.psiRe);
+        const tempIm = new Float32Array(quantumState.psiIm);
+        fftRadix2(tempRe, tempIm, false);
+
+        for (let i = 0; i < GRID_SIZE; i++) {
+            const p = quantumState.pVals[i];
+            const kineticEnergy = (p * p) / (2.0 * MASS);
+            const phase = - (kineticEnergy / HBAR) * dt;
+            const cosP = Math.cos(phase);
+            const sinP = Math.sin(phase);
+
+            const r = tempRe[i];
+            const im = tempIm[i];
+            tempRe[i] = r * cosP - im * sinP;
+            tempIm[i] = r * sinP + im * cosP;
+        }
+
+        fftRadix2(tempRe, tempIm, true);
+
+        for (let i = 0; i < GRID_SIZE; i++) {
+            quantumState.psiRe[i] = tempRe[i];
+            quantumState.psiIm[i] = tempIm[i];
+            quantumState.psiProb[i] = tempRe[i] * tempRe[i] + tempIm[i] * tempIm[i];
+        }
+
+        normalizePsi();
+        computeFourierMomentum();
+        computeObservables();
+        quantumState.time += dt;
+    }
+
+    // --- CANVASES & CONTEXTOS ---
+    const canvasX = document.getElementById('canvasX');
+    const ctxX = canvasX.getContext('2d');
+    const canvasP = document.getElementById('canvasP');
+    const ctxP = canvasP.getContext('2d');
+    const canvasSlit = document.getElementById('canvasSlit');
+    const ctxSlit = canvasSlit.getContext('2d');
+    const canvasPhaseSpace = document.getElementById('canvasPhaseSpace');
+    const ctxPhaseSpace = canvasPhaseSpace.getContext('2d');
+    const canvasMicroscope = document.getElementById('canvasMicroscope');
+    const ctxMicroscope = canvasMicroscope.getContext('2d');
+
+    function phaseToColor(phase, alpha = 1.0) {
+        let hue = ((phase + Math.PI) / (2 * Math.PI)) * 360;
+        return `hsla(${hue.toFixed(0)}, 100%, 65%, ${alpha})`;
+    }
+
+    function drawPhaseWheel() {
+        const pWheel = document.getElementById('phaseWheel');
+        if (!pWheel) return;
+        const pCtx = pWheel.getContext('2d');
+        const cx = pWheel.width / 2;
+        const cy = pWheel.height / 2;
+        const r = cx - 1;
+
+        for (let angle = 0; angle < 360; angle += 6) {
+            const rad = (angle * Math.PI) / 180;
+            const radNext = ((angle + 7) * Math.PI) / 180;
+            pCtx.beginPath();
+            pCtx.moveTo(cx, cy);
+            pCtx.arc(cx, cy, r, rad, radNext);
+            pCtx.closePath();
+            pCtx.fillStyle = `hsl(${angle}, 100%, 60%)`;
+            pCtx.fill();
+        }
+    }
+
+    function resizeCanvases() {
+        const dpr = window.devicePixelRatio || 1;
+        const canvases = [canvasX, canvasP, canvasSlit, canvasPhaseSpace, canvasMicroscope];
+
+        canvases.forEach(cvs => {
+            const rect = cvs.parentElement.getBoundingClientRect();
+            if (rect.width > 0 && rect.height > 0) {
+                cvs.width = Math.floor(rect.width * dpr);
+                cvs.height = Math.floor(rect.height * dpr);
+                const ctx = cvs.getContext('2d');
+                ctx.resetTransform?.();
+                ctx.scale(dpr, dpr);
+            }
+        });
+    }
+
+    // --- RENDERIZADOR: ESPAÇO DE POSIÇÃO \psi(x) ---
+    function renderPositionSpace() {
+        const w = canvasX.parentElement.clientWidth;
+        const h = canvasX.parentElement.clientHeight;
+        ctxX.clearRect(0, 0, w, h);
+
+        const midY = h * 0.65;
+        const scaleY = h * 0.52;
+
+        ctxX.strokeStyle = 'rgba(255, 255, 255, 0.07)';
+        ctxX.lineWidth = 1;
+        ctxX.beginPath();
+        ctxX.moveTo(0, midY);
+        ctxX.lineTo(w, midY);
+        ctxX.stroke();
+
+        const xStep = 2.0;
+        ctxX.font = '10px var(--font-mono)';
+        ctxX.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctxX.textAlign = 'center';
+
+        for (let xi = -8; xi <= 8; xi += xStep) {
+            const px = ((xi + X_RANGE / 2) / X_RANGE) * w;
+            ctxX.beginPath();
+            ctxX.moveTo(px, midY - 4);
+            ctxX.lineTo(px, midY + 4);
+            ctxX.stroke();
+            if (xi !== 0) ctxX.fillText(`${xi} u`, px, midY + 16);
+        }
+        ctxX.fillText('x = 0', w / 2, midY + 16);
+
+        if (quantumState.showSigmaBands) {
+            const xLeft = ((quantumState.meanX - quantumState.deltaX + X_RANGE / 2) / X_RANGE) * w;
+            const xRight = ((quantumState.meanX + quantumState.deltaX + X_RANGE / 2) / X_RANGE) * w;
+            
+            ctxX.fillStyle = 'rgba(0, 240, 255, 0.08)';
+            ctxX.fillRect(xLeft, 0, xRight - xLeft, h);
+
+            ctxX.strokeStyle = 'rgba(255, 183, 0, 0.6)';
+            ctxX.lineWidth = 1.5;
+            ctxX.setLineDash([4, 4]);
+
+            ctxX.beginPath();
+            ctxX.moveTo(xLeft, midY - 60);
+            ctxX.lineTo(xLeft, midY + 30);
+            ctxX.stroke();
+
+            ctxX.beginPath();
+            ctxX.moveTo(xRight, midY - 60);
+            ctxX.lineTo(xRight, midY + 30);
+            ctxX.stroke();
+            ctxX.setLineDash([]);
+
+            ctxX.fillStyle = 'var(--neon-amber)';
+            ctxX.font = 'bold 11px var(--font-mono)';
+            ctxX.fillText(`2Δx = ${(2 * quantumState.deltaX).toFixed(2)}`, (xLeft + xRight) / 2, midY - 68);
+            
+            ctxX.beginPath();
+            ctxX.moveTo(xLeft, midY - 64);
+            ctxX.lineTo(xRight, midY - 64);
+            ctxX.stroke();
+        }
+
+        if (quantumState.showFourierWaves) {
+            ctxX.lineWidth = 1;
+            const waveSamples = [-2, -1, 0, 1, 2];
+            waveSamples.forEach(m => {
+                const k = quantumState.p0 + m * (1.2 / quantumState.sigmaX);
+                const color = phaseToColor(m * 1.2, 0.25);
+                ctxX.strokeStyle = color;
+                ctxX.beginPath();
+                for (let px = 0; px < w; px += 2) {
+                    const xi = (px / w) * X_RANGE - X_RANGE / 2;
+                    const waveVal = Math.cos(k * xi - quantumState.time * 2.0);
+                    const py = midY - waveVal * 25;
+                    if (px === 0) ctxX.moveTo(px, py);
+                    else ctxX.lineTo(px, py);
+                }
+                ctxX.stroke();
+            });
+        }
+
+        let maxProb = 0.001;
+        for (let i = 0; i < GRID_SIZE; i++) {
+            if (quantumState.psiProb[i] > maxProb) maxProb = quantumState.psiProb[i];
+        }
+
+        ctxX.lineWidth = 1.2;
+        ctxX.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+        ctxX.beginPath();
+        for (let i = 0; i < GRID_SIZE; i++) {
+            const px = (i / (GRID_SIZE - 1)) * w;
+            const val = (quantumState.psiRe[i] / Math.sqrt(maxProb)) * (scaleY * 0.45);
+            const py = midY - val;
+            if (i === 0) ctxX.moveTo(px, py);
+            else ctxX.lineTo(px, py);
+        }
+        ctxX.stroke();
+
+        ctxX.strokeStyle = 'rgba(176, 38, 255, 0.4)';
+        ctxX.beginPath();
+        for (let i = 0; i < GRID_SIZE; i++) {
+            const px = (i / (GRID_SIZE - 1)) * w;
+            const val = (quantumState.psiIm[i] / Math.sqrt(maxProb)) * (scaleY * 0.45);
+            const py = midY - val;
+            if (i === 0) ctxX.moveTo(px, py);
+            else ctxX.lineTo(px, py);
+        }
+        ctxX.stroke();
+
+        const gradX = ctxX.createLinearGradient(0, midY - scaleY, 0, midY);
+        gradX.addColorStop(0, 'rgba(0, 240, 255, 0.45)');
+        gradX.addColorStop(0.7, 'rgba(0, 240, 255, 0.15)');
+        gradX.addColorStop(1, 'rgba(0, 240, 255, 0.0)');
+
+        ctxX.beginPath();
+        ctxX.moveTo(0, midY);
+        for (let i = 0; i < GRID_SIZE; i++) {
+            const px = (i / (GRID_SIZE - 1)) * w;
+            const val = (quantumState.psiProb[i] / maxProb) * scaleY;
+            const py = midY - val;
+            ctxX.lineTo(px, py);
+        }
+        ctxX.lineTo(w, midY);
+        ctxX.closePath();
+        ctxX.fillStyle = gradX;
+        ctxX.fill();
+
+        ctxX.lineWidth = 2.5;
+        for (let i = 0; i < GRID_SIZE - 1; i++) {
+            const px1 = (i / (GRID_SIZE - 1)) * w;
+            const px2 = ((i + 1) / (GRID_SIZE - 1)) * w;
+            const py1 = midY - (quantumState.psiProb[i] / maxProb) * scaleY;
+            const py2 = midY - (quantumState.psiProb[i + 1] / maxProb) * scaleY;
+
+            const c = new Complex(quantumState.psiRe[i], quantumState.psiIm[i]);
+            ctxX.strokeStyle = phaseToColor(c.phase(), 0.95);
+
+            ctxX.beginPath();
+            ctxX.moveTo(px1, py1);
+            ctxX.lineTo(px2, py2);
+            ctxX.stroke();
+        }
+    }
+
+    // --- RENDERIZADOR: ESPAÇO DE MOMENTOS \phi(p) ---
+    function renderMomentumSpace() {
+        const w = canvasP.parentElement.clientWidth;
+        const h = canvasP.parentElement.clientHeight;
+        ctxP.clearRect(0, 0, w, h);
+
+        const midY = h * 0.70;
+        const scaleY = h * 0.58;
+
+        ctxP.strokeStyle = 'rgba(255, 255, 255, 0.07)';
+        ctxP.lineWidth = 1;
+        ctxP.beginPath();
+        ctxP.moveTo(0, midY);
+        ctxP.lineTo(w, midY);
+        ctxP.stroke();
+
+        const pMax = 12.0;
+        ctxP.font = '10px var(--font-mono)';
+        ctxP.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctxP.textAlign = 'center';
+
+        for (let pi = -10; pi <= 10; pi += 2) {
+            const px = ((pi + pMax) / (2 * pMax)) * w;
+            if (px >= 0 && px <= w) {
+                ctxP.beginPath();
+                ctxP.moveTo(px, midY - 4);
+                ctxP.lineTo(px, midY + 4);
+                ctxP.stroke();
+                if (pi !== 0) ctxP.fillText(`${pi} ℏ`, px, midY + 16);
+            }
+        }
+        ctxP.fillText('p = 0', w / 2, midY + 16);
+
+        if (quantumState.showSigmaBands) {
+            const pLeft = ((quantumState.meanP - quantumState.deltaP + pMax) / (2 * pMax)) * w;
+            const pRight = ((quantumState.meanP + quantumState.deltaP + pMax) / (2 * pMax)) * w;
+
+            ctxP.fillStyle = 'rgba(255, 0, 127, 0.08)';
+            ctxP.fillRect(pLeft, 0, pRight - pLeft, h);
+
+            ctxP.strokeStyle = 'rgba(255, 183, 0, 0.6)';
+            ctxP.lineWidth = 1.5;
+            ctxP.setLineDash([4, 4]);
+
+            ctxP.beginPath();
+            ctxP.moveTo(pLeft, midY - 60);
+            ctxP.lineTo(pLeft, midY + 30);
+            ctxP.stroke();
+
+            ctxP.beginPath();
+            ctxP.moveTo(pRight, midY - 60);
+            ctxP.lineTo(pRight, midY + 30);
+            ctxP.stroke();
+            ctxP.setLineDash([]);
+
+            ctxP.fillStyle = 'var(--neon-amber)';
+            ctxP.font = 'bold 11px var(--font-mono)';
+            ctxP.fillText(`2Δp = ${(2 * quantumState.deltaP).toFixed(2)} ℏ`, (pLeft + pRight) / 2, midY - 68);
+
+            ctxP.beginPath();
+            ctxP.moveTo(pLeft, midY - 64);
+            ctxP.lineTo(pRight, midY - 64);
+            ctxP.stroke();
+        }
+
+        const shiftedProbs = new Float32Array(GRID_SIZE);
+        let maxPhiProb = 0.001;
+
+        for (let i = 0; i < GRID_SIZE; i++) {
+            const origIdx = (i + GRID_SIZE / 2) % GRID_SIZE;
+            shiftedProbs[i] = quantumState.phiProb[origIdx];
+            if (shiftedProbs[i] > maxPhiProb) maxPhiProb = shiftedProbs[i];
+        }
+
+        const gradP = ctxP.createLinearGradient(0, midY - scaleY, 0, midY);
+        gradP.addColorStop(0, 'rgba(255, 0, 127, 0.45)');
+        gradP.addColorStop(0.7, 'rgba(255, 0, 127, 0.15)');
+        gradP.addColorStop(1, 'rgba(255, 0, 127, 0.0)');
+
+        ctxP.beginPath();
+        ctxP.moveTo(0, midY);
+        for (let i = 0; i < GRID_SIZE; i++) {
+            const px = (i / (GRID_SIZE - 1)) * w;
+            const val = (shiftedProbs[i] / maxPhiProb) * scaleY;
+            const py = midY - val;
+            ctxP.lineTo(px, py);
+        }
+        ctxP.lineTo(w, midY);
+        ctxP.closePath();
+        ctxP.fillStyle = gradP;
+        ctxP.fill();
+
+        ctxP.strokeStyle = 'var(--neon-magenta)';
+        ctxP.lineWidth = 2.5;
+        ctxP.beginPath();
+        for (let i = 0; i < GRID_SIZE; i++) {
+            const px = (i / (GRID_SIZE - 1)) * w;
+            const val = (shiftedProbs[i] / maxPhiProb) * scaleY;
+            const py = midY - val;
+            if (i === 0) ctxP.moveTo(px, py);
+            else ctxP.lineTo(px, py);
+        }
+        ctxP.stroke();
+    }
+
+    // --- RENDERIZADOR MODO 2: FENDA QUÂNTICA & DIFRAÇÃO ---
+    function renderSlitExperiment() {
+        const w = canvasSlit.parentElement.clientWidth;
+        const h = canvasSlit.parentElement.clientHeight;
+        ctxSlit.clearRect(0, 0, w, h);
+
+        const slitX = w * 0.35;
+        const screenX = w * 0.82;
+        const slitWidthPx = Math.max(8, quantumState.slitWidth * 75);
+        const midY = h / 2;
+
+        // Canhão Quântico
+        const gunX = w * 0.08;
+        ctxSlit.fillStyle = '#1e293b';
+        ctxSlit.strokeStyle = 'var(--neon-cyan)';
+        ctxSlit.lineWidth = 2;
+        ctxSlit.fillRect(gunX - 25, midY - 20, 35, 40);
+        ctxSlit.strokeRect(gunX - 25, midY - 20, 35, 40);
+
+        ctxSlit.fillStyle = 'var(--neon-cyan)';
+        ctxSlit.beginPath();
+        ctxSlit.arc(gunX + 10, midY, 6, 0, Math.PI * 2);
+        ctxSlit.fill();
+
+        ctxSlit.font = '10px var(--font-mono)';
+        ctxSlit.fillStyle = 'var(--text-muted)';
+        ctxSlit.textAlign = 'center';
+        ctxSlit.fillText('Canhão Quântico', gunX - 8, midY + 36);
+
+        // Barreira opaca com a Fenda Central
+        ctxSlit.fillStyle = '#0f172a';
+        ctxSlit.fillRect(slitX - 8, 0, 16, midY - slitWidthPx / 2);
+        ctxSlit.fillRect(slitX - 8, midY + slitWidthPx / 2, 16, h - (midY + slitWidthPx / 2));
+
+        ctxSlit.strokeStyle = 'rgba(0, 240, 255, 0.4)';
+        ctxSlit.lineWidth = 2;
+        ctxSlit.strokeRect(slitX - 8, 0, 16, midY - slitWidthPx / 2);
+        ctxSlit.strokeRect(slitX - 8, midY + slitWidthPx / 2, 16, h - (midY + slitWidthPx / 2));
+
+        // Marcadores das bordas da fenda (para indicar que é arrastável)
+        ctxSlit.fillStyle = 'var(--neon-emerald)';
+        ctxSlit.beginPath();
+        ctxSlit.arc(slitX, midY - slitWidthPx / 2, 5, 0, Math.PI * 2);
+        ctxSlit.arc(slitX, midY + slitWidthPx / 2, 5, 0, Math.PI * 2);
+        ctxSlit.fill();
+
+        ctxSlit.strokeStyle = 'var(--neon-emerald)';
+        ctxSlit.lineWidth = 2;
+        ctxSlit.beginPath();
+        ctxSlit.moveTo(slitX + 18, midY - slitWidthPx / 2);
+        ctxSlit.lineTo(slitX + 18, midY + slitWidthPx / 2);
+        ctxSlit.stroke();
+
+        ctxSlit.fillStyle = 'var(--neon-emerald)';
+        ctxSlit.textAlign = 'left';
+        ctxSlit.fillText(`Δx = ${quantumState.slitWidth.toFixed(2)}`, slitX + 24, midY + 4);
+
+        // Ondas incidentes planas antes da fenda
+        ctxSlit.strokeStyle = 'rgba(0, 240, 255, 0.15)';
+        ctxSlit.lineWidth = 1.5;
+        const waveSpeed = (Date.now() * 0.05) % 24;
+        for (let ox = gunX + 20; ox < slitX - 10; ox += 24) {
+            const rx = ox + waveSpeed;
+            if (rx < slitX - 10) {
+                ctxSlit.beginPath();
+                ctxSlit.moveTo(rx, midY - 60);
+                ctxSlit.lineTo(rx, midY + 60);
+                ctxSlit.stroke();
+            }
+        }
+
+        // Frente de onda difratada após a fenda
+        const diffractionAngle = Math.min(Math.PI * 0.45, 0.35 / Math.max(0.15, quantumState.slitWidth));
+        ctxSlit.strokeStyle = 'rgba(255, 0, 127, 0.2)';
+        for (let r = 25; r < (screenX - slitX); r += 28) {
+            const animatedR = (r + waveSpeed * 1.5) % (screenX - slitX);
+            ctxSlit.beginPath();
+            ctxSlit.arc(slitX, midY, animatedR, -diffractionAngle, diffractionAngle);
+            ctxSlit.stroke();
+        }
+
+        // Tela de detecção à direita
+        ctxSlit.strokeStyle = '#475569';
+        ctxSlit.lineWidth = 3;
+        ctxSlit.beginPath();
+        ctxSlit.moveTo(screenX, 20);
+        ctxSlit.lineTo(screenX, h - 20);
+        ctxSlit.stroke();
+
+        ctxSlit.fillStyle = 'var(--text-muted)';
+        ctxSlit.textAlign = 'center';
+        ctxSlit.fillText('Tela Detectora', screenX, 15);
+
+        // Disparo contínuo estocástico de partículas
+        const fireProb = 0.12 * quantumState.slitFireRate;
+        if (Math.random() < fireProb) {
+            const a = Math.max(0.12, quantumState.slitWidth);
+            let pxSample = 0;
+            for (let tries = 0; tries < 20; tries++) {
+                const cand = (Math.random() - 0.5) * 8.0 / a;
+                const arg = (cand * a) / 2.0;
+                const sincVal = arg === 0 ? 1.0 : Math.sin(arg) / arg;
+                const prob = sincVal * sincVal;
+                if (Math.random() < prob) {
+                    pxSample = cand;
+                    break;
+                }
+            }
+
+            const hitY = midY + pxSample * 26.0;
+            if (hitY >= 20 && hitY <= h - 20) {
+                quantumState.electronsFired++;
+                quantumState.screenHits.push({ y: hitY, alpha: 1.0 });
+                const binIdx = Math.floor(((hitY - 20) / (h - 40)) * quantumState.screenBins.length);
+                if (binIdx >= 0 && binIdx < quantumState.screenBins.length) {
+                    quantumState.screenBins[binIdx]++;
+                }
+                if (audioEngine.enabled && Math.random() < 0.25) {
+                    audioEngine.playGeigerClick(900 + Math.abs(pxSample) * 80);
+                }
+            }
+        }
+
+        // Renderiza impactos individuais
+        for (let i = quantumState.screenHits.length - 1; i >= 0; i--) {
+            const hit = quantumState.screenHits[i];
+            ctxSlit.fillStyle = `rgba(0, 255, 163, ${hit.alpha})`;
+            ctxSlit.beginPath();
+            ctxSlit.arc(screenX, hit.y, 2.5, 0, Math.PI * 2);
+            ctxSlit.fill();
+
+            hit.alpha -= 0.008;
+            if (hit.alpha <= 0.05) quantumState.screenHits.splice(i, 1);
+        }
+
+        // Histograma de acúmulo quântico à direita da tela
+        let maxBin = 1;
+        for (let i = 0; i < quantumState.screenBins.length; i++) {
+            if (quantumState.screenBins[i] > maxBin) maxBin = quantumState.screenBins[i];
+        }
+
+        ctxSlit.fillStyle = 'rgba(0, 240, 255, 0.35)';
+        ctxSlit.strokeStyle = 'var(--neon-cyan)';
+        ctxSlit.lineWidth = 1.5;
+        ctxSlit.beginPath();
+        ctxSlit.moveTo(screenX, 20);
+
+        const binH = (h - 40) / quantumState.screenBins.length;
+        for (let i = 0; i < quantumState.screenBins.length; i++) {
+            const by = 20 + i * binH;
+            const bw = (quantumState.screenBins[i] / maxBin) * (w - screenX - 25);
+            ctxSlit.lineTo(screenX + bw, by);
+        }
+        ctxSlit.lineTo(screenX, h - 20);
+        ctxSlit.closePath();
+        ctxSlit.fill();
+        ctxSlit.stroke();
+
+        ctxSlit.font = '11px var(--font-mono)';
+        ctxSlit.fillStyle = 'var(--neon-emerald)';
+        ctxSlit.textAlign = 'left';
+        ctxSlit.fillText(`Elétrons Registrados: ${quantumState.electronsFired}`, 20, h - 30);
+        ctxSlit.fillStyle = 'var(--neon-amber)';
+        ctxSlit.fillText(`Dispersão Angular Δpx ∝ ℏ / Δx: ${(1.0 / quantumState.slitWidth).toFixed(2)} ℏ`, 20, h - 14);
+    }
+
+    // --- RENDERIZADOR MODO 3: ESPAÇO DE FASE & CÉLULA DE PLANCK ---
+    function renderPhaseSpace() {
+        const w = canvasPhaseSpace.parentElement.clientWidth;
+        const h = canvasPhaseSpace.parentElement.clientHeight;
+        ctxPhaseSpace.clearRect(0, 0, w, h);
+
+        const cx = w / 2;
+        const cy = h / 2;
+
+        const cellSize = 55;
+        ctxPhaseSpace.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+        ctxPhaseSpace.lineWidth = 1;
+        for (let x = cx % cellSize; x < w; x += cellSize) {
+            ctxPhaseSpace.beginPath();
+            ctxPhaseSpace.moveTo(x, 0);
+            ctxPhaseSpace.lineTo(x, h);
+            ctxPhaseSpace.stroke();
+        }
+        for (let y = cy % cellSize; y < h; y += cellSize) {
+            ctxPhaseSpace.beginPath();
+            ctxPhaseSpace.moveTo(0, y);
+            ctxPhaseSpace.lineTo(w, y);
+            ctxPhaseSpace.stroke();
+        }
+
+        ctxPhaseSpace.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+        ctxPhaseSpace.lineWidth = 1.5;
+        ctxPhaseSpace.beginPath();
+        ctxPhaseSpace.moveTo(0, cy);
+        ctxPhaseSpace.lineTo(w, cy);
+        ctxPhaseSpace.stroke();
+
+        ctxPhaseSpace.beginPath();
+        ctxPhaseSpace.moveTo(cx, 0);
+        ctxPhaseSpace.lineTo(cx, h);
+        ctxPhaseSpace.stroke();
+
+        ctxPhaseSpace.font = '11px var(--font-mono)';
+        ctxPhaseSpace.fillStyle = 'var(--neon-cyan)';
+        ctxPhaseSpace.textAlign = 'right';
+        ctxPhaseSpace.fillText('Posição (x) →', w - 20, cy - 10);
+
+        ctxPhaseSpace.fillStyle = 'var(--neon-magenta)';
+        ctxPhaseSpace.textAlign = 'left';
+        ctxPhaseSpace.fillText('↑ Momento (p)', cx + 10, 25);
+
+        // Célula Mínima de Planck
+        ctxPhaseSpace.fillStyle = 'rgba(255, 255, 255, 0.03)';
+        ctxPhaseSpace.strokeStyle = 'rgba(0, 255, 163, 0.25)';
+        ctxPhaseSpace.setLineDash([3, 3]);
+        ctxPhaseSpace.strokeRect(cx - cellSize / 2, cy - cellSize / 2, cellSize, cellSize);
+        ctxPhaseSpace.setLineDash([]);
+        ctxPhaseSpace.fillStyle = 'var(--text-dim)';
+        ctxPhaseSpace.textAlign = 'center';
+        ctxPhaseSpace.fillText('Célula Quântica h', cx, cy - cellSize / 2 - 6);
+
+        // Elipse de Incerteza Quântica
+        const pxPerUnitX = 75;
+        const pxPerUnitP = 38;
+        const rx = quantumState.deltaX * pxPerUnitX;
+        const ry = quantumState.deltaP * pxPerUnitP;
+
+        const rotAngle = (quantumState.phaseAngleDeg * Math.PI) / 180 + (quantumState.time * 0.4);
+
+        ctxPhaseSpace.save();
+        ctxPhaseSpace.translate(cx, cy);
+        ctxPhaseSpace.rotate(rotAngle);
+
+        const gradEllipse = ctxPhaseSpace.createRadialGradient(0, 0, 0, 0, 0, Math.max(rx, ry));
+        gradEllipse.addColorStop(0, 'rgba(0, 240, 255, 0.5)');
+        gradEllipse.addColorStop(0.6, 'rgba(176, 38, 255, 0.25)');
+        gradEllipse.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+        ctxPhaseSpace.fillStyle = gradEllipse;
+        ctxPhaseSpace.beginPath();
+        ctxPhaseSpace.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
+        ctxPhaseSpace.fill();
+
+        ctxPhaseSpace.strokeStyle = 'var(--neon-cyan)';
+        ctxPhaseSpace.lineWidth = 2.5;
+        ctxPhaseSpace.stroke();
+
+        ctxPhaseSpace.restore();
+
+        const areaPhaseSpace = Math.PI * quantumState.deltaX * quantumState.deltaP;
+        ctxPhaseSpace.fillStyle = 'rgba(10, 15, 28, 0.85)';
+        ctxPhaseSpace.fillRect(20, h - 80, 290, 60);
+        ctxPhaseSpace.strokeStyle = 'var(--border-subtle)';
+        ctxPhaseSpace.strokeRect(20, h - 80, 290, 60);
+
+        ctxPhaseSpace.fillStyle = 'var(--neon-cyan)';
+        ctxPhaseSpace.textAlign = 'left';
+        ctxPhaseSpace.font = 'bold 11px var(--font-mono)';
+        ctxPhaseSpace.fillText(`Área da Elipse: ${areaPhaseSpace.toFixed(3)} ℏ`, 32, h - 58);
+        ctxPhaseSpace.fillStyle = 'var(--neon-emerald)';
+        ctxPhaseSpace.font = '10px var(--font-mono)';
+        ctxPhaseSpace.fillText(`Limite de Planck Mínimo: ${(Math.PI * 0.5).toFixed(3)} ℏ (πℏ/2)`, 32, h - 42);
+        ctxPhaseSpace.fillStyle = 'var(--text-muted)';
+        ctxPhaseSpace.fillText('Estado Comprimido: Squeeze em X expande P!', 32, h - 28);
+    }
+
+    // --- RENDERIZADOR MODO 4: MICROSCÓPIO DE HEISENBERG ---
+    function renderMicroscopeExperiment() {
+        const w = canvasMicroscope.parentElement.clientWidth;
+        const h = canvasMicroscope.parentElement.clientHeight;
+        ctxMicroscope.clearRect(0, 0, w, h);
+
+        const midX = w / 2;
+        const midY = h * 0.65;
+
+        const lambda = quantumState.photonWavelength;
+        const thetaRad = (quantumState.lensApertureDeg * Math.PI) / 180;
+
+        const resDeltaX = lambda / (2.0 * Math.sin(thetaRad));
+        const recoilDeltaP = (1.0 / lambda) * Math.sin(thetaRad);
+
+        const lensY = h * 0.22;
+        const lensWidth = 220;
+        ctxMicroscope.fillStyle = 'rgba(0, 240, 255, 0.12)';
+        ctxMicroscope.strokeStyle = 'var(--neon-cyan)';
+        ctxMicroscope.lineWidth = 2;
+        ctxMicroscope.beginPath();
+        ctxMicroscope.ellipse(midX, lensY, lensWidth / 2, 22, 0, 0, Math.PI * 2);
+        ctxMicroscope.fill();
+        ctxMicroscope.stroke();
+
+        ctxMicroscope.font = '11px var(--font-mono)';
+        ctxMicroscope.fillStyle = 'var(--text-muted)';
+        ctxMicroscope.textAlign = 'center';
+        ctxMicroscope.fillText('Lente Objetiva do Microscópio', midX, lensY - 30);
+
+        const lensEdgeX1 = midX - lensWidth / 2;
+        const lensEdgeX2 = midX + lensWidth / 2;
+
+        ctxMicroscope.strokeStyle = 'rgba(255, 183, 0, 0.25)';
+        ctxMicroscope.setLineDash([4, 4]);
+        ctxMicroscope.beginPath();
+        ctxMicroscope.moveTo(midX, midY);
+        ctxMicroscope.lineTo(lensEdgeX1, lensY);
+        ctxMicroscope.moveTo(midX, midY);
+        ctxMicroscope.lineTo(lensEdgeX2, lensY);
+        ctxMicroscope.stroke();
+        ctxMicroscope.setLineDash([]);
+
+        ctxMicroscope.strokeStyle = 'var(--neon-amber)';
+        ctxMicroscope.lineWidth = 1.5;
+        ctxMicroscope.beginPath();
+        ctxMicroscope.arc(midX, midY, 60, -Math.PI / 2 - thetaRad, -Math.PI / 2 + thetaRad);
+        ctxMicroscope.stroke();
+        ctxMicroscope.fillStyle = 'var(--neon-amber)';
+        ctxMicroscope.fillText(`2θ = ${(2 * quantumState.lensApertureDeg).toFixed(0)}°`, midX, midY - 72);
+
+        // Animação de Fóton Ativo
+        if (quantumState.photonActive) {
+            const progress = (Date.now() - quantumState.photonFiredTime) / 1200;
+            if (progress < 1.0) {
+                const px = (midX - 220) + progress * 220;
+                ctxMicroscope.strokeStyle = 'var(--neon-rose)';
+                ctxMicroscope.lineWidth = 3;
+                ctxMicroscope.beginPath();
+                ctxMicroscope.arc(px, midY, 8, 0, Math.PI * 2);
+                ctxMicroscope.stroke();
+            } else {
+                quantumState.photonActive = false;
+                quantumState.electronRecoilX = recoilDeltaP * 30;
+                if (audioEngine.enabled) audioEngine.playGeigerClick(1400);
+            }
+        }
+
+        // Onda do fóton incidente animada
+        ctxMicroscope.strokeStyle = 'var(--neon-purple)';
+        ctxMicroscope.lineWidth = 2;
+        ctxMicroscope.beginPath();
+        for (let x = midX - 220; x <= midX; x += 3) {
+            const waveY = midY + Math.sin((x / lambda) * 12 - Date.now() * 0.01) * 14;
+            if (x === midX - 220) ctxMicroscope.moveTo(x, waveY);
+            else ctxMicroscope.lineTo(x, waveY);
+        }
+        ctxMicroscope.stroke();
+
+        ctxMicroscope.fillStyle = 'var(--neon-purple)';
+        ctxMicroscope.fillText(`Fóton Incidente (λ = ${lambda.toFixed(2)})`, midX - 140, midY + 35);
+
+        // Elétron Alvo com Incerteza Espacial Sombreada
+        const elDispX = midX + quantumState.electronRecoilX;
+        const haloWidth = Math.max(12, resDeltaX * 35);
+
+        const elGrad = ctxMicroscope.createRadialGradient(elDispX, midY, 2, elDispX, midY, haloWidth);
+        elGrad.addColorStop(0, 'rgba(0, 240, 255, 0.9)');
+        elGrad.addColorStop(0.3, 'rgba(0, 240, 255, 0.35)');
+        elGrad.addColorStop(1, 'rgba(0, 240, 255, 0)');
+
+        ctxMicroscope.fillStyle = elGrad;
+        ctxMicroscope.beginPath();
+        ctxMicroscope.arc(elDispX, midY, haloWidth, 0, Math.PI * 2);
+        ctxMicroscope.fill();
+
+        ctxMicroscope.fillStyle = '#ffffff';
+        ctxMicroscope.beginPath();
+        ctxMicroscope.arc(elDispX, midY, 4, 0, Math.PI * 2);
+        ctxMicroscope.fill();
+
+        ctxMicroscope.strokeStyle = 'var(--neon-cyan)';
+        ctxMicroscope.lineWidth = 2;
+        ctxMicroscope.beginPath();
+        ctxMicroscope.moveTo(elDispX - haloWidth, midY + 45);
+        ctxMicroscope.lineTo(elDispX + haloWidth, midY + 45);
+        ctxMicroscope.stroke();
+
+        ctxMicroscope.fillStyle = 'var(--neon-cyan)';
+        ctxMicroscope.fillText(`Resolução Δx ≈ ${resDeltaX.toFixed(2)}`, elDispX, midY + 60);
+
+        const recoilLen = recoilDeltaP * 120;
+        ctxMicroscope.strokeStyle = 'var(--neon-rose)';
+        ctxMicroscope.lineWidth = 2.5;
+        ctxMicroscope.beginPath();
+        ctxMicroscope.moveTo(elDispX, midY);
+        ctxMicroscope.lineTo(elDispX + recoilLen, midY);
+        ctxMicroscope.stroke();
+
+        ctxMicroscope.fillStyle = 'var(--neon-rose)';
+        ctxMicroscope.beginPath();
+        ctxMicroscope.moveTo(elDispX + recoilLen, midY);
+        ctxMicroscope.lineTo(elDispX + recoilLen - 8, midY - 5);
+        ctxMicroscope.lineTo(elDispX + recoilLen - 8, midY + 5);
+        ctxMicroscope.closePath();
+        ctxMicroscope.fill();
+
+        ctxMicroscope.fillText(`Recuo Δpx ≈ ${recoilDeltaP.toFixed(2)} ℏ`, elDispX + recoilLen / 2, midY - 10);
+
+        // Cartão Teórico do Microscópio
+        ctxMicroscope.fillStyle = 'rgba(10, 15, 28, 0.88)';
+        ctxMicroscope.fillRect(20, 20, 360, 100);
+        ctxMicroscope.strokeStyle = 'var(--border-subtle)';
+        ctxMicroscope.strokeRect(20, 20, 360, 100);
+
+        ctxMicroscope.textAlign = 'left';
+        ctxMicroscope.fillStyle = 'var(--neon-cyan)';
+        ctxMicroscope.font = 'bold 11px var(--font-mono)';
+        ctxMicroscope.fillText('Balanço do Microscópio de Heisenberg:', 32, 40);
+
+        ctxMicroscope.fillStyle = 'var(--text-main)';
+        ctxMicroscope.font = '10px var(--font-mono)';
+        ctxMicroscope.fillText(`1. Resolução Ótica: Δx ≈ λ / (2 sin θ) = ${resDeltaX.toFixed(2)}`, 32, 58);
+        ctxMicroscope.fillText(`2. Recuo Compton:   Δpx ≈ (h / λ) sin θ = ${recoilDeltaP.toFixed(2)} ℏ`, 32, 74);
+
+        const prodMicro = resDeltaX * recoilDeltaP;
+        ctxMicroscope.fillStyle = 'var(--neon-emerald)';
+        ctxMicroscope.fillText(`Produto Inevitável: Δx · Δpx ≈ ${(prodMicro).toFixed(2)} ℏ (Independe de λ e θ!)`, 32, 94);
+    }
+
+    // --- LOOP PRINCIPAL DE ANIMAÇÃO ---
+    let lastTimestamp = 0;
+    function animationLoop(timestamp) {
+        if (!lastTimestamp) lastTimestamp = timestamp;
+        lastTimestamp = timestamp;
+
+        if (quantumState.isRunning) {
+            const dtStep = 0.03 * quantumState.dtSpeed;
+            stepSchrodinger(dtStep);
+        }
+
+        if (quantumState.mode === 'fourier') {
+            renderPositionSpace();
+            renderMomentumSpace();
+        } else if (quantumState.mode === 'slit') {
+            renderSlitExperiment();
+        } else if (quantumState.mode === 'phasespace') {
+            renderPhaseSpace();
+        } else if (quantumState.mode === 'microscope') {
+            renderMicroscopeExperiment();
+        }
+
+        requestAnimationFrame(animationLoop);
+    }
+
+    // --- INTERAÇÕES DIRETAS DE MOUSE NOS CANVASES ---
+    function setupCanvasMouseInteractions() {
+        // 1. canvasX: arrastar para modular sigmaX e p0
+        let isDraggingX = false;
+        canvasX.addEventListener('mousedown', (e) => {
+            isDraggingX = true;
+            handleCanvasXDrag(e);
+        });
+        window.addEventListener('mousemove', (e) => {
+            if (isDraggingX) handleCanvasXDrag(e);
+        });
+        window.addEventListener('mouseup', () => { isDraggingX = false; });
+
+        function handleCanvasXDrag(e) {
+            const rect = canvasX.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const w = rect.width;
+            if (mouseX >= 0 && mouseX <= w) {
+                const distFromCenter = Math.abs(mouseX - w / 2) / (w / 2);
+                const newSigma = Math.max(0.1, Math.min(2.4, distFromCenter * 2.2));
+                quantumState.sigmaX = newSigma;
+                document.getElementById('sliderDeltaX').value = newSigma;
+                document.getElementById('dispDeltaX').innerText = newSigma.toFixed(2);
+                prepareWavePacket();
+            }
+        }
+
+        // 2. canvasSlit: arrastar a fenda verticalmente para abrir/fechar
+        let isDraggingSlit = false;
+        canvasSlit.addEventListener('mousedown', (e) => {
+            isDraggingSlit = true;
+            handleSlitDrag(e);
+        });
+        window.addEventListener('mousemove', (e) => {
+            if (isDraggingSlit) handleSlitDrag(e);
+        });
+        window.addEventListener('mouseup', () => { isDraggingSlit = false; });
+
+        function handleSlitDrag(e) {
+            const rect = canvasSlit.getBoundingClientRect();
+            const mouseY = e.clientY - rect.top;
+            const h = rect.height;
+            const distFromMid = Math.abs(mouseY - h / 2);
+            const newSlit = Math.max(0.15, Math.min(2.5, (distFromMid / (h / 2)) * 3.0));
+            quantumState.slitWidth = newSlit;
+            document.getElementById('sliderSlitWidth').value = newSlit;
+            document.getElementById('dispSlitWidth').innerText = newSlit.toFixed(2);
+            computeObservables();
+        }
+
+        // 3. canvasPhaseSpace: arrastar para squeeze
+        let isDraggingPhase = false;
+        canvasPhaseSpace.addEventListener('mousedown', (e) => {
+            isDraggingPhase = true;
+            handlePhaseSpaceDrag(e);
+        });
+        window.addEventListener('mousemove', (e) => {
+            if (isDraggingPhase) handlePhaseSpaceDrag(e);
+        });
+        window.addEventListener('mouseup', () => { isDraggingPhase = false; });
+
+        function handlePhaseSpaceDrag(e) {
+            const rect = canvasPhaseSpace.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            const cx = rect.width / 2;
+            const cy = rect.height / 2;
+            const dx = Math.abs(mouseX - cx);
+            const dy = Math.abs(mouseY - cy);
+            const ratio = Math.max(0.2, Math.min(3.0, dy / Math.max(10, dx)));
+            quantumState.squeezeFactor = ratio;
+            document.getElementById('sliderSqueeze').value = ratio;
+            document.getElementById('dispSqueeze').innerText = ratio.toFixed(2);
+            computeObservables();
+        }
+
+        // 4. canvasMicroscope: clicar para disparar fóton
+        canvasMicroscope.addEventListener('click', () => {
+            fireProbePhoton();
+        });
+    }
+
+    function fireProbePhoton() {
+        quantumState.photonActive = true;
+        quantumState.photonFiredTime = Date.now();
+        showToast('Fóton emitido! Colidindo com o elétron...');
+        if (audioEngine.enabled) audioEngine.playGeigerClick(800);
+    }
+
+    // --- CONTROLADORES DE INTERFACE E EVENTOS ---
+    function setupEventListeners() {
+        window.addEventListener('resize', () => {
+            resizeCanvases();
+            drawPhaseWheel();
+        });
+
+        // Abas de Modo
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                tabBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                const mode = btn.dataset.mode;
+                quantumState.mode = mode;
+
+                document.querySelectorAll('.mode-view').forEach(v => v.classList.remove('active'));
+                if (mode === 'fourier') document.getElementById('viewFourier').classList.add('active');
+                if (mode === 'slit') document.getElementById('viewSlit').classList.add('active');
+                if (mode === 'phasespace') document.getElementById('viewPhaseSpace').classList.add('active');
+                if (mode === 'microscope') document.getElementById('viewMicroscope').classList.add('active');
+
+                // Alterna seções de controle na barra lateral
+                document.getElementById('panelFourierControls').style.display = mode === 'fourier' ? 'block' : 'none';
+                document.getElementById('panelSlitControls').style.display = mode === 'slit' ? 'block' : 'none';
+                document.getElementById('panelPhaseSpaceControls').style.display = mode === 'phasespace' ? 'block' : 'none';
+                document.getElementById('panelMicroscopeControls').style.display = mode === 'microscope' ? 'block' : 'none';
+
+                computeObservables();
+                showToast(`Modo Ativado: ${btn.innerText.trim()}`);
+                resizeCanvases();
+            });
+        });
+
+        // Sliders do Modo 1
+        const sliderDeltaX = document.getElementById('sliderDeltaX');
+        const dispDeltaX = document.getElementById('dispDeltaX');
+        sliderDeltaX.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            quantumState.sigmaX = val;
+            dispDeltaX.innerText = val.toFixed(2);
+            prepareWavePacket();
+        });
+
+        const sliderP0 = document.getElementById('sliderP0');
+        const dispP0 = document.getElementById('dispP0');
+        sliderP0.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            quantumState.p0 = val;
+            dispP0.innerText = val.toFixed(2);
+            prepareWavePacket();
+        });
+
+        const sliderChirp = document.getElementById('sliderChirp');
+        const dispChirp = document.getElementById('dispChirp');
+        sliderChirp.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            quantumState.chirp = val;
+            dispChirp.innerText = val.toFixed(2);
+            prepareWavePacket();
+        });
+
+        const sliderSpeed = document.getElementById('sliderSpeed');
+        sliderSpeed.addEventListener('input', (e) => {
+            quantumState.dtSpeed = parseFloat(e.target.value);
+        });
+
+        // Sliders do Modo 2 (Fenda)
+        const sliderSlitWidth = document.getElementById('sliderSlitWidth');
+        const dispSlitWidth = document.getElementById('dispSlitWidth');
+        sliderSlitWidth.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            quantumState.slitWidth = val;
+            dispSlitWidth.innerText = val.toFixed(2);
+            computeObservables();
+        });
+
+        const sliderSlitRate = document.getElementById('sliderSlitRate');
+        const dispSlitRate = document.getElementById('dispSlitRate');
+        sliderSlitRate.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            quantumState.slitFireRate = val;
+            dispSlitRate.innerText = val > 7 ? 'Alto' : (val > 3 ? 'Médio' : 'Baixo');
+        });
+
+        document.getElementById('btnClearScreen').addEventListener('click', () => {
+            quantumState.screenHits = [];
+            quantumState.screenBins.fill(0);
+            quantumState.electronsFired = 0;
+            showToast('Tela detectora limpa com sucesso');
+        });
+
+        // Sliders do Modo 3 (Espaço de Fase)
+        const sliderSqueeze = document.getElementById('sliderSqueeze');
+        const dispSqueeze = document.getElementById('dispSqueeze');
+        sliderSqueeze.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            quantumState.squeezeFactor = val;
+            dispSqueeze.innerText = val.toFixed(2);
+            computeObservables();
+        });
+
+        const sliderPhaseAngle = document.getElementById('sliderPhaseAngle');
+        const dispPhaseAngle = document.getElementById('dispPhaseAngle');
+        sliderPhaseAngle.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            quantumState.phaseAngleDeg = val;
+            dispPhaseAngle.innerText = `${val}°`;
+        });
+
+        // Sliders do Modo 4 (Microscópio)
+        const sliderLambda = document.getElementById('sliderLambda');
+        const dispLambda = document.getElementById('dispLambda');
+        sliderLambda.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            quantumState.photonWavelength = val;
+            dispLambda.innerText = val.toFixed(2);
+            computeObservables();
+        });
+
+        const sliderTheta = document.getElementById('sliderTheta');
+        const dispTheta = document.getElementById('dispTheta');
+        sliderTheta.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            quantumState.lensApertureDeg = val;
+            dispTheta.innerText = `${val}°`;
+            computeObservables();
+        });
+
+        document.getElementById('btnFirePhoton').addEventListener('click', () => {
+            fireProbePhoton();
+        });
+
+        // Botões de Espectro no Microscópio
+        const spectrumBtns = document.querySelectorAll('.btn-spectrum');
+        spectrumBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                spectrumBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const lam = parseFloat(btn.dataset.lambda);
+                quantumState.photonWavelength = lam;
+                sliderLambda.value = lam;
+                dispLambda.innerText = lam.toFixed(2);
+                computeObservables();
+                showToast(`Espectro ajustado para: ${btn.innerText}`);
+            });
+        });
+
+        // Toggles
+        document.getElementById('toggleFourierWaves').addEventListener('change', (e) => {
+            quantumState.showFourierWaves = e.target.checked;
+        });
+
+        document.getElementById('toggleSigmaBands').addEventListener('change', (e) => {
+            quantumState.showSigmaBands = e.target.checked;
+        });
+
+        document.getElementById('toggleDispersion').addEventListener('change', (e) => {
+            quantumState.enableDispersion = e.target.checked;
+        });
+
+        // Botões de Play/Pause/Reset
+        const btnPlayPause = document.getElementById('btnPlayPause');
+        const iconPlay = document.getElementById('iconPlay');
+        const iconPause = document.getElementById('iconPause');
+        const labelPlay = document.getElementById('labelPlay');
+
+        btnPlayPause.addEventListener('click', () => {
+            quantumState.isRunning = !quantumState.isRunning;
+            if (quantumState.isRunning) {
+                iconPlay.style.display = 'none';
+                iconPause.style.display = 'inline-block';
+                labelPlay.innerText = 'Pausar Evolução';
+                showToast('Evolução temporal Schrödinger iniciada');
+            } else {
+                iconPlay.style.display = 'inline-block';
+                iconPause.style.display = 'none';
+                labelPlay.innerText = 'Evolução Temporal';
+                showToast('Evolução temporal pausada');
+            }
+        });
+
+        document.getElementById('btnStep').addEventListener('click', () => {
+            quantumState.isRunning = false;
+            iconPlay.style.display = 'inline-block';
+            iconPause.style.display = 'none';
+            labelPlay.innerText = 'Evolução Temporal';
+            stepSchrodinger(0.04);
+            showToast('Passo temporal Δt executado');
+        });
+
+        document.getElementById('btnReset').addEventListener('click', () => {
+            prepareWavePacket();
+            quantumState.screenHits = [];
+            quantumState.screenBins.fill(0);
+            quantumState.electronsFired = 0;
+            quantumState.electronRecoilX = 0;
+            showToast('Estado quântico resetado para t = 0');
+        });
+
+        // Presets Físicos
+        const presetBtns = document.querySelectorAll('.btn-preset');
+        presetBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                presetBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                const preset = btn.dataset.preset;
+                quantumState.preset = preset;
+
+                if (preset === 'gaussian_min') {
+                    quantumState.sigmaX = 0.50;
+                    quantumState.p0 = 0.0;
+                    quantumState.chirp = 0.0;
+                } else if (preset === 'localized_x') {
+                    quantumState.sigmaX = 0.10;
+                    quantumState.p0 = 0.0;
+                    quantumState.chirp = 0.0;
+                } else if (preset === 'plane_wave') {
+                    quantumState.sigmaX = 2.20;
+                    quantumState.p0 = 3.0;
+                    quantumState.chirp = 0.0;
+                } else if (preset === 'cat_state') {
+                    quantumState.sigmaX = 0.40;
+                    quantumState.p0 = 0.0;
+                    quantumState.chirp = 0.0;
+                } else if (preset === 'slit_cut') {
+                    quantumState.sigmaX = 0.60;
+                    quantumState.p0 = 0.0;
+                    quantumState.chirp = 0.0;
+                } else if (preset === 'chirped') {
+                    quantumState.sigmaX = 0.50;
+                    quantumState.p0 = 1.0;
+                    quantumState.chirp = 1.2;
+                }
+
+                sliderDeltaX.value = quantumState.sigmaX;
+                dispDeltaX.innerText = quantumState.sigmaX.toFixed(2);
+                sliderP0.value = quantumState.p0;
+                dispP0.innerText = quantumState.p0.toFixed(2);
+                sliderChirp.value = quantumState.chirp;
+                dispChirp.innerText = quantumState.chirp.toFixed(2);
+
+                prepareWavePacket();
+                showToast(`Preset: ${btn.querySelector('span').innerText}`);
+            });
+        });
+
+        // Áudio Quântico
+        const audioToggle = document.getElementById('audioToggle');
+        audioToggle.addEventListener('click', () => {
+            audioEngine.init();
+            audioEngine.enabled = !audioEngine.enabled;
+            if (audioEngine.enabled) {
+                audioToggle.classList.add('active');
+                audioToggle.innerHTML = '<span>🔊 Som Quântico: Ativo</span>';
+                audioEngine.playGeigerClick(1000);
+                showToast('Som quântico ativado (Cliques de detecção)');
+            } else {
+                audioToggle.classList.remove('active');
+                audioToggle.innerHTML = '<span>🔈 Som Quântico: Desligado</span>';
+                showToast('Som quântico silenciado');
+            }
+        });
+
+        // Modal de Teoria
+        const modal = document.getElementById('theoryModal');
+        document.getElementById('btnTheory').addEventListener('click', () => {
+            modal.classList.add('open');
+            if (window.renderMathInElement) {
+                renderMathInElement(modal, {
+                    delimiters: [
+                        {left: "$$", right: "$$", display: true},
+                        {left: "$", right: "$", display: false}
+                    ]
+                });
+            }
+        });
+        document.getElementById('btnCloseTheory').addEventListener('click', () => {
+            modal.classList.remove('open');
+        });
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.classList.remove('open');
+        });
+
+        setupCanvasMouseInteractions();
+    }
+
+    let toastTimeout;
+    function showToast(msg) {
+        const toast = document.getElementById('toastMsg');
+        toast.innerText = msg;
+        toast.classList.add('show');
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => {
+            toast.classList.remove('show');
+        }, 2400);
+    }
+
+    // --- INICIALIZAÇÃO DA APLICAÇÃO ---
+    window.addEventListener('DOMContentLoaded', () => {
+        setupEventListeners();
+        resizeCanvases();
+        drawPhaseWheel();
+        prepareWavePacket();
+
+        if (window.renderMathInElement) {
+            renderMathInElement(document.body, {
+                delimiters: [
+                    {left: "$$", right: "$$", display: true},
+                    {left: "$", right: "$", display: false}
+                ]
+            });
+        }
+
+        requestAnimationFrame(animationLoop);
+    });
+    </script>
+</body>
+</html>

@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulação Eletrodinâmica: Vetor de Poynting e Propagação de Onda Plana</title>
+    <!-- KaTeX para renderização tipográfica de equações matemáticas -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+    <!-- Three.js e OrbitControls via CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #111827;
+            --bg-tertiary: #1f293d;
+            --border-color: #2e3a52;
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --color-e: #ff3366;
+            --color-b: #00b4d8;
+            --color-s: #ffb703;
+            --color-axis: #475569;
+            --font-mono: "JetBrains Mono", "Fira Code", monospace;
+            --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        header {
+            padding: 1.25rem 2rem;
+            background-color: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: #f8fafc;
+        }
+
+        header .badge {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            background: var(--bg-tertiary);
+            padding: 0.25rem 0.6rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+        }
+
+        /* Layout Principal do Visualizador */
+        .workspace {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            grid-template-rows: 640px;
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        @media (max-width: 1024px) {
+            .workspace {
+                grid-template-columns: 1fr;
+                grid-template-rows: 500px auto;
+            }
+        }
+
+        #viewport-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background-color: #05070c;
+        }
+
+        #canvas3d {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Overlay com Legendas dos Vetores */
+        .legend-overlay {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: rgba(17, 24, 39, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.85rem 1.1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            font-size: 0.82rem;
+            font-family: var(--font-mono);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .legend-swatch {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+        }
+
+        /* HUD com Leituras Numéricas Instantâneas */
+        .telemetry-overlay {
+            position: absolute;
+            bottom: 1rem;
+            left: 1rem;
+            background: rgba(17, 24, 39, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.75rem 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            pointer-events: none;
+            z-index: 10;
+            display: grid;
+            grid-template-columns: auto auto;
+            column-gap: 1.25rem;
+            row-gap: 0.25rem;
+        }
+
+        .telemetry-overlay span.val {
+            color: #f8fafc;
+            font-weight: 600;
+        }
+
+        /* Painel Lateral de Controle */
+        .controls-panel {
+            background-color: var(--bg-secondary);
+            border-left: 1px solid var(--border-color);
+            padding: 1.5rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .panel-section-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.35rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .control-label {
+            font-size: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            font-family: var(--font-mono);
+        }
+
+        .control-label span.value-disp {
+            color: #38bdf8;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 4px;
+            background: var(--bg-tertiary);
+            border-radius: 2px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #38bdf8;
+            cursor: pointer;
+            border: 2px solid var(--bg-primary);
+        }
+
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+
+        button.btn {
+            background: var(--bg-tertiary);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem 0.75rem;
+            font-size: 0.8rem;
+            font-family: var(--font-mono);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        button.btn:hover {
+            background: #2a3b5c;
+            border-color: #38bdf8;
+        }
+
+        /* Seção Acadêmica e Dedução Formal */
+        .academic-article {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 3rem 1.5rem 5rem;
+        }
+
+        .academic-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 1.5rem;
+        }
+
+        .academic-header h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #f8fafc;
+            margin-bottom: 0.5rem;
+        }
+
+        .academic-header .meta {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+        }
+
+        .academic-section {
+            margin-bottom: 2.5rem;
+        }
+
+        .academic-section h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #38bdf8;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .academic-section p {
+            font-size: 0.95rem;
+            color: #cbd5e1;
+            margin-bottom: 1rem;
+            text-align: justify;
+        }
+
+        .math-block {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-left: 3px solid #38bdf8;
+            border-radius: 4px;
+            padding: 1.2rem;
+            margin: 1.25rem 0;
+            overflow-x: auto;
+        }
+
+        .callout-box {
+            background: rgba(31, 41, 61, 0.4);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1rem 1.25rem;
+            margin: 1.25rem 0;
+            font-size: 0.9rem;
+        }
+
+        .callout-box strong {
+            color: #f8fafc;
+        }
+
+        ol.references {
+            padding-left: 1.5rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        ol.references li {
+            margin-bottom: 0.75rem;
+            padding-left: 0.5rem;
+        }
+
+        footer {
+            border-top: 1px solid var(--border-color);
+            padding: 1.5rem 2rem;
+            font-size: 0.75rem;
+            font-family: var(--font-mono);
+            color: var(--text-muted);
+            text-align: center;
+            background: var(--bg-secondary);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div>
+            <h1>Eletrodinâmica Clássica // Vetor de Poynting</h1>
+        </div>
+        <div class="badge">SIMULAÇÃO 3D INTERATIVA • ONDA PLANA MONOCROMÁTICA</div>
+    </header>
+
+    <div class="workspace">
+        <div id="viewport-container">
+            <canvas id="canvas3d"></canvas>
+
+            <!-- Legenda da Tríade Ortogonal -->
+            <div class="legend-overlay">
+                <div class="legend-item">
+                    <div class="legend-swatch" style="background-color: var(--color-e);"></div>
+                    <span>$\mathbf{E}$ Campo Elétrico ($\hat{\mathbf{y}}$)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-swatch" style="background-color: var(--color-b);"></div>
+                    <span>$\mathbf{B}$ Campo Magnético ($\hat{\mathbf{z}}$)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-swatch" style="background-color: var(--color-s);"></div>
+                    <span>$\mathbf{S} = \frac{1}{\mu_0}(\mathbf{E} \times \mathbf{B})$ Vetor de Poynting ($\hat{\mathbf{x}}$)</span>
+                </div>
+            </div>
+
+            <!-- Painel de Telemetria Físico Instantâneo -->
+            <div class="telemetry-overlay">
+                <div>Posição da Sonda $x_0$:</div>
+                <div><span id="tel-x" class="val">0.00 m</span></div>
+                <div>Fase $\phi(x_0, t)$:</div>
+                <div><span id="tel-phi" class="val">0.00 rad</span></div>
+                <div>$E_y(x_0, t)$:</div>
+                <div><span id="tel-e" class="val">0.00 V/m</span></div>
+                <div>$B_z(x_0, t)$:</div>
+                <div><span id="tel-b" class="val">0.00 T</span></div>
+                <div>$S_x(x_0, t)$ Instantâneo:</div>
+                <div><span id="tel-s" class="val">0.00 W/m²</span></div>
+                <div>$\langle S \rangle$ Médio Temporal:</div>
+                <div><span id="tel-savg" class="val">0.00 W/m²</span></div>
+                <div>Ortogonalidade $\mathbf{E} \cdot \mathbf{B}$:</div>
+                <div><span id="tel-ortho" class="val">0.000 (Exata)</span></div>
+            </div>
+        </div>
+
+        <!-- Painel de Controles Racionais -->
+        <div class="controls-panel">
+            <div class="panel-section-title">Parâmetros da Onda Plana</div>
+
+            <div class="control-group">
+                <div class="control-label">
+                    <span>Amplitude ($E_0$)</span>
+                    <span id="disp-amp" class="value-disp">3.0</span>
+                </div>
+                <input type="range" id="input-amp" min="0.5" max="5.0" step="0.1" value="3.0">
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">
+                    <span>Comprimento ($\lambda$)</span>
+                    <span id="disp-lambda" class="value-disp">6.0 m</span>
+                </div>
+                <input type="range" id="input-lambda" min="2.5" max="12.0" step="0.1" value="6.0">
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">
+                    <span>Velocidade de Fase ($v$)</span>
+                    <span id="disp-vel" class="value-disp">2.0 m/s</span>
+                </div>
+                <input type="range" id="input-vel" min="0.0" max="6.0" step="0.1" value="2.0">
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">
+                    <span>Posição da Sonda ($x$)</span>
+                    <span id="disp-probe" class="value-disp">0.0 m</span>
+                </div>
+                <input type="range" id="input-probe" min="-8.0" max="8.0" step="0.1" value="0.0">
+            </div>
+
+            <div class="panel-section-title">Orientação da Câmera (Esférica)</div>
+
+            <div class="control-group">
+                <div class="control-label">
+                    <span>Pitch (Elevação $\theta$)</span>
+                    <span id="disp-pitch" class="value-disp">1.15 rad</span>
+                </div>
+                <input type="range" id="input-pitch" min="0.1" max="3.0" step="0.01" value="1.15">
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">
+                    <span>Yaw (Azimute $\phi$)</span>
+                    <span id="disp-yaw" class="value-disp">0.78 rad</span>
+                </div>
+                <input type="range" id="input-yaw" min="-3.14" max="3.14" step="0.01" value="0.78">
+            </div>
+
+            <div class="panel-section-title">Controle de Execução</div>
+
+            <div class="btn-group">
+                <button class="btn" id="btn-pause">Pausar</button>
+                <button class="btn" id="btn-reset">Redefinir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seção de Rigor Acadêmico -->
+    <article class="academic-article">
+        <div class="academic-header">
+            <h2>Fundamentação Teórica: Teorema e Vetor de Poynting</h2>
+            <div class="meta">Eletrodinâmica Clássica • Formulação Microscópica no Vácuo</div>
+        </div>
+
+        <section class="academic-section">
+            <h3>1. Equações de Maxwell no Vácuo</h3>
+            <p>
+                A propagação de ondas eletromagnéticas no espaço livre ($\rho = 0, \mathbf{J} = \mathbf{0}$) é governada pelo sistema fundamental de equações diferenciais lineares parciais estabelecido por James Clerk Maxwell:
+            </p>
+            <div class="math-block">
+                $$\nabla \cdot \mathbf{E} = 0 \quad \text{(Lei de Gauss)}$$
+                $$\nabla \cdot \mathbf{B} = 0 \quad \text{(Ausência de Monopolos Magnéticos)}$$
+                $$\nabla \times \mathbf{E} = -\frac{\partial \mathbf{B}}{\partial t} \quad \text{(Lei de Faraday-Lenz)}$$
+                $$\nabla \times \mathbf{B} = \mu_0 \varepsilon_0 \frac{\partial \mathbf{E}}{\partial t} \quad \text{(Lei de Ampère-Maxwell)}$$
+            </div>
+            <p>
+                Onde $\varepsilon_0$ representa a permissividade elétrica do vácuo e $\mu_0$ a permeabilidade magnética do vácuo, vinculadas à velocidade de propagação da radiação no vácuo pela relação de onda $c = 1/\sqrt{\varepsilon_0 \mu_0}$.
+            </p>
+        </section>
+
+        <section class="academic-section">
+            <h3>2. Dedução do Teorema de Poynting</h3>
+            <p>
+                O Teorema de Poynting expressa localmente o princípio de conservação de energia para campos eletromagnéticos acoplados a distribuições de carga. Considere a densidade volúmica de energia armazenada nos campos elétrico e magnético:
+            </p>
+            <div class="math-block">
+                $$u = \frac{1}{2}\left( \varepsilon_0 |\mathbf{E}|^2 + \frac{1}{\mu_0} |\mathbf{B}|^2 \right)$$
+            </div>
+            <p>
+                Diferenciando $u$ em relação ao tempo e aplicando as propriedades de diferenciação vetorial:
+            </p>
+            <div class="math-block">
+                $$\frac{\partial u}{\partial t} = \varepsilon_0 \mathbf{E} \cdot \frac{\partial \mathbf{E}}{\partial t} + \frac{1}{\mu_0} \mathbf{B} \cdot \frac{\partial \mathbf{B}}{\partial t}$$
+            </div>
+            <p>
+                Substituindo as derivadas temporais a partir das leis de Faraday-Lenz e Ampère-Maxwell com densidade genérica de corrente $\mathbf{J}$:
+            </p>
+            <div class="math-block">
+                $$\frac{\partial u}{\partial t} = \frac{1}{\mu_0} \mathbf{E} \cdot (\nabla \times \mathbf{B} - \mu_0 \mathbf{J}) - \frac{1}{\mu_0} \mathbf{B} \cdot (\nabla \times \mathbf{E})$$
+            </div>
+            <p>
+                Recorrendo à identidade do cálculo vetorial para a divergência de um produto vetorial, $\nabla \cdot (\mathbf{A} \times \mathbf{B}) = \mathbf{B} \cdot (\nabla \times \mathbf{A}) - \mathbf{A} \cdot (\nabla \times \mathbf{B})$, reescreve-se:
+            </p>
+            <div class="math-block">
+                $$\frac{\partial u}{\partial t} = -\frac{1}{\mu_0} \nabla \cdot (\mathbf{E} \times \mathbf{B}) - \mathbf{J} \cdot \mathbf{E}$$
+            </div>
+            <p>
+                Definindo o <strong>Vetor de Poynting</strong> $\mathbf{S}$ como a densidade de fluxo superficial de energia eletromagnética ($\text{W/m}^2$):
+            </p>
+            <div class="math-block">
+                $$\mathbf{S} \equiv \frac{1}{\mu_0} (\mathbf{E} \times \mathbf{B})$$
+            </div>
+            <p>
+                Obtém-se a equação da continuidade da energia em sua forma diferencial canônica:
+            </p>
+            <div class="math-block">
+                $$\frac{\partial u}{\partial t} + \nabla \cdot \mathbf{S} = -\mathbf{J} \cdot \mathbf{E}$$
+            </div>
+            <p>
+                No vácuo desprovido de cargas dissipativas ($\mathbf{J} = \mathbf{0}$), a taxa de decaimento temporal da densidade de energia $u$ em qualquer ponto é identicamente balanceada pela divergência do fluxo de Poynting: $\frac{\partial u}{\partial t} + \nabla \cdot \mathbf{S} = 0$.
+            </p>
+        </section>
+
+        <section class="academic-section">
+            <h3>3. Solução em Onda Plana e Ortogonalidade Estrita</h3>
+            <p>
+                Para uma onda eletromagnética plana monocromática com polarização linear propagando-se no sentido positivo do eixo $x$ ($\hat{\mathbf{k}} = \hat{\mathbf{x}}$), os campos são descritos por:
+            </p>
+            <div class="math-block">
+                $$\mathbf{E}(x, t) = E_0 \cos(kx - \omega t) \, \hat{\mathbf{y}}$$
+                $$\mathbf{B}(x, t) = B_0 \cos(kx - \omega t) \, \hat{\mathbf{z}} = \frac{E_0}{c} \cos(kx - \omega t) \, \hat{\mathbf{z}}$$
+            </div>
+            <p>
+                Onde $k = 2\pi/\lambda$ é o número de onda angular e $\omega = 2\pi f = c k$ é a frequência angular. O produto vetorial instantâneo resulta em:
+            </p>
+            <div class="math-block">
+                $$\mathbf{S}(x, t) = \frac{1}{\mu_0} \left[ E_0 \cos(kx - \omega t)\hat{\mathbf{y}} \right] \times \left[ \frac{E_0}{c} \cos(kx - \omega t)\hat{\mathbf{z}} \right] = \frac{E_0^2}{\mu_0 c} \cos^2(kx - \omega t) \, (\hat{\mathbf{y}} \times \hat{\mathbf{z}})$$
+                $$\mathbf{S}(x, t) = \frac{E_0^2}{\mu_0 c} \cos^2(kx - \omega t) \, \hat{\mathbf{x}} = c \varepsilon_0 E_0^2 \cos^2(kx - \omega t) \, \hat{\mathbf{x}}$$
+            </div>
+
+            <div class="callout-box">
+                <strong>Propriedades Fundamentais Observadas na Simulação:</strong>
+                <ul style="margin-top: 0.5rem; padding-left: 1.25rem;">
+                    <li><strong>Ortogonalidade Mútua:</strong> Os vetores satisfazem estritamente $\mathbf{E} \cdot \mathbf{B} = 0$, $\mathbf{E} \cdot \mathbf{S} = 0$ e $\mathbf{B} \cdot \mathbf{S} = 0$ em qualquer instante do tempo e posição espacial.</li>
+                    <li><strong>Unidirecionalidade do Fluxo:</strong> Como $\cos^2(kx - \omega t) \ge 0$, o Vetor de Poynting $\mathbf{S}$ oscila em módulo mas <em>nunca inverte sua direção</em>; ele aponta invariavelmente no sentido do vetor de onda $\hat{\mathbf{k}} = \hat{\mathbf{x}}$, refletindo o transporte estritamente progressivo de energia.</li>
+                    <li><strong>Frequência Dobrada:</strong> O módulo $|\mathbf{S}|$ varia com frequência $2\omega$, possuindo média temporal dada pela intensidade da radiação:
+                        $$\langle \mathbf{S} \rangle = \frac{1}{2} c \varepsilon_0 E_0^2 \, \hat{\mathbf{x}} = \frac{E_0 B_0}{2 \mu_0} \, \hat{\mathbf{x}}$$
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="academic-section">
+            <h3>4. Referências Bibliográficas Fundamentais</h3>
+            <ol class="references">
+                <li>GRIFFITHS, David J. <em>Introduction to Electrodynamics</em>. 4. ed. Boston: Pearson, 2013. p. 356-364 (Chapter 8: Conservation Laws), p. 382-392 (Chapter 9: Electromagnetic Waves).</li>
+                <li>JACKSON, John David. <em>Classical Electrodynamics</em>. 3. ed. New York: John Wiley & Sons, 1999. p. 258-264 (Section 6.7: Poynting's Theorem and Conservation of Energy and Momentum).</li>
+                <li>HALLIDAY, David; RESNICK, Robert; WALKER, Jearl. <em>Fundamentos de Física: Óptica e Física Moderna</em>. v. 4, 10. ed. Rio de Janeiro: LTC, 2016. p. 2-15 (Capítulo 33: Ondas Eletromagnéticas e o Vetor de Poynting).</li>
+                <li>FEYNMAN, Richard P.; LEIGHTON, Robert B.; SANDS, Matthew. <em>The Feynman Lectures on Physics</em>, Vol. II: Mainly Electromagnetism and Matter. San Francisco: Basic Books, 2011. (Chapter 27: Field Energy and Field Momentum).</li>
+            </ol>
+        </section>
+    </article>
+
+    <footer>
+        Laboratório Virtual de Física Teórica e Computacional • Modelagem Matemática Homogênea via Three.js
+    </footer>
+
+    <!-- Script de Simulação Numérica e Renderização Three.js -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Renderização de fórmulas matemáticas com KaTeX
+            if (window.renderMathInElement) {
+                renderMathInElement(document.body, {
+                    delimiters: [
+                        { left: '$$', right: '$$', display: true },
+                        { left: '$', right: '$', display: false }
+                    ]
+                });
+            }
+
+            // Parâmetros Físicos e de Estado Inicial
+            const state = {
+                amplitude: 3.0,     // E_0 (V/m normalizado)
+                wavelength: 6.0,    // lambda (m)
+                velocity: 2.0,      // v (m/s)
+                probeX: 0.0,        // Posição de inspeção pontual
+                isPaused: false,
+                simTime: 0.0,
+                // Constantes normalizadas de escala para visualização proporcional
+                scaleB: 1.0,        // B normalizado para escala 3D
+                scaleS: 0.35        // Coeficiente de visualização gráfica para |S|
+            };
+
+            // Dimensões do domínio de propagação espacial
+            const X_MIN = -8.0;
+            const X_MAX = 8.0;
+            const NUM_CURVE_SAMPLES = 400;
+            const NUM_FIELD_VECTORS = 33; // Número de setas distribuídas no eixo x
+
+            // Elementos DOM
+            const container = document.getElementById('viewport-container');
+            const canvas = document.getElementById('canvas3d');
+
+            const inputAmp = document.getElementById('input-amp');
+            const dispAmp = document.getElementById('disp-amp');
+            const inputLambda = document.getElementById('input-lambda');
+            const dispLambda = document.getElementById('disp-lambda');
+            const inputVel = document.getElementById('input-vel');
+            const dispVel = document.getElementById('disp-vel');
+            const inputProbe = document.getElementById('input-probe');
+            const dispProbe = document.getElementById('disp-probe');
+            const inputPitch = document.getElementById('input-pitch');
+            const dispPitch = document.getElementById('disp-pitch');
+            const inputYaw = document.getElementById('input-yaw');
+            const dispYaw = document.getElementById('disp-yaw');
+
+            const btnPause = document.getElementById('btn-pause');
+            const btnReset = document.getElementById('btn-reset');
+
+            const telX = document.getElementById('tel-x');
+            const telPhi = document.getElementById('tel-phi');
+            const telE = document.getElementById('tel-e');
+            const telB = document.getElementById('tel-b');
+            const telS = document.getElementById('tel-s');
+            const telSavg = document.getElementById('tel-savg');
+            const telOrtho = document.getElementById('tel-ortho');
+
+            // Configuração do Three.js
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x05070c);
+
+            const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+            const cameraRadius = 24.0;
+
+            const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+
+            // Luzes
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(10, 20, 15);
+            scene.add(dirLight);
+
+            // Eixos de Referência Físicos
+            // Eixo de Propagação (X)
+            const axisXGeom = new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(X_MIN - 1.5, 0, 0),
+                new THREE.Vector3(X_MAX + 1.5, 0, 0)
+            ]);
+            const axisXMat = new THREE.LineBasicMaterial({ color: 0x475569, linewidth: 2 });
+            const axisX = new THREE.Line(axisXGeom, axisXMat);
+            scene.add(axisX);
+
+            // Grade no plano neutro (plano Y=0 / XZ)
+            const gridHelper = new THREE.GridHelper(20, 20, 0x1e293b, 0x0f172a);
+            gridHelper.position.y = 0;
+            scene.add(gridHelper);
+
+            // Marcador de Origem (0,0,0)
+            const originGeo = new THREE.SphereGeometry(0.08, 16, 16);
+            const originMat = new THREE.MeshBasicMaterial({ color: 0x64748b });
+            const originMesh = new THREE.Mesh(originGeo, originMat);
+            scene.add(originMesh);
+
+            // 1. Curvas Contínuas de Envelope da Onda (Linhas)
+            // Curva do Campo Elétrico E(x) no plano XY (Vermelho)
+            const eCurvePositions = new Float32Array(NUM_CURVE_SAMPLES * 3);
+            const eCurveGeom = new THREE.BufferGeometry();
+            eCurveGeom.setAttribute('position', new THREE.BufferAttribute(eCurvePositions, 3));
+            const eCurveMat = new THREE.LineBasicMaterial({ color: 0xff3366, linewidth: 2.5 });
+            const eCurve = new THREE.Line(eCurveGeom, eCurveMat);
+            scene.add(eCurve);
+
+            // Curva do Campo Magnético B(x) no plano XZ (Azul)
+            const bCurvePositions = new Float32Array(NUM_CURVE_SAMPLES * 3);
+            const bCurveGeom = new THREE.BufferGeometry();
+            bCurveGeom.setAttribute('position', new THREE.BufferAttribute(bCurvePositions, 3));
+            const bCurveMat = new THREE.LineBasicMaterial({ color: 0x00b4d8, linewidth: 2.5 });
+            const bCurve = new THREE.Line(bCurveGeom, bCurveMat);
+            scene.add(bCurve);
+
+            // 2. Campo Vetorial Distribuído ao Longo do Eixo
+            const fieldEArrows = [];
+            const fieldBArrows = [];
+
+            const stepX = (X_MAX - X_MIN) / (NUM_FIELD_VECTORS - 1);
+            for (let i = 0; i < NUM_FIELD_VECTORS; i++) {
+                const posX = X_MIN + i * stepX;
+
+                // Seta E (direção vertical y)
+                const arrowE = new THREE.ArrowHelper(
+                    new THREE.Vector3(0, 1, 0),
+                    new THREE.Vector3(posX, 0, 0),
+                    0.001,
+                    0xff3366,
+                    0.25,
+                    0.12
+                );
+                scene.add(arrowE);
+                fieldEArrows.push({ arrow: arrowE, x: posX });
+
+                // Seta B (direção horizontal z)
+                const arrowB = new THREE.ArrowHelper(
+                    new THREE.Vector3(0, 0, 1),
+                    new THREE.Vector3(posX, 0, 0),
+                    0.001,
+                    0x00b4d8,
+                    0.25,
+                    0.12
+                );
+                scene.add(arrowB);
+                fieldBArrows.push({ arrow: arrowB, x: posX });
+            }
+
+            // 3. Estação de Destaque: A Sonda Pontual em x0 (Tríade E, B, S)
+            const probeGroup = new THREE.Group();
+            scene.add(probeGroup);
+
+            // Marcador de base da sonda
+            const probeBaseGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.05, 16);
+            const probeBaseMat = new THREE.MeshBasicMaterial({ color: 0xf8fafc });
+            const probeBase = new THREE.Mesh(probeBaseGeo, probeBaseMat);
+            probeGroup.add(probeBase);
+
+            // Tríade de Vetores Principais com setas reforçadas
+            const probeArrowE = new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 0), 1, 0xff3366, 0.6, 0.28);
+            const probeArrowB = new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, 0), 1, 0x00b4d8, 0.6, 0.28);
+            const probeArrowS = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 0, 0), 1, 0xffb703, 0.6, 0.28);
+
+            probeGroup.add(probeArrowE);
+            probeGroup.add(probeArrowB);
+            probeGroup.add(probeArrowS);
+
+            // Sprite textual / Rótulos para os vetores de destaque
+            function makeTextSprite(message, colorHex) {
+                const canvasLabel = document.createElement('canvas');
+                canvasLabel.width = 128;
+                canvasLabel.height = 64;
+                const ctx = canvasLabel.getContext('2d');
+                ctx.fillStyle = colorHex;
+                ctx.font = 'Bold 36px "JetBrains Mono", monospace';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(message, 64, 32);
+
+                const texture = new THREE.CanvasTexture(canvasLabel);
+                const spriteMat = new THREE.SpriteMaterial({ map: texture, depthTest: false });
+                const sprite = new THREE.Sprite(spriteMat);
+                sprite.scale.set(1.2, 0.6, 1);
+                return sprite;
+            }
+
+            const labelE = makeTextSprite("E", "#ff3366");
+            const labelB = makeTextSprite("B", "#00b4d8");
+            const labelS = makeTextSprite("S", "#ffb703");
+            probeGroup.add(labelE);
+            probeGroup.add(labelB);
+            probeGroup.add(labelS);
+
+            // Sincronização Segura da Câmera (Pitch / Yaw esférico)
+            let isUpdatingCamera = false;
+
+            function updateCameraFromSliders() {
+                if (isUpdatingCamera) return;
+                isUpdatingCamera = true;
+
+                const pitch = parseFloat(inputPitch.value);
+                const yaw = parseFloat(inputYaw.value);
+
+                camera.position.x = cameraRadius * Math.sin(pitch) * Math.sin(yaw);
+                camera.position.y = cameraRadius * Math.cos(pitch);
+                camera.position.z = cameraRadius * Math.sin(pitch) * Math.cos(yaw);
+                camera.lookAt(0, 0, 0);
+                controls.target.set(0, 0, 0);
+                controls.update();
+
+                dispPitch.textContent = pitch.toFixed(2) + " rad";
+                dispYaw.textContent = yaw.toFixed(2) + " rad";
+
+                isUpdatingCamera = false;
+            }
+
+            function updateSlidersFromCamera() {
+                if (isUpdatingCamera) return;
+                isUpdatingCamera = true;
+
+                const r = camera.position.length();
+                if (r > 0.001) {
+                    const pitch = Math.acos(Math.min(Math.max(camera.position.y / r, -1), 1));
+                    const yaw = Math.atan2(camera.position.x, camera.position.z);
+
+                    inputPitch.value = pitch.toFixed(2);
+                    inputYaw.value = yaw.toFixed(2);
+                    dispPitch.textContent = pitch.toFixed(2) + " rad";
+                    dispYaw.textContent = yaw.toFixed(2) + " rad";
+                }
+
+                isUpdatingCamera = false;
+            }
+
+            controls.addEventListener('change', updateSlidersFromCamera);
+
+            // Listeners da UI
+            inputAmp.addEventListener('input', (e) => {
+                state.amplitude = parseFloat(e.target.value);
+                dispAmp.textContent = state.amplitude.toFixed(1);
+            });
+
+            inputLambda.addEventListener('input', (e) => {
+                state.wavelength = parseFloat(e.target.value);
+                dispLambda.textContent = state.wavelength.toFixed(1) + " m";
+            });
+
+            inputVel.addEventListener('input', (e) => {
+                state.velocity = parseFloat(e.target.value);
+                dispVel.textContent = state.velocity.toFixed(1) + " m/s";
+            });
+
+            inputProbe.addEventListener('input', (e) => {
+                state.probeX = parseFloat(e.target.value);
+                dispProbe.textContent = state.probeX.toFixed(1) + " m";
+            });
+
+            inputPitch.addEventListener('input', updateCameraFromSliders);
+            inputYaw.addEventListener('input', updateCameraFromSliders);
+
+            btnPause.addEventListener('click', () => {
+                state.isPaused = !state.isPaused;
+                btnPause.textContent = state.isPaused ? "Retomar" : "Pausar";
+            });
+
+            btnReset.addEventListener('click', () => {
+                state.amplitude = 3.0;
+                state.wavelength = 6.0;
+                state.velocity = 2.0;
+                state.probeX = 0.0;
+                state.simTime = 0.0;
+                state.isPaused = false;
+
+                inputAmp.value = 3.0;
+                dispAmp.textContent = "3.0";
+                inputLambda.value = 6.0;
+                dispLambda.textContent = "6.0 m";
+                inputVel.value = 2.0;
+                dispVel.textContent = "2.0 m/s";
+                inputProbe.value = 0.0;
+                dispProbe.textContent = "0.0 m";
+                inputPitch.value = 1.15;
+                inputYaw.value = 0.78;
+                btnPause.textContent = "Pausar";
+
+                updateCameraFromSliders();
+            });
+
+            window.addEventListener('resize', () => {
+                const w = container.clientWidth;
+                const h = container.clientHeight;
+                camera.aspect = w / h;
+                camera.updateProjectionMatrix();
+                renderer.setSize(w, h);
+            });
+
+            // Inicialização da Câmera
+            updateCameraFromSliders();
+
+            // Loop de Animação e Física
+            let lastTimestamp = performance.now();
+
+            function animate(timestamp) {
+                requestAnimationFrame(animate);
+
+                const dt = Math.min((timestamp - lastTimestamp) / 1000, 0.1);
+                lastTimestamp = timestamp;
+
+                if (!state.isPaused) {
+                    state.simTime += dt;
+                }
+
+                // Cálculo das variáveis físicas de onda
+                const k = (2.0 * Math.PI) / state.wavelength;
+                const omega = k * state.velocity;
+                const t = state.simTime;
+
+                // 1. Atualizar Curvas Contínuas
+                const ePos = eCurve.geometry.attributes.position.array;
+                const bPos = bCurve.geometry.attributes.position.array;
+                const dx = (X_MAX - X_MIN) / (NUM_CURVE_SAMPLES - 1);
+
+                for (let i = 0; i < NUM_CURVE_SAMPLES; i++) {
+                    const x = X_MIN + i * dx;
+                    const phase = k * x - omega * t;
+                    const cosVal = Math.cos(phase);
+
+                    const ey = state.amplitude * cosVal;
+                    const bz = (state.amplitude * state.scaleB) * cosVal;
+
+                    // Curva E (plano XY)
+                    ePos[i * 3 + 0] = x;
+                    ePos[i * 3 + 1] = ey;
+                    ePos[i * 3 + 2] = 0;
+
+                    // Curva B (plano XZ)
+                    bPos[i * 3 + 0] = x;
+                    bPos[i * 3 + 1] = 0;
+                    bPos[i * 3 + 2] = bz;
+                }
+                eCurve.geometry.attributes.position.needsUpdate = true;
+                bCurve.geometry.attributes.position.needsUpdate = true;
+
+                // 2. Atualizar Campo Vetorial Distribuído
+                for (let i = 0; i < fieldEArrows.length; i++) {
+                    const itemE = fieldEArrows[i];
+                    const itemB = fieldBArrows[i];
+                    const phase = k * itemE.x - omega * t;
+                    const cosVal = Math.cos(phase);
+
+                    const ey = state.amplitude * cosVal;
+                    const bz = (state.amplitude * state.scaleB) * cosVal;
+
+                    const absEy = Math.abs(ey);
+                    const absBz = Math.abs(bz);
+
+                    const dirEy = ey >= 0 ? 1 : -1;
+                    const dirBz = bz >= 0 ? 1 : -1;
+
+                    itemE.arrow.setDirection(new THREE.Vector3(0, dirEy, 0));
+                    itemE.arrow.setLength(Math.max(absEy, 0.001), Math.min(absEy * 0.35, 0.25), Math.min(absEy * 0.2, 0.12));
+
+                    itemB.arrow.setDirection(new THREE.Vector3(0, 0, dirBz));
+                    itemB.arrow.setLength(Math.max(absBz, 0.001), Math.min(absBz * 0.35, 0.25), Math.min(absBz * 0.2, 0.12));
+                }
+
+                // 3. Atualizar Estação da Sonda Pontual
+                probeGroup.position.set(state.probeX, 0, 0);
+
+                const probePhase = k * state.probeX - omega * t;
+                const probeCos = Math.cos(probePhase);
+
+                const probeEy = state.amplitude * probeCos;
+                const probeBz = (state.amplitude * state.scaleB) * probeCos;
+                // Vetor de Poynting: S = (E x B) / mu0; neste modelo, S aponta estritamente em +X
+                const probeSx = (state.scaleS * (state.amplitude * state.amplitude)) * (probeCos * probeCos);
+
+                // Magnitude e direção de E na sonda
+                const absPEy = Math.abs(probeEy);
+                const sgnPEy = probeEy >= 0 ? 1 : -1;
+                probeArrowE.setDirection(new THREE.Vector3(0, sgnPEy, 0));
+                probeArrowE.setLength(Math.max(absPEy, 0.001), Math.min(absPEy * 0.3, 0.5), Math.min(absPEy * 0.18, 0.25));
+                labelE.position.set(0, probeEy + (sgnPEy * 0.4), 0);
+
+                // Magnitude e direção de B na sonda
+                const absPBz = Math.abs(probeBz);
+                const sgnPBz = probeBz >= 0 ? 1 : -1;
+                probeArrowB.setDirection(new THREE.Vector3(0, 0, sgnPBz));
+                probeArrowB.setLength(Math.max(absPBz, 0.001), Math.min(absPBz * 0.3, 0.5), Math.min(absPBz * 0.18, 0.25));
+                labelB.position.set(0, 0, probeBz + (sgnPBz * 0.4));
+
+                // Magnitude e direção de S na sonda (sempre +X)
+                probeArrowS.setDirection(new THREE.Vector3(1, 0, 0));
+                probeArrowS.setLength(Math.max(probeSx, 0.001), Math.min(probeSx * 0.3, 0.5), Math.min(probeSx * 0.18, 0.25));
+                labelS.position.set(probeSx + 0.4, 0, 0);
+
+                // 4. Atualização da Telemetria Numérica
+                telX.textContent = state.probeX.toFixed(2) + " m";
+                telPhi.textContent = ((probePhase % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI)).toFixed(2) + " rad";
+                telE.textContent = probeEy.toFixed(2) + " V/m";
+                telB.textContent = (probeBz * 0.01).toFixed(4) + " T"; // Escala representativa
+                telS.textContent = (probeSx / state.scaleS).toFixed(2) + " W/m²";
+                telSavg.textContent = (0.5 * (state.amplitude * state.amplitude)).toFixed(2) + " W/m²";
+                // Produto interno numérico: E_y * 0 + 0 * 0 + 0 * B_z = 0 exato
+                telOrtho.textContent = "0.0000 (E ⟂ B ⟂ S)";
+
+                controls.update();
+                renderer.render(scene, camera);
+            }
+
+            requestAnimationFrame(animate);
+        });
+    </script>
+</body>
+</html>

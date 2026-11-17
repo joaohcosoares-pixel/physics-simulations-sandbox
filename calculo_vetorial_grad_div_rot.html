@@ -1,0 +1,2676 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cálculo Vetorial: Gradiente, Divergente e Rotacional — Simulação Interativa e Rigorosa</title>
+    
+    <!-- Tipografia Moderna: Inter e JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- KaTeX para renderização tipográfica precisa de LaTeX -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+    
+    <!-- Biblioteca p5.js via CDN oficial -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+
+    <style>
+        /* ==========================================================================
+           1. VARIÁVEIS CSS E DESIGN SYSTEM (DARK OBSIDIAN / SCIENTIFIC LAB)
+           ========================================================================== */
+        :root {
+            --bg-base: #070a12;
+            --bg-surface: #0e1424;
+            --bg-panel: rgba(15, 23, 42, 0.88);
+            --bg-card: rgba(30, 41, 59, 0.55);
+            --bg-card-hover: rgba(51, 65, 85, 0.45);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-active: rgba(99, 102, 241, 0.5);
+
+            --text-main: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+
+            /* Cores dos Operadores */
+            --gradient-primary: #f59e0b;
+            --gradient-glow: rgba(245, 158, 11, 0.35);
+            --divergence-source: #ef4444;
+            --divergence-sink: #3b82f6;
+            --divergence-neutral: #10b981;
+            --curl-primary: #a855f7;
+            --curl-cyan: #06b6d4;
+
+            --accent-brand: #6366f1;
+            --accent-brand-hover: #4f46e5;
+
+            --radius-xl: 18px;
+            --radius-lg: 12px;
+            --radius-md: 8px;
+            --radius-sm: 4px;
+
+            --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --transition-fast: 0.18s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            font-size: 14px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Layout Grid Principal */
+        .app-root {
+            display: flex;
+            flex-direction: column;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* ==========================================================================
+           2. CABEÇALHO E BARRA DE ABAS
+           ========================================================================== */
+        header.top-header {
+            height: 64px;
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 50;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .logo-symbol {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-mono);
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #ffffff;
+            box-shadow: 0 0 16px rgba(99, 102, 241, 0.4);
+        }
+
+        .header-title-group h1 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-title-group p {
+            font-size: 0.76rem;
+            color: var(--text-secondary);
+        }
+
+        /* Abas Principais de Seleção */
+        .tabs-nav {
+            display: flex;
+            align-items: center;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 4px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-subtle);
+            gap: 4px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all var(--transition-fast);
+        }
+
+        .tab-btn:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-btn.active {
+            color: #ffffff;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .tab-btn[data-mode="gradient"].active {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(217, 119, 6, 0.4));
+            border: 1px solid rgba(245, 158, 11, 0.6);
+            color: #fde68a;
+        }
+
+        .tab-btn[data-mode="divergence"].active {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.25), rgba(59, 130, 246, 0.3));
+            border: 1px solid rgba(239, 68, 68, 0.6);
+            color: #fecaca;
+        }
+
+        .tab-btn[data-mode="curl"].active {
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.25), rgba(6, 182, 212, 0.35));
+            border: 1px solid rgba(168, 85, 247, 0.6);
+            color: #e9d5ff;
+        }
+
+        .tab-badge {
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-action {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-main);
+            padding: 7px 12px;
+            border-radius: var(--radius-md);
+            font-size: 0.78rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .btn-action:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* ==========================================================================
+           3. CORPO PRINCIPAL: CANVAS INTERATIVO + PAINEL LATERAL
+           ========================================================================== */
+        .main-workspace {
+            flex: 1;
+            display: flex;
+            height: calc(100vh - 64px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Área do Canvas */
+        .canvas-area {
+            flex: 1;
+            height: 100%;
+            position: relative;
+            background-color: #06080e;
+            overflow: hidden;
+            outline: none;
+        }
+
+        #p5-canvas-wrapper {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        #p5-canvas-wrapper canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* HUD Overlay sobre o Canvas */
+        .canvas-hud {
+            position: absolute;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        .hud-top-left {
+            top: 16px;
+            left: 16px;
+            background: rgba(10, 15, 28, 0.78);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 12px 18px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            max-width: 380px;
+        }
+
+        .hud-top-left .hud-title {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .hud-top-left .hud-main-reading {
+            font-family: var(--font-mono);
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hud-sub-coords {
+            margin-top: 4px;
+            font-family: var(--font-mono);
+            font-size: 0.76rem;
+            color: var(--text-secondary);
+        }
+
+        .hud-bottom-left {
+            bottom: 16px;
+            left: 16px;
+            background: rgba(10, 15, 28, 0.72);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 8px 14px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .hud-bottom-left kbd {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: #ffffff;
+        }
+
+        .hud-floating-controls {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            display: flex;
+            gap: 8px;
+            pointer-events: auto;
+            z-index: 25;
+        }
+
+        .btn-circle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .btn-circle:hover {
+            background: rgba(30, 41, 59, 0.95);
+            border-color: rgba(255, 255, 255, 0.25);
+            transform: scale(1.05);
+        }
+
+        /* ==========================================================================
+           4. PAINEL LATERAL DE CONTROLE E TELEMETRIA (SIDEBAR)
+           ========================================================================== */
+        aside.sidebar {
+            width: 440px;
+            height: 100%;
+            background: var(--bg-panel);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-left: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            z-index: 30;
+            box-shadow: -8px 0 30px rgba(0, 0, 0, 0.45);
+        }
+
+        aside.sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        aside.sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.14);
+            border-radius: 3px;
+        }
+
+        .sidebar-content {
+            padding: 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Cartões de Seção */
+        .control-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            transition: border-color var(--transition-fast);
+        }
+
+        .control-card:hover {
+            border-color: rgba(255, 255, 255, 0.14);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-header h2 {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-header .badge-tag {
+            font-size: 0.68rem;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background: rgba(99, 102, 241, 0.15);
+            color: #818cf8;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+
+        /* Select de Presets */
+        .select-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .select-group label {
+            font-size: 0.74rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        select.custom-select {
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid var(--border-subtle);
+            color: #ffffff;
+            font-family: var(--font-sans);
+            font-size: 0.82rem;
+            padding: 9px 12px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            outline: none;
+            transition: all var(--transition-fast);
+        }
+
+        select.custom-select:hover, select.custom-select:focus {
+            border-color: var(--accent-brand);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+        }
+
+        /* Sliders e Controles Numéricos */
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .slider-label-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+        }
+
+        .slider-label-row span:first-child {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .slider-val-readout {
+            font-family: var(--font-mono);
+            font-weight: 600;
+            color: #ffffff;
+            background: rgba(0, 0, 0, 0.35);
+            padding: 1px 6px;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        input[type="range"].custom-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.12);
+            outline: none;
+            cursor: pointer;
+            transition: background var(--transition-fast);
+        }
+
+        input[type="range"].custom-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent-brand);
+            border: 2px solid #ffffff;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+            transition: transform var(--transition-fast);
+        }
+
+        input[type="range"].custom-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+
+        /* Bloco de Telemetria Matemática (KaTeX) */
+        .math-telemetry-box {
+            background: rgba(10, 15, 28, 0.7);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .math-formula-row {
+            padding: 6px 0;
+            overflow-x: auto;
+            text-align: center;
+        }
+
+        .math-formula-row::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .math-formula-row::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .verification-badge {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: var(--radius-md);
+            padding: 8px 12px;
+            font-size: 0.78rem;
+            color: #a7f3d0;
+        }
+
+        .verification-badge.active-red {
+            background: rgba(239, 68, 68, 0.12);
+            border-color: rgba(239, 68, 68, 0.35);
+            color: #fca5a5;
+        }
+
+        .verification-badge.active-blue {
+            background: rgba(59, 130, 246, 0.12);
+            border-color: rgba(59, 130, 246, 0.35);
+            color: #93c5fd;
+        }
+
+        .verification-badge.active-purple {
+            background: rgba(168, 85, 247, 0.12);
+            border-color: rgba(168, 85, 247, 0.35);
+            color: #d8b4fe;
+        }
+
+        .badge-status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            box-shadow: 0 0 8px currentColor;
+        }
+
+        /* Toggles de Opções Visuais */
+        .toggles-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .toggle-btn {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            padding: 8px 10px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-main);
+        }
+
+        .toggle-btn.active {
+            background: rgba(99, 102, 241, 0.18);
+            border-color: rgba(99, 102, 241, 0.5);
+            color: #c7d2fe;
+        }
+
+        .toggle-indicator {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+        }
+
+        .toggle-btn.active .toggle-indicator {
+            background: var(--accent-brand);
+            border-color: var(--accent-brand);
+            color: #ffffff;
+        }
+
+        /* Cartão Didático de Teoria */
+        .theory-card {
+            background: linear-gradient(180deg, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.6));
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            font-size: 0.78rem;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+
+        .theory-card h3 {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .theory-card p {
+            margin-bottom: 8px;
+        }
+
+        .theory-card p:last-child {
+            margin-bottom: 0;
+        }
+
+        .theory-highlight {
+            color: #f8fafc;
+            font-weight: 600;
+        }
+
+        /* Responsividade */
+        @media (max-width: 1024px) {
+            .app-root {
+                flex-direction: column;
+            }
+            .main-workspace {
+                flex-direction: column;
+            }
+            aside.sidebar {
+                width: 100%;
+                height: 380px;
+                border-left: none;
+                border-top: 1px solid var(--border-subtle);
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-root">
+    <!-- Cabeçalho Superior -->
+    <header class="top-header">
+        <div class="header-brand">
+            <div class="logo-symbol">∇</div>
+            <div class="header-title-group">
+                <h1>CÁLCULO VETORIAL 2D</h1>
+                <p>Visualização Geométrica Rigorosa: Gradiente, Divergente e Rotacional</p>
+            </div>
+        </div>
+
+        <!-- Abas de Modo -->
+        <nav class="tabs-nav" aria-label="Operadores Vetoriais">
+            <button class="tab-btn active" data-mode="gradient" id="tab-btn-gradient">
+                <span>Gradiente</span>
+                <span class="tab-badge">∇f</span>
+            </button>
+            <button class="tab-btn" data-mode="divergence" id="tab-btn-divergence">
+                <span>Divergente</span>
+                <span class="tab-badge">∇·F</span>
+            </button>
+            <button class="tab-btn" data-mode="curl" id="tab-btn-curl">
+                <span>Rotacional</span>
+                <span class="tab-badge">∇×F</span>
+            </button>
+        </nav>
+
+        <!-- Ações Globais -->
+        <div class="header-actions">
+            <button class="btn-action" id="btn-pause-play" title="Pausar / Retomar animação (Espaço)">
+                <span id="pause-icon">⏸</span>
+                <span id="pause-text">Pausar</span>
+            </button>
+            <button class="btn-action" id="btn-reset-probe" title="Resetar posição da sonda para a origem (R)">
+                <span>↺</span>
+                <span>Resetar Sonda</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Área Principal de Trabalho -->
+    <main class="main-workspace">
+        <!-- Canvas Interativo (p5.js) -->
+        <div class="canvas-area" id="canvas-container">
+            <div id="p5-canvas-wrapper"></div>
+
+            <!-- HUD: Leituras em Tempo Real sobre o Canvas -->
+            <div class="canvas-hud hud-top-left">
+                <div class="hud-title" id="hud-operator-title">CAMPO ESCALAR & GRADIENTE</div>
+                <div class="hud-main-reading" id="hud-primary-value">
+                    <span>f(x, y) = 0.000</span>
+                </div>
+                <div class="hud-sub-coords" id="hud-coords-value">
+                    Posição Sonda: (x = 1.20, y = 0.80) | Escala: [-4.0, +4.0]
+                </div>
+            </div>
+
+            <div class="canvas-hud hud-bottom-left">
+                <span><kbd>Arrastar</kbd> Move a sonda/roda</span>
+                <span><kbd>Espaço</kbd> Pausa</span>
+                <span><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> Alterna modo</span>
+                <span><kbd>R</kbd> Origem</span>
+            </div>
+
+            <!-- Botões Flutuantes de Câmera -->
+            <div class="hud-floating-controls">
+                <button class="btn-circle" id="btn-zoom-in" title="Aproximar Zoom">+</button>
+                <button class="btn-circle" id="btn-zoom-out" title="Afastar Zoom">−</button>
+                <button class="btn-circle" id="btn-center-view" title="Recentralizar Visão">⌖</button>
+            </div>
+        </div>
+
+        <!-- Barra Lateral: Controles e Telemetria KaTeX -->
+        <aside class="sidebar">
+            <div class="sidebar-content">
+
+                <!-- 1. SELEÇÃO DE CAMPO & PARÂMETROS -->
+                <section class="control-card">
+                    <div class="card-header">
+                        <h2>Configuração do Campo</h2>
+                        <span class="badge-tag" id="current-mode-tag">Gradiente</span>
+                    </div>
+
+                    <div class="select-group">
+                        <label for="preset-select">Campo Selecionado</label>
+                        <select id="preset-select" class="custom-select">
+                            <!-- Inserido dinamicamente pelo modo ativo -->
+                        </select>
+                    </div>
+
+                    <!-- Sliders Específicos por Modo -->
+                    <div id="dynamic-sliders-container" class="slider-group">
+                        <!-- Gerado via JavaScript de acordo com o operador ativo -->
+                    </div>
+
+                    <!-- Slider Comum: Densidade da Grade de Vetores -->
+                    <div class="slider-group">
+                        <div class="slider-label-row">
+                            <span>Densidade da Grade de Vetores</span>
+                            <span class="slider-val-readout" id="grid-density-val">18 × 18</span>
+                        </div>
+                        <input type="range" class="custom-slider" id="grid-density-slider" min="10" max="28" step="2" value="18">
+                    </div>
+
+                    <!-- Slider Comum: Escala dos Vetores -->
+                    <div class="slider-group">
+                        <div class="slider-label-row">
+                            <span>Tamanho das Setas Vetoriais</span>
+                            <span class="slider-val-readout" id="vector-scale-val">1.0×</span>
+                        </div>
+                        <input type="range" class="custom-slider" id="vector-scale-slider" min="0.4" max="2.2" step="0.1" value="1.0">
+                    </div>
+                </section>
+
+                <!-- 2. TELEMETRIA MATEMÁTICA EM TEMPO REAL (KaTeX) -->
+                <section class="control-card">
+                    <div class="card-header">
+                        <h2>Telemetria Matemática</h2>
+                        <span class="badge-tag" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.3);">KaTeX Live</span>
+                    </div>
+
+                    <div class="math-telemetry-box">
+                        <div class="math-formula-row" id="math-field-definition">
+                            <!-- LaTeX do campo -->
+                        </div>
+                        <div class="math-formula-row" id="math-operator-analytical">
+                            <!-- LaTeX da derivada analítica -->
+                        </div>
+                        <div class="math-formula-row" id="math-probe-evaluation">
+                            <!-- Avaliação pontual na sonda (x0, y0) -->
+                        </div>
+                    </div>
+
+                    <!-- Bloco de Verificação Algébrica e Geométrica -->
+                    <div class="verification-badge" id="verification-box">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span class="badge-status-dot" id="verification-dot"></span>
+                            <span id="verification-text">Rigor: Ortogonalidade ∇f ⟂ Isolinha confirmada</span>
+                        </div>
+                        <span style="font-family:var(--font-mono); font-weight:700;" id="verification-metric">θ = 90.0°</span>
+                    </div>
+                </section>
+
+                <!-- 3. CONTROLES DA SONDA / FERRAMENTA INTERATIVA -->
+                <section class="control-card" id="card-tool-controls">
+                    <div class="card-header">
+                        <h2 id="tool-card-title">Sonda Interativa</h2>
+                        <span class="badge-tag" id="tool-mode-badge">Ortogonalidade</span>
+                    </div>
+
+                    <div id="tool-controls-container">
+                        <!-- Conteúdo dinâmico: slider de raio, rotação direcional, fixação de sonda -->
+                    </div>
+                </section>
+
+                <!-- 4. CAMADAS VISUAIS E EXIBIÇÃO -->
+                <section class="control-card">
+                    <div class="card-header">
+                        <h2>Camadas Visuais</h2>
+                    </div>
+
+                    <div class="toggles-grid">
+                        <button class="toggle-btn active" id="toggle-vectors">
+                            <span>Grade Vetorial</span>
+                            <span class="toggle-indicator">✓</span>
+                        </button>
+                        <button class="toggle-btn active" id="toggle-heatmap">
+                            <span>Mapa de Cores</span>
+                            <span class="toggle-indicator">✓</span>
+                        </button>
+                        <button class="toggle-btn active" id="toggle-isolines">
+                            <span>Curvas de Nível</span>
+                            <span class="toggle-indicator">✓</span>
+                        </button>
+                        <button class="toggle-btn active" id="toggle-streamlines">
+                            <span>Fluxo de Partículas</span>
+                            <span class="toggle-indicator">✓</span>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- 5. FUNDAMENTO TEÓRICO E RIGOR GEOMÉTRICO -->
+                <section class="theory-card" id="theory-explanation-box">
+                    <!-- Preenchido dinamicamente com rigor matemático pelo JS -->
+                </section>
+
+            </div>
+        </aside>
+    </main>
+</div>
+
+<script>
+/**
+ * ==============================================================================
+ * MOTOR MATEMÁTICO & SIMULAÇÃO INTERATIVA DE CÁLCULO VETORIAL 2D
+ * Especialista em Matemática Aplicada & Front-End Avançado
+ * ==============================================================================
+ */
+
+// Estado Global da Aplicação
+const appState = {
+    mode: 'gradient', // 'gradient' | 'divergence' | 'curl'
+    isPaused: false,
+    simSpeed: 1.0,
+    time: 0.0,
+
+    // Câmera & Domínio
+    viewL: 3.5, // viewport em unidades físicas x, y em [-viewL, +viewL]
+    panX: 0,
+    panY: 0,
+
+    // Configurações Visuais
+    gridDivs: 18,
+    arrowScale: 1.0,
+    showVectors: true,
+    showHeatmap: true,
+    showIsolines: true,
+    showStreamlines: true,
+
+    // Sub-estado: Gradiente
+    gradient: {
+        preset: 'sincos',
+        params: {
+            amp: 1.0,
+            freq: 1.0,
+            sigma: 1.8,
+            d: 1.5
+        },
+        probe: { x: 1.2, y: 0.8 },
+        isPinned: false,
+        isDragging: false,
+        testAngle: 0.0, // ângulo para derivada direcional
+        autoSweep: false,
+        contourCount: 16
+    },
+
+    // Sub-estado: Divergente
+    divergence: {
+        preset: 'source_pure',
+        params: {
+            k: 1.0,
+            q: 3.0,
+            d: 1.6,
+            eps: 0.45
+        },
+        probe: { x: 0.0, y: 0.0 },
+        isPinned: false,
+        isDragging: false,
+        radius: 0.95,
+        samples: 24
+    },
+
+    // Sub-estado: Rotacional
+    curl: {
+        preset: 'rigid_vortex',
+        params: {
+            omega: 1.0,
+            k: 1.0,
+            eps: 0.3
+        },
+        wheel: { x: 1.2, y: 0.0 },
+        isPinned: false,
+        isDragging: false,
+        radius: 0.85,
+        angle: 0.0,
+        blades: 6
+    }
+};
+
+/**
+ * ==============================================================================
+ * DEFINIÇÕES ANALÍTICAS EXATAS DOS CAMPOS (MATEMÁTICA PURA)
+ * ==============================================================================
+ */
+
+// 1. CAMPOS ESCALARES & GRADIENTE
+const ScalarFields = {
+    sincos: {
+        name: 'Ondulações Senoidais: f(x,y) = A·sen(kx)cos(ky)',
+        latexDef: 'f(x, y) = A \\sin(k x) \\cos(k y)',
+        latexGrad: '\\nabla f = \\begin{bmatrix} A k \\cos(k x) \\cos(k y) \\\\ -A k \\sin(k x) \\sin(k y) \\end{bmatrix}',
+        f: (x, y, p) => p.amp * Math.sin(p.freq * x) * Math.cos(p.freq * y),
+        grad: (x, y, p) => {
+            const k = p.freq;
+            const fx = p.amp * k * Math.cos(k * x) * Math.cos(k * y);
+            const fy = -p.amp * k * Math.sin(k * x) * Math.sin(k * y);
+            return { fx, fy, mag: Math.hypot(fx, fy) };
+        },
+        range: [-1.2, 1.2]
+    },
+    gaussian: {
+        name: 'Colina Gaussiana: f(x,y) = A·exp(-(x²+y²)/σ²)',
+        latexDef: 'f(x, y) = A e^{-\\frac{x^2 + y^2}{\\sigma^2}}',
+        latexGrad: '\\nabla f = -\\frac{2}{\\sigma^2} f(x,y) \\begin{bmatrix} x \\\\ y \\end{bmatrix}',
+        f: (x, y, p) => {
+            const r2 = x * x + y * y;
+            const s2 = p.sigma * p.sigma;
+            return p.amp * 2.5 * Math.exp(-r2 / s2);
+        },
+        grad: (x, y, p) => {
+            const r2 = x * x + y * y;
+            const s2 = p.sigma * p.sigma;
+            const val = p.amp * 2.5 * Math.exp(-r2 / s2);
+            const factor = -2.0 / s2 * val;
+            const fx = factor * x;
+            const fy = factor * y;
+            return { fx, fy, mag: Math.hypot(fx, fy) };
+        },
+        range: [0, 2.6]
+    },
+    saddle: {
+        name: 'Ponto de Sela: f(x,y) = ½(x² - y²)',
+        latexDef: 'f(x, y) = \\frac{A}{2} (x^2 - y^2)',
+        latexGrad: '\\nabla f = A \\begin{bmatrix} x \\\\ -y \\end{bmatrix}',
+        f: (x, y, p) => 0.5 * p.amp * (x * x - y * y),
+        grad: (x, y, p) => {
+            const fx = p.amp * x;
+            const fy = -p.amp * y;
+            return { fx, fy, mag: Math.hypot(fx, fy) };
+        },
+        range: [-3.5, 3.5]
+    },
+    dipole_scalar: {
+        name: 'Dipolo Escalar (Pico e Poço)',
+        latexDef: 'f(x,y) = A e^{-\\frac{(x-d)^2+y^2}{\\sigma^2}} - A e^{-\\frac{(x+d)^2+y^2}{\\sigma^2}}',
+        latexGrad: '\\nabla f = -\\frac{2}{\\sigma^2} \\left( f_1 \\begin{bmatrix} x-d \\\\ y \\end{bmatrix} - f_2 \\begin{bmatrix} x+d \\\\ y \\end{bmatrix} \\right)',
+        f: (x, y, p) => {
+            const s2 = p.sigma * p.sigma;
+            const r1 = (x - p.d) * (x - p.d) + y * y;
+            const r2 = (x + p.d) * (x + p.d) + y * y;
+            return p.amp * 2.0 * (Math.exp(-r1 / s2) - Math.exp(-r2 / s2));
+        },
+        grad: (x, y, p) => {
+            const s2 = p.sigma * p.sigma;
+            const r1 = (x - p.d) * (x - p.d) + y * y;
+            const r2 = (x + p.d) * (x + p.d) + y * y;
+            const v1 = p.amp * 2.0 * Math.exp(-r1 / s2);
+            const v2 = p.amp * 2.0 * Math.exp(-r2 / s2);
+            const fx = (-2.0 * (x - p.d) / s2) * v1 - (-2.0 * (x + p.d) / s2) * v2;
+            const fy = (-2.0 * y / s2) * v1 - (-2.0 * y / s2) * v2;
+            return { fx, fy, mag: Math.hypot(fx, fy) };
+        },
+        range: [-2.2, 2.2]
+    }
+};
+
+// 2. CAMPOS VETORIAIS & DIVERGENTE
+const DivergenceFields = {
+    source_pure: {
+        name: 'Fonte Pura (Monopolo): F = k(x i + y j)',
+        latexDef: '\\mathbf{F}(x, y) = k \\begin{bmatrix} x \\\\ y \\end{bmatrix}',
+        latexDiv: '\\nabla \\cdot \\mathbf{F} = \\frac{\\partial (kx)}{\\partial x} + \\frac{\\partial (ky)}{\\partial y} = 2k > 0',
+        F: (x, y, p) => ({ Fx: p.k * x, Fy: p.k * y }),
+        div: (x, y, p) => 2.0 * p.k,
+        partials: (x, y, p) => ({ dFxdx: p.k, dFydy: p.k })
+    },
+    sink_pure: {
+        name: 'Sumidouro Puro: F = -k(x i + y j)',
+        latexDef: '\\mathbf{F}(x, y) = -k \\begin{bmatrix} x \\\\ y \\end{bmatrix}',
+        latexDiv: '\\nabla \\cdot \\mathbf{F} = \\frac{\\partial (-kx)}{\\partial x} + \\frac{\\partial (-ky)}{\\partial y} = -2k < 0',
+        F: (x, y, p) => ({ Fx: -p.k * x, Fy: -p.k * y }),
+        div: (x, y, p) => -2.0 * p.k,
+        partials: (x, y, p) => ({ dFxdx: -p.k, dFydy: -p.k })
+    },
+    dipole_div: {
+        name: 'Dipolo Fonte & Sumidouro Coexistentes',
+        latexDef: '\\mathbf{F} = q \\frac{\\mathbf{r}_+}{r_+^2 + \\epsilon} - q \\frac{\\mathbf{r}_-}{r_-^2 + \\epsilon}',
+        latexDiv: '\\nabla \\cdot \\mathbf{F} = \\frac{2q\\epsilon}{(r_+^2+\\epsilon)^2} - \\frac{2q\\epsilon}{(r_-^2+\\epsilon)^2}',
+        F: (x, y, p) => {
+            const x1 = x + p.d, y1 = y;
+            const x2 = x - p.d, y2 = y;
+            const d1_sq = x1 * x1 + y1 * y1 + p.eps;
+            const d2_sq = x2 * x2 + y2 * y2 + p.eps;
+            const Fx = p.q * (x1 / d1_sq - x2 / d2_sq);
+            const Fy = p.q * (y1 / d1_sq - y2 / d2_sq);
+            return { Fx, Fy };
+        },
+        div: (x, y, p) => {
+            const x1 = x + p.d, y1 = y;
+            const x2 = x - p.d, y2 = y;
+            const d1_sq = x1 * x1 + y1 * y1 + p.eps;
+            const d2_sq = x2 * x2 + y2 * y2 + p.eps;
+            const div1 = (2.0 * p.q * p.eps) / (d1_sq * d1_sq);
+            const div2 = (2.0 * p.q * p.eps) / (d2_sq * d2_sq);
+            return div1 - div2;
+        },
+        partials: (x, y, p) => {
+            // Diferenciação analítica direta
+            const x1 = x + p.d, y1 = y;
+            const x2 = x - p.d, y2 = y;
+            const d1 = x1 * x1 + y1 * y1 + p.eps;
+            const d2 = x2 * x2 + y2 * y2 + p.eps;
+            const dFxdx = p.q * ((d1 - 2 * x1 * x1) / (d1 * d1) - (d2 - 2 * x2 * x2) / (d2 * d2));
+            const dFydy = p.q * ((d1 - 2 * y1 * y1) / (d1 * d1) - (d2 - 2 * y2 * y2) / (d2 * d2));
+            return { dFxdx, dFydy };
+        }
+    },
+    incompressible_saddle: {
+        name: 'Campo Incompressível (Sela): F = x i - y j',
+        latexDef: '\\mathbf{F}(x, y) = k \\begin{bmatrix} x \\\\ -y \\end{bmatrix}',
+        latexDiv: '\\nabla \\cdot \\mathbf{F} = k - k = 0 \\quad (\\text{Incompress\\acute{i}vel})',
+        F: (x, y, p) => ({ Fx: p.k * x, Fy: -p.k * y }),
+        div: (x, y, p) => 0.0,
+        partials: (x, y, p) => ({ dFxdx: p.k, dFydy: -p.k })
+    },
+    sinusoidal_div: {
+        name: 'Grade de Fontes/Sumidouros: F = sen(x) i + sen(y) j',
+        latexDef: '\\mathbf{F}(x, y) = \\begin{bmatrix} \\sin(k x) \\\\ \\sin(k y) \\end{bmatrix}',
+        latexDiv: '\\nabla \\cdot \\mathbf{F} = k [\\cos(k x) + \\cos(k y)]',
+        F: (x, y, p) => ({ Fx: Math.sin(p.k * x), Fy: Math.sin(p.k * y) }),
+        div: (x, y, p) => p.k * (Math.cos(p.k * x) + Math.cos(p.k * y)),
+        partials: (x, y, p) => ({ dFxdx: p.k * Math.cos(p.k * x), dFydy: p.k * Math.cos(p.k * y) })
+    }
+};
+
+// 3. CAMPOS VETORIAIS & ROTACIONAL
+const CurlFields = {
+    rigid_vortex: {
+        name: 'Vórtice Rígido: F = -ωy i + ωx j',
+        latexDef: '\\mathbf{F}(x, y) = \\omega \\begin{bmatrix} -y \\\\ x \\end{bmatrix}',
+        latexCurl: '(\\nabla \\times \\mathbf{F})_z = \\frac{\\partial (\\omega x)}{\\partial x} - \\frac{\\partial (-\\omega y)}{\\partial y} = 2\\omega',
+        F: (x, y, p) => ({ Fx: -p.omega * y, Fy: p.omega * x }),
+        curl: (x, y, p) => 2.0 * p.omega,
+        partials: (x, y, p) => ({ dFydx: p.omega, dFxdy: -p.omega })
+    },
+    shear_flow: {
+        name: 'Cisalhamento Linear (Linhas Retas com Rotacional!)',
+        latexDef: '\\mathbf{F}(x, y) = \\begin{bmatrix} k y \\\\ 0 \\end{bmatrix}',
+        latexCurl: '(\\nabla \\times \\mathbf{F})_z = 0 - k = -k < 0 \\quad (\\circlearrowright \\text{ Hor\\acute{a}rio})',
+        F: (x, y, p) => ({ Fx: p.k * y, Fy: 0.0 }),
+        curl: (x, y, p) => -p.k,
+        partials: (x, y, p) => ({ dFydx: 0.0, dFxdy: p.k })
+    },
+    poiseuille_shear: {
+        name: 'Cisalhamento Parabólico (Poiseuille)',
+        latexDef: '\\mathbf{F}(x, y) = \\begin{bmatrix} k(2.5 - 0.4 y^2) \\\\ 0 \\end{bmatrix}',
+        latexCurl: '(\\nabla \\times \\mathbf{F})_z = 0 - (-0.8 k y) = +0.8 k y',
+        F: (x, y, p) => ({ Fx: p.k * Math.max(0, 2.5 - 0.4 * y * y), Fy: 0.0 }),
+        curl: (x, y, p) => 0.8 * p.k * y,
+        partials: (x, y, p) => ({ dFydx: 0.0, dFxdy: -0.8 * p.k * y })
+    },
+    irrotational_vortex: {
+        name: 'Vórtice Irrotacional (Livre / Potencial)',
+        latexDef: '\\mathbf{F}(x,y) = \\frac{k}{r^2 + \\epsilon} \\begin{bmatrix} -y \\\\ x \\end{bmatrix}',
+        latexCurl: '(\\nabla \\times \\mathbf{F})_z = \\frac{2k\\epsilon}{(r^2+\\epsilon)^2} \\approx 0 \\quad (\\forall r > 0)',
+        F: (x, y, p) => {
+            const r2 = x * x + y * y + p.eps;
+            return { Fx: -p.k * 3.0 * y / r2, Fy: p.k * 3.0 * x / r2 };
+        },
+        curl: (x, y, p) => {
+            const r2 = x * x + y * y + p.eps;
+            return (6.0 * p.k * p.eps) / (r2 * r2);
+        },
+        partials: (x, y, p) => {
+            const r2 = x * x + y * y + p.eps;
+            const k3 = 3.0 * p.k;
+            const dFydx = k3 * (r2 - 2 * x * x) / (r2 * r2);
+            const dFxdy = -k3 * (r2 - 2 * y * y) / (r2 * r2);
+            return { dFydx, dFxdy };
+        }
+    },
+    sinusoidal_eddy: {
+        name: 'Células de Vorticidade Senoidais: F = sen(y) i + cos(x) j',
+        latexDef: '\\mathbf{F}(x, y) = \\begin{bmatrix} \\sin(k y) \\\\ \\cos(k x) \\end{bmatrix}',
+        latexCurl: '(\\nabla \\times \\mathbf{F})_z = -k [\\sin(k x) + \\cos(k y)]',
+        F: (x, y, p) => ({ Fx: Math.sin(p.k * y), Fy: Math.cos(p.k * x) }),
+        curl: (x, y, p) => -p.k * (Math.sin(p.k * x) + Math.cos(p.k * y)),
+        partials: (x, y, p) => ({ dFydx: -p.k * Math.sin(p.k * x), dFxdy: p.k * Math.cos(p.k * y) })
+    }
+};
+
+/**
+ * ==============================================================================
+ * SISTEMA DE PARTÍCULAS DE FLUXO (STREAMLINE TRACERS)
+ * ==============================================================================
+ */
+class FlowParticleSystem {
+    constructor(count = 140) {
+        this.particles = [];
+        this.maxParticles = count;
+        this.init();
+    }
+
+    init() {
+        this.particles = [];
+        for (let i = 0; i < this.maxParticles; i++) {
+            this.particles.push(this.createParticle(true));
+        }
+    }
+
+    createParticle(randomAge = false) {
+        const L = appState.viewL;
+        return {
+            x: (Math.random() * 2 - 1) * L,
+            y: (Math.random() * 2 - 1) * L,
+            prevX: 0,
+            prevY: 0,
+            life: randomAge ? Math.random() * 120 : 120,
+            maxLife: 120 + Math.random() * 60,
+            speed: 0.8 + Math.random() * 0.4
+        };
+    }
+
+    update(dt) {
+        if (appState.isPaused) return;
+        const L = appState.viewL;
+
+        for (let p of this.particles) {
+            p.prevX = p.x;
+            p.prevY = p.y;
+            p.life--;
+
+            // Avalia velocidade de acordo com o modo ativo
+            let vx = 0, vy = 0;
+            if (appState.mode === 'gradient') {
+                const spec = ScalarFields[appState.gradient.preset];
+                const g = spec.grad(p.x, p.y, appState.gradient.params);
+                // Move ao longo do gradiente
+                vx = g.fx;
+                vy = g.fy;
+            } else if (appState.mode === 'divergence') {
+                const spec = DivergenceFields[appState.divergence.preset];
+                const f = spec.F(p.x, p.y, appState.divergence.params);
+                vx = f.Fx;
+                vy = f.Fy;
+            } else if (appState.mode === 'curl') {
+                const spec = CurlFields[appState.curl.preset];
+                const f = spec.F(p.x, p.y, appState.curl.params);
+                vx = f.Fx;
+                vy = f.Fy;
+            }
+
+            // Integração Euler com limitação de velocidade
+            const vMag = Math.hypot(vx, vy);
+            const clampV = Math.min(vMag, 3.5);
+            const scale = vMag > 0.0001 ? clampV / vMag : 0;
+
+            p.x += vx * scale * dt * 0.9 * p.speed;
+            p.y += vy * scale * dt * 0.9 * p.speed;
+
+            // Se sair dos limites ou morrer, recria
+            if (p.life <= 0 || Math.abs(p.x) > L * 1.15 || Math.abs(p.y) > L * 1.15) {
+                // Em divergência, favorece respawn em fontes
+                Object.assign(p, this.createParticle(false));
+                p.prevX = p.x;
+                p.prevY = p.y;
+            }
+        }
+    }
+
+    draw(pg, toScreen) {
+        if (!appState.showStreamlines) return;
+        pg.strokeWeight(1.4);
+        for (let p of this.particles) {
+            const alpha = Math.sin((p.life / p.maxLife) * Math.PI) * 160;
+            if (alpha <= 5) continue;
+
+            const s1 = toScreen(p.prevX, p.prevY);
+            const s2 = toScreen(p.x, p.y);
+
+            // Cor de acordo com o operador
+            if (appState.mode === 'gradient') {
+                pg.stroke(245, 158, 11, alpha);
+            } else if (appState.mode === 'divergence') {
+                pg.stroke(147, 197, 253, alpha);
+            } else {
+                pg.stroke(192, 132, 252, alpha);
+            }
+            pg.line(s1.x, s1.y, s2.x, s2.y);
+        }
+    }
+}
+
+/**
+ * ==============================================================================
+ * MOTOR GRÁFICO MARCHING SQUARES PARA CURVAS DE NÍVEL (ISOLINHAS EXATAS)
+ * ==============================================================================
+ */
+class MarchingSquaresRenderer {
+    constructor(gridSize = 70) {
+        this.gridSize = gridSize;
+        this.values = [];
+    }
+
+    computeFieldGrid(fieldFunc, params, viewL) {
+        const N = this.gridSize;
+        const step = (2.0 * viewL) / N;
+        this.values = new Float32Array((N + 1) * (N + 1));
+        this.minVal = Infinity;
+        this.maxVal = -Infinity;
+
+        let idx = 0;
+        for (let j = 0; j <= N; j++) {
+            const y = viewL - j * step;
+            for (let i = 0; i <= N; i++) {
+                const x = -viewL + i * step;
+                const v = fieldFunc(x, y, params);
+                this.values[idx++] = v;
+                if (v < this.minVal) this.minVal = v;
+                if (v > this.maxVal) this.maxVal = v;
+            }
+        }
+    }
+
+    drawContourLevel(pg, level, toScreen, viewL, strokeColor, strokeW = 1.0) {
+        const N = this.gridSize;
+        const step = (2.0 * viewL) / N;
+
+        pg.stroke(strokeColor);
+        pg.strokeWeight(strokeW);
+
+        // Marching Squares em cada célula [i, j]
+        for (let j = 0; j < N; j++) {
+            const yTop = viewL - j * step;
+            const yBot = yTop - step;
+
+            for (let i = 0; i < N; i++) {
+                const xLeft = -viewL + i * step;
+                const xRight = xLeft + step;
+
+                // Valores nos 4 cantos
+                const idxTL = j * (N + 1) + i;
+                const idxTR = idxTL + 1;
+                const idxBL = (j + 1) * (N + 1) + i;
+                const idxBR = idxBL + 1;
+
+                const vTL = this.values[idxTL];
+                const vTR = this.values[idxTR];
+                const vBL = this.values[idxBL];
+                const vBR = this.values[idxBR];
+
+                let cellCase = 0;
+                if (vTL >= level) cellCase |= 8;
+                if (vTR >= level) cellCase |= 4;
+                if (vBR >= level) cellCase |= 2;
+                if (vBL >= level) cellCase |= 1;
+
+                if (cellCase === 0 || cellCase === 15) continue;
+
+                // Interpolação linear dos pontos nas 4 arestas
+                const topP = () => {
+                    const t = (level - vTL) / (vTR - vTL || 1e-6);
+                    return { x: xLeft + t * step, y: yTop };
+                };
+                const rightP = () => {
+                    const t = (level - vTR) / (vBR - vTR || 1e-6);
+                    return { x: xRight, y: yTop - t * step };
+                };
+                const botP = () => {
+                    const t = (level - vBL) / (vBR - vBL || 1e-6);
+                    return { x: xLeft + t * step, y: yBot };
+                };
+                const leftP = () => {
+                    const t = (level - vTL) / (vBL - vTL || 1e-6);
+                    return { x: xLeft, y: yTop - t * step };
+                };
+
+                const drawSeg = (p1, p2) => {
+                    const s1 = toScreen(p1.x, p1.y);
+                    const s2 = toScreen(p2.x, p2.y);
+                    pg.line(s1.x, s1.y, s2.x, s2.y);
+                };
+
+                switch (cellCase) {
+                    case 1:  case 14: drawSeg(leftP(), botP()); break;
+                    case 2:  case 13: drawSeg(botP(), rightP()); break;
+                    case 3:  case 12: drawSeg(leftP(), rightP()); break;
+                    case 4:  case 11: drawSeg(topP(), rightP()); break;
+                    case 5:
+                        drawSeg(leftP(), topP());
+                        drawSeg(botP(), rightP());
+                        break;
+                    case 6:  case 9:  drawSeg(topP(), botP()); break;
+                    case 7:  case 8:  drawSeg(leftP(), topP()); break;
+                    case 10:
+                        drawSeg(leftP(), botP());
+                        drawSeg(topP(), rightP());
+                        break;
+                }
+            }
+        }
+    }
+}
+
+/**
+ * ==============================================================================
+ * INSTÂNCIA P5.JS (RENDERIZADOR VETORIAL 2D & INTERAÇÃO)
+ * ==============================================================================
+ */
+let p5Instance = null;
+const flowParticles = new FlowParticleSystem(150);
+const marchingSquares = new MarchingSquaresRenderer(75);
+
+const sketch = (p) => {
+    let heatmapBuffer = null;
+    let canvasW = 800;
+    let canvasH = 600;
+
+    // Conversores de Coordenadas
+    const toScreen = (xw, yw) => {
+        const pxPerUnit = Math.min(canvasW, canvasH) / (2.0 * appState.viewL);
+        return {
+            x: canvasW / 2 + appState.panX + xw * pxPerUnit,
+            y: canvasH / 2 + appState.panY - yw * pxPerUnit
+        };
+    };
+
+    const toWorld = (xs, ys) => {
+        const pxPerUnit = Math.min(canvasW, canvasH) / (2.0 * appState.viewL);
+        return {
+            x: (xs - canvasW / 2 - appState.panX) / pxPerUnit,
+            y: (canvasH / 2 + appState.panY - ys) / pxPerUnit
+        };
+    };
+
+    p.setup = () => {
+        const container = document.getElementById('p5-canvas-wrapper');
+        canvasW = container.clientWidth || 800;
+        canvasH = container.clientHeight || 600;
+        const canvas = p.createCanvas(canvasW, canvasH);
+        canvas.parent('p5-canvas-wrapper');
+        p.pixelDensity(window.devicePixelRatio || 1);
+
+        // Buffer offscreen para mapa de calor
+        heatmapBuffer = p.createGraphics(100, 100);
+        updateHeatmapImage();
+    };
+
+    p.windowResized = () => {
+        const container = document.getElementById('p5-canvas-wrapper');
+        canvasW = container.clientWidth || 800;
+        canvasH = container.clientHeight || 600;
+        p.resizeCanvas(canvasW, canvasH);
+        updateHeatmapImage();
+    };
+
+    function updateHeatmapImage() {
+        if (!heatmapBuffer) return;
+        const res = 100;
+        heatmapBuffer.loadPixels();
+        const L = appState.viewL;
+        const step = (2.0 * L) / res;
+
+        if (appState.mode === 'gradient') {
+            const spec = ScalarFields[appState.gradient.preset];
+            const prms = appState.gradient.params;
+            for (let j = 0; j < res; j++) {
+                const y = L - j * step;
+                for (let i = 0; i < res; i++) {
+                    const x = -L + i * step;
+                    const val = spec.f(x, y, prms);
+                    // Colormap Coolwarm / Viridis Normalizado
+                    const norm = Math.max(0, Math.min(1, (val - spec.range[0]) / (spec.range[1] - spec.range[0] || 1)));
+                    
+                    // Gradiente azul escuro -> ciano -> dourado -> carmesim
+                    let r, g, b;
+                    if (norm < 0.5) {
+                        const t = norm * 2.0;
+                        r = Math.floor(15 + t * 40);
+                        g = Math.floor(30 + t * 110);
+                        b = Math.floor(80 + t * 110);
+                    } else {
+                        const t = (norm - 0.5) * 2.0;
+                        r = Math.floor(55 + t * 190);
+                        g = Math.floor(140 - t * 40);
+                        b = Math.floor(190 - t * 150);
+                    }
+                    const pxIdx = (j * res + i) * 4;
+                    heatmapBuffer.pixels[pxIdx] = r;
+                    heatmapBuffer.pixels[pxIdx + 1] = g;
+                    heatmapBuffer.pixels[pxIdx + 2] = b;
+                    heatmapBuffer.pixels[pxIdx + 3] = 160; // Alpha translúcido
+                }
+            }
+        } else if (appState.mode === 'divergence') {
+            const spec = DivergenceFields[appState.divergence.preset];
+            const prms = appState.divergence.params;
+            for (let j = 0; j < res; j++) {
+                const y = L - j * step;
+                for (let i = 0; i < res; i++) {
+                    const x = -L + i * step;
+                    const div = spec.div(x, y, prms);
+                    // Negativo: Azul (Sumidouro) | Zero: Neutro | Positivo: Vermelho (Fonte)
+                    const clampDiv = Math.max(-2.5, Math.min(2.5, div));
+                    let r = 18, g = 24, b = 38, a = 40;
+                    if (clampDiv > 0.05) {
+                        const intensity = clampDiv / 2.5;
+                        r = Math.floor(40 + intensity * 190);
+                        g = Math.floor(20 + intensity * 20);
+                        b = Math.floor(30);
+                        a = Math.floor(60 + intensity * 120);
+                    } else if (clampDiv < -0.05) {
+                        const intensity = -clampDiv / 2.5;
+                        r = Math.floor(20);
+                        g = Math.floor(40 + intensity * 60);
+                        b = Math.floor(60 + intensity * 180);
+                        a = Math.floor(60 + intensity * 120);
+                    }
+                    const pxIdx = (j * res + i) * 4;
+                    heatmapBuffer.pixels[pxIdx] = r;
+                    heatmapBuffer.pixels[pxIdx + 1] = g;
+                    heatmapBuffer.pixels[pxIdx + 2] = b;
+                    heatmapBuffer.pixels[pxIdx + 3] = a;
+                }
+            }
+        } else if (appState.mode === 'curl') {
+            const spec = CurlFields[appState.curl.preset];
+            const prms = appState.curl.params;
+            for (let j = 0; j < res; j++) {
+                const y = L - j * step;
+                for (let i = 0; i < res; i++) {
+                    const x = -L + i * step;
+                    const curlZ = spec.curl(x, y, prms);
+                    const clampCurl = Math.max(-2.5, Math.min(2.5, curlZ));
+                    let r = 18, g = 24, b = 38, a = 40;
+                    if (clampCurl > 0.05) {
+                        // Anti-horário: Púrpura / Violeta
+                        const intensity = clampCurl / 2.5;
+                        r = Math.floor(60 + intensity * 140);
+                        g = Math.floor(20 + intensity * 40);
+                        b = Math.floor(80 + intensity * 150);
+                        a = Math.floor(60 + intensity * 110);
+                    } else if (clampCurl < -0.05) {
+                        // Horário: Ciano / Esmeralda
+                        const intensity = -clampCurl / 2.5;
+                        r = Math.floor(10);
+                        g = Math.floor(60 + intensity * 130);
+                        b = Math.floor(80 + intensity * 140);
+                        a = Math.floor(60 + intensity * 110);
+                    }
+                    const pxIdx = (j * res + i) * 4;
+                    heatmapBuffer.pixels[pxIdx] = r;
+                    heatmapBuffer.pixels[pxIdx + 1] = g;
+                    heatmapBuffer.pixels[pxIdx + 2] = b;
+                    heatmapBuffer.pixels[pxIdx + 3] = a;
+                }
+            }
+        }
+        heatmapBuffer.updatePixels();
+    }
+
+    p.draw = () => {
+        p.background(7, 10, 18);
+        const dt = (1.0 / 60.0) * appState.simSpeed;
+        if (!appState.isPaused) {
+            appState.time += dt;
+        }
+
+        // 1. Desenha Grade e Eixos Cartesianos
+        drawCartesianGrid();
+
+        // 2. Desenha Mapa de Calor (se ativado)
+        if (appState.showHeatmap && heatmapBuffer) {
+            p.image(heatmapBuffer, 0, 0, canvasW, canvasH);
+        }
+
+        // 3. Atualiza e Renderiza Partículas de Fluxo
+        flowParticles.update(dt);
+        flowParticles.draw(p, toScreen);
+
+        // 4. Renderizações Específicas do Operador Ativo
+        if (appState.mode === 'gradient') {
+            drawGradientSimulation();
+        } else if (appState.mode === 'divergence') {
+            drawDivergenceSimulation();
+        } else if (appState.mode === 'curl') {
+            drawCurlSimulation(dt);
+        }
+
+        // 5. Feedback visual dinâmico do cursor
+        const wPos = toWorld(p.mouseX, p.mouseY);
+        let isHovering = false;
+        if (appState.mode === 'gradient') {
+            isHovering = Math.hypot(wPos.x - appState.gradient.probe.x, wPos.y - appState.gradient.probe.y) < 0.6;
+        } else if (appState.mode === 'divergence') {
+            isHovering = Math.hypot(wPos.x - appState.divergence.probe.x, wPos.y - appState.divergence.probe.y) < appState.divergence.radius;
+        } else if (appState.mode === 'curl') {
+            isHovering = Math.hypot(wPos.x - appState.curl.wheel.x, wPos.y - appState.curl.wheel.y) < appState.curl.radius;
+        }
+
+        const isDragging = appState.gradient.isDragging || appState.divergence.isDragging || appState.curl.isDragging;
+        if (isDragging) {
+            p.cursor('grabbing');
+        } else if (isHovering) {
+            p.cursor('grab');
+        } else {
+            p.cursor('crosshair');
+        }
+
+        // 6. Atualiza Telemetria e HUD
+        updateHUDAndTelemetry();
+    };
+
+    /**
+     * GRADE CARTESIANA E EIXOS
+     */
+    function drawCartesianGrid() {
+        const L = appState.viewL;
+        const step = 1.0; // Unidade 1.0 no mundo físico
+
+        p.stroke(255, 255, 255, 12);
+        p.strokeWeight(1);
+
+        for (let x = -Math.ceil(L); x <= Math.ceil(L); x += step) {
+            const p1 = toScreen(x, -L * 1.5);
+            const p2 = toScreen(x, L * 1.5);
+            p.line(p1.x, p1.y, p2.x, p2.y);
+        }
+        for (let y = -Math.ceil(L); y <= Math.ceil(L); y += step) {
+            const p1 = toScreen(-L * 1.5, y);
+            const p2 = toScreen(L * 1.5, y);
+            p.line(p1.x, p1.y, p2.x, p2.y);
+        }
+
+        // Eixos Principais X e Y
+        const oScreen = toScreen(0, 0);
+        p.stroke(255, 255, 255, 50);
+        p.strokeWeight(1.5);
+        p.line(0, oScreen.y, canvasW, oScreen.y); // Eixo X
+        p.line(oScreen.x, 0, oScreen.x, canvasH); // Eixo Y
+
+        // Rótulos nos Eixos
+        p.fill(148, 163, 184, 180);
+        p.noStroke();
+        p.textSize(10);
+        p.textAlign(p.CENTER, p.TOP);
+        for (let x = -Math.floor(L); x <= Math.floor(L); x++) {
+            if (x === 0) continue;
+            const pt = toScreen(x, 0);
+            p.text(x, pt.x, pt.y + 4);
+        }
+        p.textAlign(p.RIGHT, p.CENTER);
+        for (let y = -Math.floor(L); y <= Math.floor(L); y++) {
+            if (y === 0) continue;
+            const pt = toScreen(0, y);
+            p.text(y, pt.x - 5, pt.y);
+        }
+    }
+
+    /**
+     * ==========================================================================
+     * MODO 1: GRADIENTE (∇f)
+     * Curvas de Nível + Campo Vetorial Ortogonal + Sonda Interativa
+     * ==========================================================================
+     */
+    function drawGradientSimulation() {
+        const spec = ScalarFields[appState.gradient.preset];
+        const prms = appState.gradient.params;
+        const L = appState.viewL;
+
+        // A. Curvas de Nível (Marching Squares)
+        if (appState.showIsolines) {
+            marchingSquares.computeFieldGrid(spec.f, prms, L);
+            const minV = spec.range[0];
+            const maxV = spec.range[1];
+            const count = appState.gradient.contourCount;
+
+            for (let k = 0; k <= count; k++) {
+                const level = minV + (k / count) * (maxV - minV);
+                const col = p.color(245, 158, 11, 45); // Âmbar translúcido
+                marchingSquares.drawContourLevel(p, level, toScreen, L, col, 1.0);
+            }
+        }
+
+        // B. Campo Vetorial de Gradiente ∇f na Grade
+        if (appState.showVectors) {
+            const divs = appState.gridDivs;
+            const step = (2.0 * L) / divs;
+            const arrowBaseScale = (step * 0.45) * appState.arrowScale;
+
+            for (let i = 0; i <= divs; i++) {
+                const x = -L + i * step;
+                for (let j = 0; j <= divs; j++) {
+                    const y = -L + j * step;
+                    const g = spec.grad(x, y, prms);
+                    if (g.mag < 0.001) continue;
+
+                    const origin = toScreen(x, y);
+                    // Normaliza com saturação suave para clareza geométrica
+                    const len = Math.min(g.mag, 2.2) * arrowBaseScale;
+                    const uX = g.fx / g.mag;
+                    const uY = g.fy / g.mag;
+
+                    // Cor baseada na magnitude do gradiente (amarelo brilhante)
+                    const col = p.color(251, 191, 36, Math.min(230, 80 + g.mag * 80));
+                    drawVectorArrow(origin.x, origin.y, uX * len, -uY * len, col, 1.2, 5);
+                }
+            }
+        }
+
+        // C. Sonda Interativa de Rigor Geométrico
+        const probe = appState.gradient.probe;
+        const probeScreen = toScreen(probe.x, probe.y);
+        const f0 = spec.f(probe.x, probe.y, prms);
+        const g0 = spec.grad(probe.x, probe.y, prms);
+
+        // Curva de Nível Exata Passando na Sonda: f(x, y) = f(x0, y0)
+        p.stroke(251, 191, 36, 220); // Dourado brilhante
+        p.strokeWeight(2.2);
+        marchingSquares.drawContourLevel(p, f0, toScreen, L, p.color(251, 191, 36, 230), 2.2);
+
+        // Vetor Gradiente ∇f na Sonda (Aponta na subida mais íngreme)
+        const gradLenPx = 70 * appState.arrowScale;
+        let gxNorm = 0, gyNorm = 0;
+        if (g0.mag > 0.001) {
+            gxNorm = g0.fx / g0.mag;
+            gyNorm = g0.fy / g0.mag;
+        }
+        const gradEnd = {
+            x: probeScreen.x + gxNorm * gradLenPx,
+            y: probeScreen.y - gyNorm * gradLenPx
+        };
+
+        // Vetor Tangente T à Curva de Nível: T = (-fy, fx)
+        const tangLenPx = 60 * appState.arrowScale;
+        const txNorm = -gyNorm;
+        const tyNorm = gxNorm;
+        const tangEnd1 = {
+            x: probeScreen.x + txNorm * tangLenPx,
+            y: probeScreen.y - tyNorm * tangLenPx
+        };
+        const tangEnd2 = {
+            x: probeScreen.x - txNorm * tangLenPx,
+            y: probeScreen.y + tyNorm * tangLenPx
+        };
+
+        // Desenha Linha Tangente à Isolinha (Tracejada)
+        p.stroke(52, 211, 153, 200); // Verde esmeralda
+        p.strokeWeight(1.8);
+        drawDashedLine(tangEnd2.x, tangEnd2.y, tangEnd1.x, tangEnd1.y, 4, 4);
+
+        // Seta do Vetor Gradiente ∇f (Brilhante e Destaque)
+        drawVectorArrow(probeScreen.x, probeScreen.y, gxNorm * gradLenPx, -gyNorm * gradLenPx, p.color(245, 158, 11), 3.0, 9);
+
+        // Símbolo de Ortogonalidade Estrita (Ângulo Reto de 90°)
+        if (g0.mag > 0.05) {
+            drawRightAngleIndicator(probeScreen.x, probeScreen.y, gxNorm, -gyNorm, txNorm, -tyNorm, 16);
+        }
+
+        // Testador de Derivada Direcional Du f = ∇f · u
+        if (appState.gradient.autoSweep && !appState.isPaused) {
+            appState.gradient.testAngle += 0.02;
+        }
+        const uAngle = appState.gradient.testAngle;
+        const uDirX = Math.cos(uAngle);
+        const uDirY = Math.sin(uAngle);
+        const dirLenPx = 48;
+        const dirEnd = {
+            x: probeScreen.x + uDirX * dirLenPx,
+            y: probeScreen.y - uDirY * dirLenPx
+        };
+        // Vetor unitário u (Azul ciano)
+        drawVectorArrow(probeScreen.x, probeScreen.y, uDirX * dirLenPx, -uDirY * dirLenPx, p.color(56, 189, 248), 2.0, 6);
+
+        // Desenha o Ponto Central da Sonda
+        p.fill(255);
+        p.stroke(245, 158, 11);
+        p.strokeWeight(3);
+        p.circle(probeScreen.x, probeScreen.y, 11);
+
+        // Rótulos explicativos flutuantes
+        p.noStroke();
+        p.textSize(11);
+        p.fill(245, 158, 11);
+        p.textAlign(p.LEFT, p.BOTTOM);
+        p.text('∇f (Maior subida)', gradEnd.x + 8, gradEnd.y);
+
+        p.fill(52, 211, 153);
+        p.text('T (Tangente à Isolinha)', tangEnd1.x + 8, tangEnd1.y);
+
+        p.fill(56, 189, 248);
+        p.text('û (Direção)', dirEnd.x + 6, dirEnd.y + 4);
+    }
+
+    /**
+     * ==========================================================================
+     * MODO 2: DIVERGENTE (∇ · F)
+     * Volume Circular Infinitesimal + Fluxo Líquido + Teorema de Gauss-Green
+     * ==========================================================================
+     */
+    function drawDivergenceSimulation() {
+        const spec = DivergenceFields[appState.divergence.preset];
+        const prms = appState.divergence.params;
+        const L = appState.viewL;
+
+        // A. Campo Vetorial na Grade
+        if (appState.showVectors) {
+            const divs = appState.gridDivs;
+            const step = (2.0 * L) / divs;
+            const arrowBaseScale = (step * 0.45) * appState.arrowScale;
+
+            for (let i = 0; i <= divs; i++) {
+                const x = -L + i * step;
+                for (let j = 0; j <= divs; j++) {
+                    const y = -L + j * step;
+                    const f = spec.F(x, y, prms);
+                    const mag = Math.hypot(f.Fx, f.Fy);
+                    if (mag < 0.001) continue;
+
+                    const origin = toScreen(x, y);
+                    const len = Math.min(mag, 2.4) * arrowBaseScale;
+                    const uX = f.Fx / mag;
+                    const uY = f.Fy / mag;
+
+                    // Cor neutra translúcida
+                    const col = p.color(148, 163, 184, 110);
+                    drawVectorArrow(origin.x, origin.y, uX * len, -uY * len, col, 1.2, 5);
+                }
+            }
+        }
+
+        // B. Região Circular Interativa (Volume Infinitesimal 2D)
+        const probe = appState.divergence.probe;
+        const R = appState.divergence.radius;
+        const centerScreen = toScreen(probe.x, probe.y);
+        const pxPerUnit = Math.min(canvasW, canvasH) / (2.0 * appState.viewL);
+        const radiusPx = R * pxPerUnit;
+
+        // Cálculo da Divergência Pontual e do Fluxo no Bordo
+        const div0 = spec.div(probe.x, probe.y, prms);
+        const samples = appState.divergence.samples;
+        let fluxNet = 0;
+        const ds = (2.0 * Math.PI * R) / samples;
+
+        const boundaryPoints = [];
+        for (let k = 0; k < samples; k++) {
+            const theta = (2.0 * Math.PI * k) / samples;
+            const bx = probe.x + R * Math.cos(theta);
+            const by = probe.y + R * Math.sin(theta);
+            const f = spec.F(bx, by, prms);
+
+            // Vetor Normal Exterior unitário
+            const nx = Math.cos(theta);
+            const ny = Math.sin(theta);
+            const normalFlux = f.Fx * nx + f.Fy * ny;
+            fluxNet += normalFlux * ds;
+
+            boundaryPoints.push({ bx, by, theta, Fx: f.Fx, Fy: f.Fy, nx, ny, normalFlux });
+        }
+        appState.divergence.lastFluxNet = fluxNet;
+
+        // Destaque Visual Rigoroso:
+        // div > 0 (Fonte): Vermelho | div < 0 (Sumidouro): Azul | div = 0: Neutro
+        let circleFill, circleStroke;
+        const absDiv = Math.abs(div0);
+        const intensity = Math.min(1.0, absDiv / 2.0);
+
+        if (div0 > 0.04) {
+            // Fonte: Vermelho
+            circleFill = p.color(239, 68, 68, Math.floor(40 + intensity * 140));
+            circleStroke = p.color(239, 68, 68, 240);
+        } else if (div0 < -0.04) {
+            // Sumidouro: Azul
+            circleFill = p.color(59, 130, 246, Math.floor(40 + intensity * 140));
+            circleStroke = p.color(59, 130, 246, 240);
+        } else {
+            // Incompressível: Neutro Esmeralda / Ardósia
+            circleFill = p.color(16, 185, 129, 35);
+            circleStroke = p.color(16, 185, 129, 180);
+        }
+
+        // Desenha Disco Preenchido
+        p.fill(circleFill);
+        p.stroke(circleStroke);
+        p.strokeWeight(2.5);
+        p.circle(centerScreen.x, centerScreen.y, radiusPx * 2);
+
+        // C. Setas de Fluxo Normal ao Longo do Perímetro
+        for (let pt of boundaryPoints) {
+            const sPt = toScreen(pt.bx, pt.by);
+            p.fill(circleStroke);
+            p.noStroke();
+            p.circle(sPt.x, sPt.y, 4);
+
+            // Desenha Seta de Fluxo Normal F · n̂
+            const arrowLen = Math.min(32, Math.abs(pt.normalFlux) * 18);
+            if (arrowLen > 3) {
+                if (pt.normalFlux > 0) {
+                    // Saindo (Vermelho / Laranja)
+                    const arrowCol = p.color(248, 113, 113, 220);
+                    drawVectorArrow(sPt.x, sPt.y, pt.nx * arrowLen, -pt.ny * arrowLen, arrowCol, 2.0, 5);
+                } else {
+                    // Entrando (Azul / Ciano)
+                    const arrowCol = p.color(96, 165, 250, 220);
+                    // Aponta para o interior do círculo
+                    drawVectorArrow(sPt.x, sPt.y, -pt.nx * arrowLen, pt.ny * arrowLen, arrowCol, 2.0, 5);
+                }
+            }
+        }
+
+        // Ponto Central
+        p.fill(255);
+        p.stroke(circleStroke);
+        p.strokeWeight(2);
+        p.circle(centerScreen.x, centerScreen.y, 8);
+
+        // Rótulo Dinâmico no Centro
+        p.noStroke();
+        p.textAlign(p.CENTER, p.CENTER);
+        p.textSize(11);
+        p.fill(255);
+        let tag = '∇·F ≈ 0 (Neutro)';
+        if (div0 > 0.04) tag = `FONTE (+${div0.toFixed(2)})`;
+        else if (div0 < -0.04) tag = `SUMIDOURO (${div0.toFixed(2)})`;
+        p.text(tag, centerScreen.x, centerScreen.y - radiusPx - 14);
+    }
+
+    /**
+     * ==========================================================================
+     * MODO 3: ROTACIONAL (∇ × F)
+     * Roda de Pás Interativa + Dinâmica Angular Estrita + Circulação de Stokes
+     * ==========================================================================
+     */
+    function drawCurlSimulation(dt) {
+        const spec = CurlFields[appState.curl.preset];
+        const prms = appState.curl.params;
+        const L = appState.viewL;
+
+        // A. Campo Vetorial na Grade
+        if (appState.showVectors) {
+            const divs = appState.gridDivs;
+            const step = (2.0 * L) / divs;
+            const arrowBaseScale = (step * 0.45) * appState.arrowScale;
+
+            for (let i = 0; i <= divs; i++) {
+                const x = -L + i * step;
+                for (let j = 0; j <= divs; j++) {
+                    const y = -L + j * step;
+                    const f = spec.F(x, y, prms);
+                    const mag = Math.hypot(f.Fx, f.Fy);
+                    if (mag < 0.001) continue;
+
+                    const origin = toScreen(x, y);
+                    const len = Math.min(mag, 2.4) * arrowBaseScale;
+                    const uX = f.Fx / mag;
+                    const uY = f.Fy / mag;
+
+                    const col = p.color(168, 85, 247, 120);
+                    drawVectorArrow(origin.x, origin.y, uX * len, -uY * len, col, 1.2, 5);
+                }
+            }
+        }
+
+        // B. Modelo Físico da Roda de Pás (Paddle Wheel)
+        const wheel = appState.curl.wheel;
+        const Rw = appState.curl.radius;
+        const centerScreen = toScreen(wheel.x, wheel.y);
+        const pxPerUnit = Math.min(canvasW, canvasH) / (2.0 * appState.viewL);
+        const radiusPx = Rw * pxPerUnit;
+
+        // Rigor Matemático: Rotacional 2D na Coordenada Exata
+        const curlZ = spec.curl(wheel.x, wheel.y, prms);
+
+        // Dinâmica Angular: ω = 0.5 * curl_z (relação hidrodinâmica de Cauchy-Stokes)
+        const omega = 0.5 * curlZ;
+        if (!appState.isPaused) {
+            appState.curl.angle += omega * dt * 2.2; // Escala visual confortável
+        }
+        const wheelAngle = appState.curl.angle;
+
+        // Integral Numérica de Circulação ao Longo do Perímetro: Γ = ∮ F · dr
+        let circNet = 0;
+        const circSamples = 24;
+        const circDs = (2.0 * Math.PI * Rw) / circSamples;
+        for (let k = 0; k < circSamples; k++) {
+            const theta = (2.0 * Math.PI * k) / circSamples;
+            const bx = wheel.x + Rw * Math.cos(theta);
+            const by = wheel.y + Rw * Math.sin(theta);
+            const f = spec.F(bx, by, prms);
+            const circEl = (-f.Fx * Math.sin(theta) + f.Fy * Math.cos(theta));
+            circNet += circEl * circDs;
+        }
+        appState.curl.lastCirculationNet = circNet;
+
+        // Cor de Destaque conforme Sentido de Rotação
+        let wheelColor, dirText;
+        if (curlZ > 0.04) {
+            wheelColor = p.color(192, 132, 252); // Anti-horário (Violeta)
+            dirText = `⟲ Anti-horário (curl > 0, ⊙)`;
+        } else if (curlZ < -0.04) {
+            wheelColor = p.color(34, 211, 238); // Horário (Ciano)
+            dirText = `⟳ Horário (curl < 0, ⊗)`;
+        } else {
+            wheelColor = p.color(148, 163, 184); // Neutro
+            dirText = `Estático (curl = 0)`;
+        }
+
+        // Anel Externo de Rolamento
+        p.noFill();
+        p.stroke(wheelColor);
+        p.strokeWeight(1.8);
+        p.circle(centerScreen.x, centerScreen.y, radiusPx * 2);
+
+        // Pás da Roda (Paddle Blades)
+        const bladeCount = appState.curl.blades;
+        for (let b = 0; b < bladeCount; b++) {
+            const bAngle = wheelAngle + (b * 2.0 * Math.PI) / bladeCount;
+            const endX = centerScreen.x + Math.cos(bAngle) * radiusPx;
+            const endY = centerScreen.y - Math.sin(bAngle) * radiusPx;
+
+            // Haste da Pá
+            p.stroke(220, 220, 240, 220);
+            p.strokeWeight(2.5);
+            p.line(centerScreen.x, centerScreen.y, endX, endY);
+
+            // Aleta Perpendicular na Ponta da Pá
+            const perpAngle = bAngle + Math.PI / 2;
+            const paddleSpan = 10;
+            const p1x = endX + Math.cos(perpAngle) * paddleSpan;
+            const p1y = endY - Math.sin(perpAngle) * paddleSpan;
+            const p2x = endX - Math.cos(perpAngle) * paddleSpan;
+            const p2y = endY + Math.sin(perpAngle) * paddleSpan;
+
+            p.stroke(wheelColor);
+            p.strokeWeight(3.5);
+            p.line(p1x, p1y, p2x, p2y);
+        }
+
+        // Cubo Central com Indicador de Sentido Fora do Plano (± z)
+        p.fill(15, 23, 42);
+        p.stroke(wheelColor);
+        p.strokeWeight(2.5);
+        p.circle(centerScreen.x, centerScreen.y, 22);
+
+        p.fill(255);
+        p.noStroke();
+        p.textAlign(p.CENTER, p.CENTER);
+        p.textSize(12);
+        p.textFont('monospace');
+        if (curlZ > 0.04) {
+            // Aponta para fora do plano (+z): Ponto central ⊙
+            p.text('⊙', centerScreen.x, centerScreen.y - 1);
+        } else if (curlZ < -0.04) {
+            // Aponta para dentro do plano (-z): Cruz ⊗
+            p.text('⊗', centerScreen.x, centerScreen.y);
+        } else {
+            p.text('·', centerScreen.x, centerScreen.y);
+        }
+
+        // Rótulo Flutuante
+        p.textSize(11);
+        p.fill(wheelColor);
+        p.text(dirText, centerScreen.x, centerScreen.y - radiusPx - 14);
+    }
+
+    /**
+     * ==========================================================================
+     * FUNÇÕES AUXILIARES DE DESENHO VETORIAL
+     * ==========================================================================
+     */
+    function drawVectorArrow(x, y, dx, dy, col, strokeW = 1.5, headSize = 6) {
+        const len = Math.hypot(dx, dy);
+        if (len < 0.5) return;
+
+        p.stroke(col);
+        p.strokeWeight(strokeW);
+        p.line(x, y, x + dx, y + dy);
+
+        // Ponta da seta
+        const angle = Math.atan2(dy, dx);
+        p.fill(col);
+        p.noStroke();
+        p.push();
+        p.translate(x + dx, y + dy);
+        p.rotate(angle);
+        p.triangle(0, 0, -headSize, headSize * 0.45, -headSize, -headSize * 0.45);
+        p.pop();
+    }
+
+    function drawDashedLine(x1, y1, x2, y2, dashLen = 5, gapLen = 5) {
+        const dist = Math.hypot(x2 - x1, y2 - y1);
+        const dx = (x2 - x1) / dist;
+        const dy = (y2 - y1) / dist;
+        let drawn = 0;
+        let isDrawing = true;
+
+        while (drawn < dist) {
+            const step = isDrawing ? Math.min(dashLen, dist - drawn) : Math.min(gapLen, dist - drawn);
+            if (isDrawing) {
+                p.line(x1 + dx * drawn, y1 + dy * drawn, x1 + dx * (drawn + step), y1 + dy * (drawn + step));
+            }
+            drawn += step;
+            isDrawing = !isDrawing;
+        }
+    }
+
+    function drawRightAngleIndicator(cx, cy, ux1, uy1, ux2, uy2, size = 14) {
+        p.stroke(52, 211, 153, 230); // Verde esmeralda
+        p.strokeWeight(1.4);
+        p.noFill();
+
+        const p1x = cx + ux1 * size;
+        const p1y = cy + uy1 * size;
+        const p2x = cx + ux2 * size;
+        const p2y = cy + uy2 * size;
+        const cornerX = cx + (ux1 + ux2) * size;
+        const cornerY = cy + (uy1 + uy2) * size;
+
+        p.beginShape();
+        p.vertex(p1x, p1y);
+        p.vertex(cornerX, cornerY);
+        p.vertex(p2x, p2y);
+        p.endShape();
+    }
+
+    /**
+     * ==========================================================================
+     * MANIPULAÇÃO DE ENTRADAS (MOUSE & TOQUE)
+     * ==========================================================================
+     */
+    p.mousePressed = () => {
+        if (p.mouseX < 0 || p.mouseX > canvasW || p.mouseY < 0 || p.mouseY > canvasH) return;
+        const wPos = toWorld(p.mouseX, p.mouseY);
+
+        if (appState.mode === 'gradient') {
+            const probe = appState.gradient.probe;
+            const d = Math.hypot(wPos.x - probe.x, wPos.y - probe.y);
+            if (d < 0.6 || !appState.gradient.isPinned) {
+                appState.gradient.isDragging = true;
+                probe.x = wPos.x;
+                probe.y = wPos.y;
+            }
+        } else if (appState.mode === 'divergence') {
+            const probe = appState.divergence.probe;
+            const d = Math.hypot(wPos.x - probe.x, wPos.y - probe.y);
+            if (d < appState.divergence.radius * 1.2 || !appState.divergence.isPinned) {
+                appState.divergence.isDragging = true;
+                probe.x = wPos.x;
+                probe.y = wPos.y;
+            }
+        } else if (appState.mode === 'curl') {
+            const wheel = appState.curl.wheel;
+            const d = Math.hypot(wPos.x - wheel.x, wPos.y - wheel.y);
+            if (d < appState.curl.radius * 1.2 || !appState.curl.isPinned) {
+                appState.curl.isDragging = true;
+                wheel.x = wPos.x;
+                wheel.y = wPos.y;
+            }
+        }
+    };
+
+    p.mouseDragged = () => {
+        if (p.mouseX < 0 || p.mouseX > canvasW || p.mouseY < 0 || p.mouseY > canvasH) return;
+        const wPos = toWorld(p.mouseX, p.mouseY);
+
+        if (appState.mode === 'gradient' && appState.gradient.isDragging) {
+            appState.gradient.probe.x = wPos.x;
+            appState.gradient.probe.y = wPos.y;
+        } else if (appState.mode === 'divergence' && appState.divergence.isDragging) {
+            appState.divergence.probe.x = wPos.x;
+            appState.divergence.probe.y = wPos.y;
+        } else if (appState.mode === 'curl' && appState.curl.isDragging) {
+            appState.curl.wheel.x = wPos.x;
+            appState.curl.wheel.y = wPos.y;
+        }
+    };
+
+    p.mouseReleased = () => {
+        appState.gradient.isDragging = false;
+        appState.divergence.isDragging = false;
+        appState.curl.isDragging = false;
+    };
+
+    // Exporta atualizador de heatmap para chamadas externas
+    window.refreshHeatmap = updateHeatmapImage;
+};
+
+/**
+ * ==============================================================================
+ * GERENCIADOR DE INTERFACE DO USUÁRIO & INTEGRAÇÃO KaTeX
+ * ==============================================================================
+ */
+
+// Inicializa a aplicação quando o DOM estiver pronto
+document.addEventListener('DOMContentLoaded', () => {
+    p5Instance = new p5(sketch);
+    setupDOMEventListeners();
+    switchMode('gradient');
+});
+
+/**
+ * CONFIGURAÇÃO DOS EVENTOS DO DOM
+ */
+function setupDOMEventListeners() {
+    // Abas de Modo
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetMode = btn.dataset.mode;
+            switchMode(targetMode);
+        });
+    });
+
+    // Botões de Ação Globais
+    const pauseBtn = document.getElementById('btn-pause-play');
+    pauseBtn.addEventListener('click', togglePause);
+
+    const resetProbeBtn = document.getElementById('btn-reset-probe');
+    resetProbeBtn.addEventListener('click', resetProbePosition);
+
+    // Zoom e Câmera
+    document.getElementById('btn-zoom-in').addEventListener('click', () => {
+        appState.viewL = Math.max(1.8, appState.viewL * 0.85);
+        if (window.refreshHeatmap) window.refreshHeatmap();
+    });
+    document.getElementById('btn-zoom-out').addEventListener('click', () => {
+        appState.viewL = Math.min(7.0, appState.viewL * 1.18);
+        if (window.refreshHeatmap) window.refreshHeatmap();
+    });
+    document.getElementById('btn-center-view').addEventListener('click', () => {
+        appState.viewL = 3.5;
+        appState.panX = 0;
+        appState.panY = 0;
+        if (window.refreshHeatmap) window.refreshHeatmap();
+    });
+
+    // Seletor de Presets
+    const presetSelect = document.getElementById('preset-select');
+    presetSelect.addEventListener('change', (e) => {
+        if (appState.mode === 'gradient') appState.gradient.preset = e.target.value;
+        else if (appState.mode === 'divergence') appState.divergence.preset = e.target.value;
+        else if (appState.mode === 'curl') appState.curl.preset = e.target.value;
+
+        flowParticles.init();
+        if (window.refreshHeatmap) window.refreshHeatmap();
+        updateTheoryExplanation();
+    });
+
+    // Sliders Comuns: Densidade e Escala
+    const densitySlider = document.getElementById('grid-density-slider');
+    densitySlider.addEventListener('input', (e) => {
+        appState.gridDivs = parseInt(e.target.value);
+        document.getElementById('grid-density-val').textContent = `${appState.gridDivs} × ${appState.gridDivs}`;
+    });
+
+    const scaleSlider = document.getElementById('vector-scale-slider');
+    scaleSlider.addEventListener('input', (e) => {
+        appState.arrowScale = parseFloat(e.target.value);
+        document.getElementById('vector-scale-val').textContent = `${appState.arrowScale.toFixed(1)}×`;
+    });
+
+    // Toggles de Exibição
+    setupToggle('toggle-vectors', (active) => appState.showVectors = active);
+    setupToggle('toggle-heatmap', (active) => appState.showHeatmap = active);
+    setupToggle('toggle-isolines', (active) => appState.showIsolines = active);
+    setupToggle('toggle-streamlines', (active) => appState.showStreamlines = active);
+
+    // Atalhos de Teclado
+    window.addEventListener('keydown', (e) => {
+        if (e.key === ' ' || e.code === 'Space') {
+            e.preventDefault();
+            togglePause();
+        } else if (e.key === '1') {
+            switchMode('gradient');
+        } else if (e.key === '2') {
+            switchMode('divergence');
+        } else if (e.key === '3') {
+            switchMode('curl');
+        } else if (e.key === 'r' || e.key === 'R') {
+            resetProbePosition();
+        }
+    });
+}
+
+function setupToggle(elementId, callback) {
+    const btn = document.getElementById(elementId);
+    btn.addEventListener('click', () => {
+        const isActive = btn.classList.toggle('active');
+        btn.querySelector('.toggle-indicator').textContent = isActive ? '✓' : '';
+        callback(isActive);
+    });
+}
+
+function togglePause() {
+    appState.isPaused = !appState.isPaused;
+    const icon = document.getElementById('pause-icon');
+    const text = document.getElementById('pause-text');
+    if (appState.isPaused) {
+        icon.textContent = '▶';
+        text.textContent = 'Retomar';
+    } else {
+        icon.textContent = '⏸';
+        text.textContent = 'Pausar';
+    }
+}
+
+function resetProbePosition() {
+    if (appState.mode === 'gradient') {
+        appState.gradient.probe.x = 1.0;
+        appState.gradient.probe.y = 0.5;
+    } else if (appState.mode === 'divergence') {
+        appState.divergence.probe.x = 0.0;
+        appState.divergence.probe.y = 0.0;
+    } else if (appState.mode === 'curl') {
+        appState.curl.wheel.x = 1.0;
+        appState.curl.wheel.y = 0.0;
+    }
+}
+
+/**
+ * ==============================================================================
+ * TRANSIÇÃO DE MODO (GRADIENTE / DIVERGENTE / ROTACIONAL)
+ * ==============================================================================
+ */
+function switchMode(newMode) {
+    appState.mode = newMode;
+
+    // Atualiza classes ativas nas abas
+    document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.mode === newMode);
+    });
+
+    // Atualiza opções do dropdown de presets
+    const select = document.getElementById('preset-select');
+    select.innerHTML = '';
+
+    let dict = {};
+    let currentPreset = '';
+    if (newMode === 'gradient') {
+        dict = ScalarFields;
+        currentPreset = appState.gradient.preset;
+        document.getElementById('current-mode-tag').textContent = 'Gradiente ∇f';
+        document.getElementById('hud-operator-title').textContent = 'CAMPO ESCALAR & GRADIENTE';
+        document.getElementById('tool-card-title').textContent = 'Sonda de Ortogonalidade';
+        document.getElementById('tool-mode-badge').textContent = '∇f ⟂ Curva de Nível';
+    } else if (newMode === 'divergence') {
+        dict = DivergenceFields;
+        currentPreset = appState.divergence.preset;
+        document.getElementById('current-mode-tag').textContent = 'Divergente ∇·F';
+        document.getElementById('hud-operator-title').textContent = 'CAMPO VETORIAL & FLUXO LÍQUIDO';
+        document.getElementById('tool-card-title').textContent = 'Volume Circular Infinitesimal';
+        document.getElementById('tool-mode-badge').textContent = 'Teorema de Gauss-Green';
+    } else if (newMode === 'curl') {
+        dict = CurlFields;
+        currentPreset = appState.curl.preset;
+        document.getElementById('current-mode-tag').textContent = 'Rotacional ∇×F';
+        document.getElementById('hud-operator-title').textContent = 'CAMPO VETORIAL & VORTICIDADE';
+        document.getElementById('tool-card-title').textContent = 'Roda de Pás (Paddle Wheel)';
+        document.getElementById('tool-mode-badge').textContent = 'Cinemática de Stokes';
+    }
+
+    for (let key in dict) {
+        const opt = document.createElement('option');
+        opt.value = key;
+        opt.textContent = dict[key].name;
+        if (key === currentPreset) opt.selected = true;
+        select.appendChild(opt);
+    }
+
+    // Reconstrói controles dinâmicos de parâmetros
+    buildDynamicSliders();
+    buildToolControls();
+
+    // Atualiza partículas e mapa de cores
+    flowParticles.init();
+    if (window.refreshHeatmap) window.refreshHeatmap();
+    updateTheoryExplanation();
+}
+
+/**
+ * CONSTRUÇÃO DE SLIDERS DINÂMICOS CONFORME O MODO
+ */
+function buildDynamicSliders() {
+    const container = document.getElementById('dynamic-sliders-container');
+    container.innerHTML = '';
+
+    if (appState.mode === 'gradient') {
+        // Amplitude do Campo Escalar
+        container.appendChild(createSliderItem('Amplitude (A)', appState.gradient.params.amp, 0.2, 2.5, 0.1, (val) => {
+            appState.gradient.params.amp = val;
+            if (window.refreshHeatmap) window.refreshHeatmap();
+        }));
+        // Frequência Espacial (k)
+        container.appendChild(createSliderItem('Frequência Espacial (k)', appState.gradient.params.freq, 0.4, 2.0, 0.1, (val) => {
+            appState.gradient.params.freq = val;
+            if (window.refreshHeatmap) window.refreshHeatmap();
+        }));
+    } else if (appState.mode === 'divergence') {
+        // Intensidade do Campo k / q
+        container.appendChild(createSliderItem('Intensidade das Fontes (q)', appState.divergence.params.q, 0.5, 5.0, 0.5, (val) => {
+            appState.divergence.params.q = val;
+            appState.divergence.params.k = val / 2.5;
+            if (window.refreshHeatmap) window.refreshHeatmap();
+        }));
+        // Separação Dipolar (d)
+        container.appendChild(createSliderItem('Distância do Dipolo (d)', appState.divergence.params.d, 0.8, 2.5, 0.1, (val) => {
+            appState.divergence.params.d = val;
+            if (window.refreshHeatmap) window.refreshHeatmap();
+        }));
+    } else if (appState.mode === 'curl') {
+        // Intensidade da Vorticidade ω / k
+        container.appendChild(createSliderItem('Vorticidade (ω)', appState.curl.params.omega, 0.2, 2.5, 0.1, (val) => {
+            appState.curl.params.omega = val;
+            appState.curl.params.k = val;
+            if (window.refreshHeatmap) window.refreshHeatmap();
+        }));
+    }
+}
+
+/**
+ * CONTROLES DA FERRAMENTA INTERATIVA
+ */
+function buildToolControls() {
+    const container = document.getElementById('tool-controls-container');
+    container.innerHTML = '';
+
+    if (appState.mode === 'gradient') {
+        // Ângulo da Derivada Direcional
+        container.appendChild(createSliderItem('Direção do Teste θ (û)', (appState.gradient.testAngle * 180 / Math.PI).toFixed(0) + '°', 0, 360, 5, (val) => {
+            appState.gradient.testAngle = (val * Math.PI) / 180;
+        }));
+
+        const sweepRow = document.createElement('div');
+        sweepRow.style.display = 'flex';
+        sweepRow.style.gap = '8px';
+        sweepRow.style.marginTop = '8px';
+
+        const sweepBtn = document.createElement('button');
+        sweepBtn.className = 'btn-action';
+        sweepBtn.style.flex = '1';
+        sweepBtn.textContent = appState.gradient.autoSweep ? '⏹ Parar Varredura' : '⟳ Varredura 360°';
+        sweepBtn.addEventListener('click', () => {
+            appState.gradient.autoSweep = !appState.gradient.autoSweep;
+            sweepBtn.textContent = appState.gradient.autoSweep ? '⏹ Parar Varredura' : '⟳ Varredura 360°';
+        });
+
+        const pinBtn = document.createElement('button');
+        pinBtn.className = 'btn-action';
+        pinBtn.style.flex = '1';
+        pinBtn.textContent = appState.gradient.isPinned ? 'Desbloquear Sonda' : 'Bloquear Sonda';
+        pinBtn.addEventListener('click', () => {
+            appState.gradient.isPinned = !appState.gradient.isPinned;
+            pinBtn.textContent = appState.gradient.isPinned ? 'Desbloquear Sonda' : 'Bloquear Sonda';
+        });
+
+        sweepRow.appendChild(sweepBtn);
+        sweepRow.appendChild(pinBtn);
+        container.appendChild(sweepRow);
+
+    } else if (appState.mode === 'divergence') {
+        // Raio do Volume Infinitesimal R
+        container.appendChild(createSliderItem('Raio da Região Circular (R)', appState.divergence.radius, 0.4, 1.8, 0.05, (val) => {
+            appState.divergence.radius = val;
+        }));
+
+        const pinBtn = document.createElement('button');
+        pinBtn.className = 'btn-action';
+        pinBtn.style.width = '100%';
+        pinBtn.style.marginTop = '8px';
+        pinBtn.textContent = appState.divergence.isPinned ? 'Desbloquear Círculo' : 'Bloquear Círculo';
+        pinBtn.addEventListener('click', () => {
+            appState.divergence.isPinned = !appState.divergence.isPinned;
+            pinBtn.textContent = appState.divergence.isPinned ? 'Desbloquear Círculo' : 'Bloquear Círculo';
+        });
+        container.appendChild(pinBtn);
+
+    } else if (appState.mode === 'curl') {
+        // Raio da Roda de Pás
+        container.appendChild(createSliderItem('Raio da Roda de Pás (Rw)', appState.curl.radius, 0.4, 1.6, 0.05, (val) => {
+            appState.curl.radius = val;
+        }));
+
+        const pinBtn = document.createElement('button');
+        pinBtn.className = 'btn-action';
+        pinBtn.style.width = '100%';
+        pinBtn.style.marginTop = '8px';
+        pinBtn.textContent = appState.curl.isPinned ? 'Desbloquear Roda' : 'Bloquear Roda';
+        pinBtn.addEventListener('click', () => {
+            appState.curl.isPinned = !appState.curl.isPinned;
+            pinBtn.textContent = appState.curl.isPinned ? 'Desbloquear Roda' : 'Bloquear Roda';
+        });
+        container.appendChild(pinBtn);
+    }
+}
+
+function createSliderItem(label, currentVal, min, max, step, onChange) {
+    const item = document.createElement('div');
+    item.className = 'slider-group';
+
+    const row = document.createElement('div');
+    row.className = 'slider-label-row';
+
+    const title = document.createElement('span');
+    title.textContent = label;
+
+    const valBadge = document.createElement('span');
+    valBadge.className = 'slider-val-readout';
+    valBadge.textContent = typeof currentVal === 'number' ? currentVal.toFixed(2) : currentVal;
+
+    row.appendChild(title);
+    row.appendChild(valBadge);
+
+    const input = document.createElement('input');
+    input.type = 'range';
+    input.className = 'custom-slider';
+    input.min = min;
+    input.max = max;
+    input.step = step;
+    input.value = typeof currentVal === 'number' ? currentVal : parseFloat(currentVal);
+
+    input.addEventListener('input', (e) => {
+        const v = parseFloat(e.target.value);
+        valBadge.textContent = v.toFixed(2);
+        onChange(v);
+    });
+
+    item.appendChild(row);
+    item.appendChild(input);
+    return item;
+}
+
+/**
+ * ==============================================================================
+ * ATUALIZAÇÃO DA TELEMETRIA KaTeX & HUD
+ * ==============================================================================
+ */
+function updateHUDAndTelemetry() {
+    if (typeof katex === 'undefined') return;
+
+    const defEl = document.getElementById('math-field-definition');
+    const anaEl = document.getElementById('math-operator-analytical');
+    const evalEl = document.getElementById('math-probe-evaluation');
+    const verifBox = document.getElementById('verification-box');
+    const verifText = document.getElementById('verification-text');
+    const verifMetric = document.getElementById('verification-metric');
+    const primaryHUD = document.getElementById('hud-primary-value');
+    const coordsHUD = document.getElementById('hud-coords-value');
+
+    if (appState.mode === 'gradient') {
+        const spec = ScalarFields[appState.gradient.preset];
+        const prms = appState.gradient.params;
+        const p = appState.gradient.probe;
+
+        const fVal = spec.f(p.x, p.y, prms);
+        const g = spec.grad(p.x, p.y, prms);
+
+        // Derivada Direcional na direção u
+        const uA = appState.gradient.testAngle;
+        const uX = Math.cos(uA);
+        const uY = Math.sin(uA);
+        const dirDeriv = g.fx * uX + g.fy * uY;
+
+        // Renderiza KaTeX
+        katex.render(spec.latexDef, defEl, { throwOnError: false, displayMode: true });
+        katex.render(spec.latexGrad, anaEl, { throwOnError: false, displayMode: true });
+
+        const evalLatex = `\\nabla f(${p.x.toFixed(2)}, ${p.y.toFixed(2)}) = \\begin{bmatrix} ${g.fx.toFixed(2)} \\\\ ${g.fy.toFixed(2)} \\end{bmatrix}, \\quad \\|\\nabla f\\| = ${g.mag.toFixed(2)}`;
+        katex.render(evalLatex, evalEl, { throwOnError: false, displayMode: false });
+
+        // Verificação Geométrica Rigorosa: Ortogonalidade ∇f · T = 0
+        const tangX = -g.fy;
+        const tangY = g.fx;
+        const dotProd = (g.fx * tangX + g.fy * tangY); // estritamente 0 analiticamente!
+        
+        verifBox.className = 'verification-badge';
+        verifText.textContent = `Ortogonalidade Rigorosa: ∇f ⟂ T  (∇f · T = ${dotProd.toFixed(4)})`;
+        verifMetric.textContent = 'θ = 90.00°';
+
+        primaryHUD.innerHTML = `<span>f = ${fVal.toFixed(3)}</span> | <span>\\|∇f\\| = ${g.mag.toFixed(3)}</span>`;
+        coordsHUD.textContent = `Sonda: (${p.x.toFixed(2)}, ${p.y.toFixed(2)}) | D_u f = ${dirDeriv.toFixed(2)} (Máx: +${g.mag.toFixed(2)})`;
+
+    } else if (appState.mode === 'divergence') {
+        const spec = DivergenceFields[appState.divergence.preset];
+        const prms = appState.divergence.params;
+        const p = appState.divergence.probe;
+        const R = appState.divergence.radius;
+
+        const f = spec.F(p.x, p.y, prms);
+        const divVal = spec.div(p.x, p.y, prms);
+
+        // Teorema da Divergência: Fluxo Líquido Integrado vs div * Área
+        const area = Math.PI * R * R;
+        const theoreticalFlux = divVal * area;
+
+        katex.render(spec.latexDef, defEl, { throwOnError: false, displayMode: true });
+        katex.render(spec.latexDiv, anaEl, { throwOnError: false, displayMode: true });
+
+        const fluxNum = typeof appState.divergence.lastFluxNet === 'number' ? appState.divergence.lastFluxNet : theoreticalFlux;
+        const evalLatex = `\\nabla \\cdot \\mathbf{F} = ${divVal.toFixed(3)}, \\quad \\Phi_{\\text{num}} = \\oint \\mathbf{F}\\cdot\\hat{\\mathbf{n}}\\,ds = ${fluxNum.toFixed(3)}, \\quad \\Phi_{\\text{teor}} = ${theoreticalFlux.toFixed(3)}`;
+        katex.render(evalLatex, evalEl, { throwOnError: false, displayMode: false });
+
+        if (divVal > 0.04) {
+            verifBox.className = 'verification-badge active-red';
+            verifText.textContent = `Gauss-Green: FONTE (Fluxo Saindo, ∮ F·n̂ ds = ${fluxNum.toFixed(2)})`;
+            verifMetric.textContent = `∇·F = +${divVal.toFixed(2)}`;
+        } else if (divVal < -0.04) {
+            verifBox.className = 'verification-badge active-blue';
+            verifText.textContent = `Gauss-Green: SUMIDOURO (Fluxo Entrando, ∮ F·n̂ ds = ${fluxNum.toFixed(2)})`;
+            verifMetric.textContent = `∇·F = ${divVal.toFixed(2)}`;
+        } else {
+            verifBox.className = 'verification-badge';
+            verifText.textContent = `Gauss-Green: CAMPO SOLENOIDAL (Fluxo Líquido Nulo ≡ 0.00)`;
+            verifMetric.textContent = '∇·F ≡ 0.00';
+        }
+
+        primaryHUD.innerHTML = `<span>∇·F = ${divVal.toFixed(3)}</span> | <span>Fluxo Líquido: ${fluxNum.toFixed(2)}</span>`;
+        coordsHUD.textContent = `Centro: (${p.x.toFixed(2)}, ${p.y.toFixed(2)}) | Raio R = ${R.toFixed(2)} (Área = ${area.toFixed(2)})`;
+
+    } else if (appState.mode === 'curl') {
+        const spec = CurlFields[appState.curl.preset];
+        const prms = appState.curl.params;
+        const w = appState.curl.wheel;
+        const Rw = appState.curl.radius;
+
+        const curlVal = spec.curl(w.x, w.y, prms);
+        const omega = 0.5 * curlVal;
+        const circulationTeor = curlVal * (Math.PI * Rw * Rw);
+        const circNum = typeof appState.curl.lastCirculationNet === 'number' ? appState.curl.lastCirculationNet : circulationTeor;
+
+        katex.render(spec.latexDef, defEl, { throwOnError: false, displayMode: true });
+        katex.render(spec.latexCurl, anaEl, { throwOnError: false, displayMode: true });
+
+        const evalLatex = `(\\nabla \\times \\mathbf{F})_z = ${curlVal.toFixed(3)}, \\quad \\omega_{\\text{roda}} = ${omega.toFixed(3)} \\text{ rad/s}, \\quad \\Gamma_{\\text{num}} = \\oint \\mathbf{F}\\cdot d\\mathbf{r} = ${circNum.toFixed(3)}`;
+        katex.render(evalLatex, evalEl, { throwOnError: false, displayMode: false });
+
+        if (curlVal > 0.04) {
+            verifBox.className = 'verification-badge active-purple';
+            verifText.textContent = `Stokes: ⟲ Anti-horário (ω = +${omega.toFixed(2)} rad/s, ∮ F·dr = ${circNum.toFixed(2)})`;
+            verifMetric.textContent = `curl = +${curlVal.toFixed(2)}`;
+        } else if (curlVal < -0.04) {
+            verifBox.className = 'verification-badge active-blue';
+            verifText.textContent = `Stokes: ⟳ Horário (ω = ${omega.toFixed(2)} rad/s, ∮ F·dr = ${circNum.toFixed(2)})`;
+            verifMetric.textContent = `curl = ${curlVal.toFixed(2)}`;
+        } else {
+            verifBox.className = 'verification-badge';
+            verifText.textContent = 'Stokes: CAMPO IRROTACIONAL (Roda de Pás Estática)';
+            verifMetric.textContent = 'curl ≡ 0.00';
+        }
+
+        primaryHUD.innerHTML = `<span>(\\nabla\\times F)_z = ${curlVal.toFixed(3)}</span> | <span>ω = ${omega.toFixed(2)} rad/s</span>`;
+        coordsHUD.textContent = `Centro: (${w.x.toFixed(2)}, ${w.y.toFixed(2)}) | Circulação Γ = ${circNum.toFixed(2)}`;
+    }
+}
+
+/**
+ * ==============================================================================
+ * TEXTOS DE FUNDAMENTO TEÓRICO E RIGOR GEOMÉTRICO
+ * ==============================================================================
+ */
+function updateTheoryExplanation() {
+    const card = document.getElementById('theory-explanation-box');
+    if (appState.mode === 'gradient') {
+        card.innerHTML = `
+            <h3>📐 Rigor Geométrico: O Gradiente (∇f)</h3>
+            <p><span class="theory-highlight">1. Ortogonalidade Estrita:</span> Seja uma curva de nível dada por $f(x, y) = c$. Pela regra da cadeia, $\\frac{df}{dt} = \\nabla f \\cdot \\frac{d\\mathbf{r}}{dt} = 0$. Como o vetor tangente é $\\mathbf{T} = \\frac{d\\mathbf{r}}{dt}$, o gradiente é <strong>estritamente perpendicular</strong> às curvas de nível em todos os pontos regulares.</p>
+            <p><span class="theory-highlight">2. Taxa de Variação Máxima:</span> A derivada direcional na direção unitária $\\hat{\\mathbf{u}}$ é $D_{\\hat{\\mathbf{u}}} f = \\nabla f \\cdot \\hat{\\mathbf{u}} = \\|\\nabla f\\| \\cos\\theta$. O valor máximo ocorre quando $\\theta = 0$, provando que $\\nabla f$ aponta na direção de crescimento mais acentuado da função.</p>
+        `;
+    } else if (appState.mode === 'divergence') {
+        card.innerHTML = `
+            <h3>🔴🔵 Rigor Geométrico: O Divergente (∇ · F)</h3>
+            <p><span class="theory-highlight">1. Densidade de Fluxo Líquido:</span> Pelo Teorema de Green / Divergência no plano: $\\Phi_{\\text{líquido}} = \\oint_{\\partial D} \\mathbf{F} \\cdot \\hat{\\mathbf{n}} \\, ds = \\iint_D (\\nabla \\cdot \\mathbf{F}) \\, dA$.</p>
+            <p><span class="theory-highlight">2. Interpretação Física Exata:</span> Quando o raio do círculo tende a zero, o fluxo normal líquido dividido pela área converge precisamente para o divergente pontual: $\\nabla \\cdot \\mathbf{F} = \\lim_{A \\to 0} \\frac{1}{A} \\oint \\mathbf{F} \\cdot \\hat{\\mathbf{n}} \\, ds$.</p>
+            <p><span class="theory-highlight">3. Fontes e Sumidouros:</span> Se $\\nabla \\cdot \\mathbf{F} > 0$, o fluxo sai da região (expansão/fonte). Se $\\nabla \\cdot \\mathbf{F} < 0$, o fluxo entra (compressão/sumidouro).</p>
+        `;
+    } else if (appState.mode === 'curl') {
+        card.innerHTML = `
+            <h3>🌀 Rigor Geométrico: O Rotacional (∇ × F)</h3>
+            <p><span class="theory-highlight">1. A Roda de Pás Ideal:</span> Pelo teorema de decomposição cinemática de Cauchy-Stokes em mecânica dos fluidos, a taxa de rotação média de um elemento fluido infinitesimal é exatamente a metade da vorticidade: $\\vec{\\omega}_{\\text{roda}} = \\frac{1}{2} (\\nabla \\times \\mathbf{F})$.</p>
+            <p><span class="theory-highlight">2. Circulação e Teorema de Stokes:</span> $\\Gamma = \\oint_{\\partial D} \\mathbf{F} \\cdot d\\mathbf{r} = \\iint_D (\\nabla \\times \\mathbf{F})_z \\, dA$. A circulação de linha ao longo do perímetro da roda mede o torque líquido exercido pelo fluido sobre as pás.</p>
+            <p><span class="theory-highlight">3. Paradoxo do Cisalhamento:</span> Escoamentos retilíneos com cisalhamento (como $\\mathbf{F} = y\\mathbf{i}$) possuem rotacional NÃO-NULO, pois a velocidade diferencial entre o topo e a base da roda produz rotação líquida!</p>
+        `;
+    }
+
+    function applyMath() {
+        if (window.renderMathInElement) {
+            renderMathInElement(card, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false}
+                ],
+                throwOnError: false
+            });
+        } else {
+            setTimeout(applyMath, 100);
+        }
+    }
+    applyMath();
+}
+</script>
+
+</body>
+</html>
